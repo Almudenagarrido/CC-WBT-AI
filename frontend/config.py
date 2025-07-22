@@ -1,0 +1,1 @@
+COUNTRIES = ["Rwanda", "Mozambique"]
