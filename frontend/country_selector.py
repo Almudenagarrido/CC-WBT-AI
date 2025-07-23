@@ -1,13 +1,13 @@
 import os
 import time
 import streamlit as st
-from config import COUNTRIES as INITIAL_COUNTRIES
+import utils as u
 
 def show():
     st.title("Select a country:")
 
     if "countries" not in st.session_state:
-        st.session_state.countries = INITIAL_COUNTRIES.copy()
+        st.session_state.countries = u.get_countries_from_backend()
 
     selected = st.session_state.get("selected_country", None)
 
@@ -22,10 +22,14 @@ def show():
         if selected == country:
             with col2:
                 if st.button("🗑️", key=f"delete_{country}"):
-                    st.session_state.countries.remove(country)
-                    del st.session_state.selected_country
-                    st.rerun()
-                
+                    result = u.delete_country_from_backend(country)
+                    if result is not None:
+                        st.session_state.countries = u.get_countries_from_backend()
+                        if "selected_country" in st.session_state:
+                            del st.session_state.selected_country
+                        st.success(f"{country} deleted.")
+                        st.rerun()
+
     if selected:
         st.markdown(f"### Selected country: {selected}")
 
@@ -42,10 +46,13 @@ def show():
         new_country = st.text_input("New country name")
         if st.button("Add country"):
             new_country = new_country.strip()
-            if new_country and new_country not in st.session_state.countries:
-                st.session_state.countries.append(new_country)
-                st.success(f"{new_country} added to the list.")
-                time.sleep(1)
-                st.rerun()
-            elif new_country in st.session_state.countries:
-                st.warning(f"{new_country} already exists.")
+            if new_country:
+                if new_country not in st.session_state.countries:
+                    result = u.add_country_to_backend(new_country)
+                    if result is not None:
+                        st.session_state.countries = u.get_countries_from_backend()
+                        st.success(f"{new_country} added to the list.")
+                        time.sleep(1)
+                        st.rerun()
+                else:
+                    st.warning(f"{new_country} already exists.")
