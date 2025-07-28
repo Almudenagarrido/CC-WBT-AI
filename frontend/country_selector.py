@@ -4,7 +4,7 @@ import streamlit as st
 import utils as u
 
 def show():
-    st.title("Select a country:")
+    st.markdown("### Select a country scenario to begin modeling:")
 
     if "countries" not in st.session_state:
         st.session_state.countries = u.get_countries_from_backend()
@@ -40,6 +40,7 @@ def show():
         if st.button("Start modeling", key=f"start_{selected}"):
             st.session_state.country = selected
             st.session_state.page = "main_dashboard"
+            u.create_templates_if_missing(country)
             st.rerun()
 
     with st.expander("➕ Add a new country"):
