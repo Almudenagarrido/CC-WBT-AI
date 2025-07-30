@@ -31,7 +31,7 @@ def show():
                         st.rerun()
 
     if selected:
-        st.markdown(f"### Selected country: {selected}")
+        st.markdown(f"#### Selected country: {selected}")
 
         image_path = f"public/{selected}.png"
         if os.path.exists(image_path):
@@ -40,7 +40,7 @@ def show():
         if st.button("Start modeling", key=f"start_{selected}"):
             st.session_state.country = selected
             st.session_state.page = "main_dashboard"
-            u.create_templates_if_missing(country)
+            u.create_templates_if_missing(selected)
             st.rerun()
 
     with st.expander("➕ Add a new country"):

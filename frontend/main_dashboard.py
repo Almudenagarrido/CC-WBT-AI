@@ -6,10 +6,10 @@ from modules.techno_economic_models import TechnoEconomicModels
 def show():
     header.show()
 
-    page, subsection, model, fuel_market = sidebar.show()
-    if page == "Financial Inputs" and fuel_market:
-        FuelMarketInformation(u.API_URL, fuel_market)()
-    elif page == "Techno-Economic Inputs" and subsection:
-        TechnoEconomicModels(u.API_URL, subsection, model, fuel_market)()
+    section, subsection, model, fuel = sidebar.show()
+    if section == "financial_inputs" and (fuel or subsection):
+        FuelMarketInformation(u.API_URL, subsection, fuel)()
+    elif section == "technoeconomic_models" and subsection:
+        TechnoEconomicModels(u.API_URL, subsection, model, fuel)()
 
     footer.show()
