@@ -47,6 +47,41 @@ def remove_readonly(func, path, excinfo):
     os.chmod(path, stat.S_IWRITE)
     func(path)
 
+@app.get("/download-country")
+def download_country_files(country: str, background_tasks: BackgroundTasks):
+    temp_dir = tempfile.mkdtemp()
+    try:
+        folder_path = os.path.join(c.BASE_DIR, country)        
+        internal_folder = os.path.join(temp_dir, country)
+        os.makedirs(internal_folder, exist_ok=True)
+
+        files_to_include = [
+            f for f in os.listdir(folder_path)
+            if os.path.isfile(os.path.join(folder_path, f)) and "{model}" not in f
+        ]
+
+        for filename in files_to_include:
+            src = os.path.join(folder_path, filename)
+            dst = os.path.join(internal_folder, filename)
+            shutil.copy(src, dst)
+
+        zip_base = os.path.join(tempfile.gettempdir(), f"{country}_files")
+        zip_path = shutil.make_archive(zip_base, 'zip', internal_folder)
+
+        background_tasks.add_task(os.remove, zip_path)
+        shutil.rmtree(temp_dir)
+
+        return FileResponse(
+            zip_path,
+            media_type="application/zip",
+            filename=os.path.basename(zip_path)
+        )
+
+    except Exception as e:
+        if os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir)
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.delete("/countries")
 def delete_country(request: CountryRequest):
     country = request.name.strip()
@@ -70,6 +105,9 @@ class FuelRequest(BaseModel):
     fuel: str
     country: str
 
+def sort_fuels(fuels):
+    return sorted(fuels, key=lambda x: (x not in c.ELECTRICITY_VARIANTS, x))
+
 @app.get("/fuels")
 def get_fuels(key, country):
     key = key.strip()
@@ -83,7 +121,7 @@ def get_fuels(key, country):
     if key not in c.FUELS[country]:
         raise HTTPException(status_code=404, detail=f"Key '{key}' not found in country '{country}'.")
     
-    return {"fuels": c.FUELS[country][key]}
+    return {"fuels": sort_fuels(c.FUELS[country][key])}
 
 @app.post("/fuels")
 def add_fuel(request: FuelRequest):
@@ -128,10 +166,15 @@ def delete_fuel(request: FuelRequest):
     if country not in c.FUELS:
         raise HTTPException(status_code=404, detail=f"Country '{country}' not found in fuels.")
 
+    if fuel.lower().startswith("electricity"):
+        to_delete = c.ELECTRICITY_VARIANTS
+    else:
+        to_delete = {fuel}
+
     deleted = []
     for key in c.FUELS[country]:
         original = c.FUELS[country][key]
-        filtered = [f for f in original if fuel.lower() not in f.lower()]
+        filtered = [f for f in original if f not in to_delete]
         removed = set(original) - set(filtered)
         c.FUELS[country][key] = filtered
         deleted.extend(removed)
@@ -142,7 +185,7 @@ def delete_fuel(request: FuelRequest):
     return {"message": f"Removed entries: {sorted(set(deleted))}"}
 
 
-# Models (GET)
+# Models (GET, POST, DOWNLOAD, DELETE)
 class ModelRequest(BaseModel):
     country: str
     model: str
@@ -201,29 +244,32 @@ async def create_model(country: str, model: str, start_year: int, end_year: int)
 def download_model_files(country:str, model: str, background_tasks: BackgroundTasks):
     temp_dir = tempfile.mkdtemp()
     try:
-        paths = []
+        folder_path = os.path.join(c.BASE_DIR, country)
+        files_to_copy = []
+
         if model.lower() != "bau":
             for route in c.ROUTES:
                 filename = route.format(model=model)
-                full_path = os.path.join(c.BASE_DIR, country, filename)
-                paths.append(full_path)
+                full_path = os.path.join(folder_path, filename)
+                if not os.path.exists(full_path):
+                    shutil.rmtree(temp_dir)
+                files_to_copy.append(full_path)
 
-        for route in c.SHARED_ROUTES:
-            full_path = os.path.join(c.BASE_DIR, country, route)
-            paths.append(full_path)
-
-        for path in paths:
-            if not os.path.exists(path):
+        for shared_route in c.SHARED_ROUTES:
+            full_path = os.path.join(folder_path, shared_route)
+            if not os.path.exists(full_path):
                 shutil.rmtree(temp_dir)
-                raise HTTPException(status_code=404, detail=f"Missing file: {path}")
+            files_to_copy.append(full_path)
+
+        for path in files_to_copy:
             shutil.copy(path, os.path.join(temp_dir, os.path.basename(path)))
 
-        zip_path = os.path.join(tempfile.gettempdir(), f"{country}_{model}_files.zip")
-        shutil.make_archive(zip_path.replace(".zip", ""), 'zip', temp_dir)
+        zip_base = os.path.join(tempfile.gettempdir(), f"{country}_{model}_files")
+        zip_path = shutil.make_archive(zip_base, 'zip', temp_dir)
 
         background_tasks.add_task(os.remove, zip_path)
         shutil.rmtree(temp_dir)
-
+        
         return FileResponse(
             zip_path,
             media_type="application/zip",

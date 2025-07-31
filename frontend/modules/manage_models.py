@@ -7,13 +7,11 @@ import streamlit as st
 
 class ManageModels:
 
-    def __init__(self, api_base):
-        self.api_base = api_base
-        self.upload_url = f"{self.api_base}/upload-technoeconomic-model"
-        self.valid_extensions = ["xlsx", "xlsm", "xls", "xltx", "xltm"]
+    def __init__(self):
+        self.upload_extensions = ["xlsx", "xlsm", "xls", "xltx", "xltm"]
 
-
-    def upload_technoeconomic_model(self, name, file):
+    ## ALGORIOTMO PARA CARGAR ARCHIVOS
+    """def upload_technoeconomic_model(self, name, file):
         files = {"file": (file.name, file, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")}
         res = requests.post(f"{self.upload_url}/{name}", files=files)
 
@@ -26,8 +24,7 @@ class ManageModels:
                 error_detail = res.text
             st.error(f"Upload failed: {error_detail}")
             return False
-
-
+    """
 
     def model_creator(self, models):
         st.markdown("#### ➕ Create New Techno-Economic Model")
@@ -40,7 +37,7 @@ class ManageModels:
                 start_year = st.number_input("Start Year (BAU)", step=1, format="%d")
                 end_year = st.number_input("End Year (BAU)", step=1, format="%d")
 
-                upload_file = st.file_uploader("Upload Excel file for BAU (optional)", type=self.valid_extensions)
+                upload_file = st.file_uploader("Upload Excel file for BAU (optional)", type=self.upload_extensions)
 
                 create = st.form_submit_button("Create BAU Model")
 
@@ -52,7 +49,7 @@ class ManageModels:
                         st.success(f"BAU model created succesfully.")
                         st.session_state.models = u.get_models_from_backend()
 
-                        #############
+                        ### ALGORITMO PARA CARGAR ARCHIVO BAU
                         """if upload_file:
                             upload_success = self.upload_technoeconomic_model("BAU", upload_file)
                             if upload_success:
@@ -92,8 +89,6 @@ class ManageModels:
                         time.sleep(1)
                         st.rerun()
 
-
-
     def show_models(self, models):
         for model in models:
             col1, col2, col3, col4 = st.columns([0.7, 0.1, 0.1, 0.1])
@@ -131,15 +126,16 @@ class ManageModels:
                         st.session_state.models = u.get_models_from_backend()
                     st.rerun()
 
-            if st.session_state.get(f"show_uploader_{model}", False):
+            ## ALGORITMO PARA CARGAR ARCHIVOS PARA MODELO
+            """ if st.session_state.get(f"show_uploader_{model}", False):
                 file = st.file_uploader(
                     f"Upload file for {model}",
-                    type=self.valid_extensions,
+                    type=self.upload_extensions,
                     key=f"upload_{model}",
                     label_visibility="collapsed"
                 )
                 if file:
-                    if any(file.name.lower().endswith(f".{ext}") for ext in self.valid_extensions):
+                    if any(file.name.lower().endswith(f".{ext}") for ext in self.upload_extensions):
                         upload_success = self.upload_technoeconomic_model(model, file)
                         if upload_success:
                             st.success(f"Information uploaded to 'Techno-Economic Inputs' file for model '{model}'")
@@ -147,8 +143,9 @@ class ManageModels:
                             time.sleep(2)
                             st.rerun()
                     else:
-                        st.error(f"Only Excel files are allowed: {', '.join(self.valid_extensions)}")
-
+                        st.error(f"Only Excel files are allowed: {', '.join(self.upload_extensions)}")
+            """
+    
     def __call__(self):
         st.subheader("Manage Techno-Economic Inputs")
         if "models" not in st.session_state or not st.session_state.models:

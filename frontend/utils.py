@@ -53,7 +53,7 @@ def delete_country_from_backend(country):
         return None
     
 
-# Fuels (GET, DELETE)
+# Fuels (GET, POST, DELETE)
 def get_fuels_from_backend(key, country):
     try:
         response = requests.get(
@@ -88,7 +88,19 @@ def add_fuel_to_backend():
             except Exception as e:
                 st.error(f"Error adding fuel: {e}")
                 return False
-                
+
+def download_country_files_from_backend(country):
+    try:
+        response = requests.get(
+            f"{API_URL}/download-country",
+            params={"country": country}
+        )
+        response.raise_for_status()
+        return response.content
+    except Exception as e:
+        st.error(f"Download failed: {e}")
+        return None
+           
 def delete_fuel_from_backend(fuel, country):
     try:
         response = requests.delete(
@@ -102,7 +114,7 @@ def delete_fuel_from_backend(fuel, country):
         return False
 
 
-# Models
+# Models (GET, POST, DOWNLOAD, DELETE)
 def get_models_from_backend():
     try:
         country = st.session_state.country
@@ -139,13 +151,10 @@ def download_model_files_from_backend(country, model):
             f"{API_URL}/download-model",
             params={"country": country, "model": model}
         )
-        if response.status_code == 200:
-            return response.content
-        else:
-            st.error(f"Download failed: {response.status_code} - {response.text}")
-            return None
+        response.raise_for_status()
+        return response.content
     except Exception as e:
-        st.error(f"Exception occurred: {e}")
+        st.error(f"Download failed: {e}")
         return None
     
 def delete_model_from_backend(model):

@@ -25,6 +25,13 @@ FUELS = {
         }
     }
 
+ELECTRICITY_VARIANTS = {
+        "Electricity",
+        "Electricity & E-Cooking",
+        "Electricity (Just access)",
+        "Electricity (Only E-Cooking)"
+    }
+
 MODELS = {}
 
 SHARED_ROUTES = [

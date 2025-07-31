@@ -8,7 +8,7 @@ from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 from modules.cell_validator import CellValidator
 
 
-class FuelMarketInformation:
+class FuelFinancialInformation:
 
     def __init__(self, api_url, subsection, fuel_market):
         self.api_base = api_url
@@ -24,19 +24,6 @@ class FuelMarketInformation:
         self.edited_df = None
         self.editable_columns = ["Baseline"] + [str(year) for year in range(2020, 2051)]
         self.df_heights = {"Electricity": 170, "LPG": 290, "Carbon": 170}
-
-    def get_fuel_markets(self):
-        try:
-            res = requests.get(self.get_url)
-            if res.status_code != 200:
-                st.error("The file 'fuel-market-information.xlsx' was not found.")
-                return []
-            file_data = BytesIO(res.content)
-            xls = pd.ExcelFile(file_data)
-            return xls.sheet_names
-        except Exception as e:
-            st.error(f"Error fetching financial markets: {e}")
-            return []
 
     def fetch_and_load(self):
         res = requests.get(self.get_url)

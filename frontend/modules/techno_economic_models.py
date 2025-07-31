@@ -18,12 +18,12 @@ class TechnoEconomicModels:
         self.fuel = fuel
         self.cell_validator = CellValidator()
         self.subsections = {
-            "manage_models": ManageModels(self.api_url),
-            "design_capital": DesignCapitalStructure(api_url, subsection, model, fuel, self.cell_validator),
+            "manage_models": ManageModels(),
             "technoeconomic_inputs": TechnoEconomicInputs(api_url, subsection, model, fuel, self.cell_validator),
             "carbon_credits": CarbonCredits(api_url, subsection, model, self.cell_validator),
-            "financial_statements": FinancialStatements(api_url, subsection, model, fuel),
             "capex_fuels": CapexFuelMarket(api_url, subsection, model, fuel),
+            "design_capital": DesignCapitalStructure(api_url, subsection, model, fuel, self.cell_validator),
+            "financial_statements": FinancialStatements(api_url, subsection, model, fuel),
             "summary_financing": SummaryFinancing(self.api_url)
         }
 

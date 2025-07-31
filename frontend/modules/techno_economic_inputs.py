@@ -213,3 +213,9 @@ class TechnoEconomicInputs:
             time.sleep(1)
             st.rerun()
 
+"""
+get
+fetch and load
+show excel
+save reset
+"""
