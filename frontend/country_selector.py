@@ -5,55 +5,62 @@ import utils as u
 
 def show():
     st.markdown("### Select a country scenario to begin modeling:")
-
+    
+    if "selected_country" not in st.session_state:
+        st.session_state.selected_country = None
     if "countries" not in st.session_state:
         st.session_state.countries = u.get_countries_from_backend()
-
-    selected = st.session_state.get("selected_country", None)
-
+    
     for country in st.session_state.countries:
-        col1, col2 = st.columns([0.9, 0.1])
-
+        col1, col2, col3 = st.columns([0.8, 0.1, 0.1])
+        
         with col1:
-            if st.button(f"{country}", key=f"btn_{country}"):
+            if st.button(country, key=f"select_{country}"):
+                u.create_templates_if_missing(country)
                 st.session_state.selected_country = country
                 st.rerun()
-
-        if selected == country:
+        
+        if st.session_state.selected_country == country:
             with col2:
+                content = u.download_country_files_from_backend(country)
+                if content:
+                    st.download_button(
+                        "⬇️",
+                        data=content,
+                        file_name=f"{country}_files.zip",
+                        mime="application/zip",
+                        key=f"download_{country}"
+                    )
+            
+            with col3:
                 if st.button("🗑️", key=f"delete_{country}"):
-                    result = u.delete_country_from_backend(country)
-                    if result is not None:
+                    if u.delete_country_from_backend(country):
+                        st.session_state.selected_country = None
                         st.session_state.countries = u.get_countries_from_backend()
-                        if "selected_country" in st.session_state:
-                            del st.session_state.selected_country
-                        st.success(f"{country} deleted.")
+                        st.success(f"Deleted: {country}")
+                        time.sleep(1)
                         st.rerun()
 
-    if selected:
-        st.markdown(f"### Selected country: {selected}")
-
+    if st.session_state.selected_country:
+        selected = st.session_state.selected_country
+        st.markdown(f"#### Selected country: {selected}")
+        
         image_path = f"public/{selected}.png"
         if os.path.exists(image_path):
             st.image(image_path, width=100)
-
-        if st.button("Start modeling", key=f"start_{selected}"):
-            st.session_state.country = selected
+        
+        if st.button("Start modeling"):
             st.session_state.page = "main_dashboard"
-            u.create_templates_if_missing(country)
+            st.session_state.country = selected
             st.rerun()
 
     with st.expander("➕ Add a new country"):
-        new_country = st.text_input("New country name")
-        if st.button("Add country"):
+        new_country = st.text_input("Country name", key="new_country_input")
+        if st.button("Add", key="add_country_btn"):
             new_country = new_country.strip()
             if new_country:
-                if new_country not in st.session_state.countries:
-                    result = u.add_country_to_backend(new_country)
-                    if result is not None:
-                        st.session_state.countries = u.get_countries_from_backend()
-                        st.success(f"{new_country} added to the list.")
-                        time.sleep(1)
-                        st.rerun()
-                else:
-                    st.warning(f"{new_country} already exists.")
+                if u.add_country_to_backend(new_country):
+                    st.session_state.countries = u.get_countries_from_backend()
+                    st.success(f"Added: {new_country}")
+                    time.sleep(1)
+                    st.rerun()

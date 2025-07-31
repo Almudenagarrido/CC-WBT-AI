@@ -1,5 +1,6 @@
 import time
 import requests
+import utils as u
 import pandas as pd
 from io import BytesIO
 import streamlit as st
@@ -7,10 +8,11 @@ from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 from modules.cell_validator import CellValidator
 
 
-class FuelMarketInformation:
+class FuelFinancialInformation:
 
-    def __init__(self, api_url, fuel_market):
+    def __init__(self, api_url, subsection, fuel_market):
         self.api_base = api_url
+        self.subsection = subsection
         self.fuel_market = fuel_market
         self.cell_validator = CellValidator()
         self.get_url = f"{self.api_base}/fuel-market-information"
@@ -23,19 +25,6 @@ class FuelMarketInformation:
         self.editable_columns = ["Baseline"] + [str(year) for year in range(2020, 2051)]
         self.df_heights = {"Electricity": 170, "LPG": 290, "Carbon": 170}
 
-    def get_fuel_markets(self):
-        try:
-            res = requests.get(self.get_url)
-            if res.status_code != 200:
-                st.error("The file 'fuel-market-information.xlsx' was not found.")
-                return []
-            file_data = BytesIO(res.content)
-            xls = pd.ExcelFile(file_data)
-            return xls.sheet_names
-        except Exception as e:
-            st.error(f"Error fetching financial markets: {e}")
-            return []
-
     def fetch_and_load(self):
         res = requests.get(self.get_url)
         if res.status_code != 200:
@@ -43,7 +32,6 @@ class FuelMarketInformation:
             return False
 
         if not self.fuel_market:
-            st.write(self.fuel_market)
             st.warning("No sheet found in file for selected technology market.")
             return False
 
@@ -127,51 +115,10 @@ class FuelMarketInformation:
         else:
             st.error(response.json().get("error", "Something went wrong"))
 
-    def add_market(self):
-        st.subheader("Add new fuel market")
-        new_market = st.text_input("Enter name of the new technology: ")
-
-        if st.button("Create market"):
-            new_market = new_market.strip()
-
-            if new_market == "":
-                st.warning("Fuel market name cannot be empty.")
-            else:
-                try:
-                    response = requests.post(
-                        self.add_url, 
-                        json={"name": new_market}
-                    )
-                    if response.status_code == 200:
-                        st.success(f"Market '{new_market}' added successfully.")
-                        st.session_state.fuel_market = f"{new_market}"
-                        st.rerun()
-                    else:
-                        try:
-                            error_msg = response.json().get("error", "Unknown error occurred.")
-                            st.error(error_msg)
-                        except:
-                            st.error("Error contacting backend.")
-                except Exception as e:
-                    st.error(f"Failed to connect to backend: {e}")
-
-    def delete_market(self, sheet_name):
-
-        try:
-            response = requests.post(self.delete_url, json={"name": sheet_name})
-            if response.status_code == 200:
-                return True
-            else:
-                st.error(f"Failed to delete '{sheet_name}'. Server responded with {response.status_code}.")
-                return False
-        except Exception as e:
-            st.error(f"Error deleting market: {e}")
-            return False
-
     def __call__(self):
 
-        if self.fuel_market == "Add":
-            self.add_market()
+        if self.subsection == "add":
+            u.add_fuel_to_backend()
             return
         
         if not self.fetch_and_load():

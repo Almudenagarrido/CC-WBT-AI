@@ -11,20 +11,20 @@ from modules.summary_financing import SummaryFinancing
 
 class TechnoEconomicModels:
     
-    def __init__(self, api_url, subsection, model, fuel_market):
+    def __init__(self, api_url, subsection, model, fuel):
         self.api_url = api_url
         self.subsection = subsection
         self.model = model
-        self.fuel_market = fuel_market
+        self.fuel = fuel
         self.cell_validator = CellValidator()
         self.subsections = {
-            "Manage Techno-Economic Inputs": ManageModels(self.api_url),
-            "Design Capital Structure": DesignCapitalStructure(api_url, subsection, model, fuel_market, self.cell_validator),
-            "Techno-Economic Inputs": TechnoEconomicInputs(api_url, subsection, model, fuel_market, self.cell_validator),
-            "Carbon Credits": CarbonCredits(api_url, subsection, model, self.cell_validator),
-            "Financial Statements": FinancialStatements(api_url, subsection, model, fuel_market),
-            "Capex Fuel Market": CapexFuelMarket(api_url, subsection, model, fuel_market),
-            "Summary Financing": SummaryFinancing(self.api_url)
+            "manage_models": ManageModels(),
+            "technoeconomic_inputs": TechnoEconomicInputs(api_url, subsection, model, fuel, self.cell_validator),
+            "carbon_credits": CarbonCredits(api_url, subsection, model, self.cell_validator),
+            "capex_fuels": CapexFuelMarket(api_url, subsection, model, fuel),
+            "design_capital": DesignCapitalStructure(api_url, subsection, model, fuel, self.cell_validator),
+            "financial_statements": FinancialStatements(api_url, subsection, model, fuel),
+            "summary_financing": SummaryFinancing(self.api_url)
         }
 
     def __call__(self):
