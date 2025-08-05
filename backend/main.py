@@ -3,9 +3,13 @@ import stat
 import copy
 import shutil
 import tempfile
+import openpyxl
 import config as c
+import pandas as pd
+from shutil import copyfile
 from pydantic import BaseModel
-from fastapi.responses import FileResponse
+from typing import List, Dict, Any
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 
 
@@ -57,7 +61,7 @@ def download_country_files(country: str, background_tasks: BackgroundTasks):
 
         files_to_include = [
             f for f in os.listdir(folder_path)
-            if os.path.isfile(os.path.join(folder_path, f)) and "{model}" not in f
+            if os.path.isfile(os.path.join(folder_path, f)) and "{model}" not in f and "{template}" not in f
         ]
 
         for filename in files_to_include:
@@ -112,7 +116,6 @@ def sort_fuels(fuels):
 def get_fuels(key, country):
     key = key.strip()
     country = country.strip()
-
     if country not in c.FUELS:
         if "template" not in c.FUELS:
             raise HTTPException(status_code=500, detail="Template country not available.")
@@ -123,7 +126,7 @@ def get_fuels(key, country):
     
     return {"fuels": sort_fuels(c.FUELS[country][key])}
 
-@app.post("/fuels")
+@app.post("/add-fuels")
 def add_fuel(request: FuelRequest):
     fuel = request.fuel.strip()
     country = request.country.strip()
@@ -153,9 +156,10 @@ def add_fuel(request: FuelRequest):
 
     if not added_to:
         return {"message": f"Fuel already present in all lists for {country}."}
+    
     return {"message": f"Fuel added to {country}: {added_to}"}
 
-@app.delete("/fuels")
+@app.delete("/delete-fuels")
 def delete_fuel(request: FuelRequest):
     fuel = request.fuel.strip()
     country = request.country.strip()
@@ -210,7 +214,7 @@ async def create_model(country: str, model: str, start_year: int, end_year: int)
                 "end": end_year
             }
             c.MODELS[country] = ["BAU"]
-
+    
     else:
         expected_range = c.COUNTRY_YEAR_RANGES[country]
         if start_year != expected_range["start"] or end_year != expected_range["end"]:
@@ -234,10 +238,6 @@ async def create_model(country: str, model: str, start_year: int, end_year: int)
                 
         c.MODELS[country].append(model)
 
-    for route in c.SHARED_ROUTES:
-        # Aqui va la logica de añadir lineas
-        pass
-
     return {"message": f"Model '{model}' created successfully for country '{country}'."}
 
 @app.get("/download-model")
@@ -257,9 +257,8 @@ def download_model_files(country:str, model: str, background_tasks: BackgroundTa
 
         for shared_route in c.SHARED_ROUTES:
             full_path = os.path.join(folder_path, shared_route)
-            if not os.path.exists(full_path):
-                shutil.rmtree(temp_dir)
-            files_to_copy.append(full_path)
+            if os.path.exists(full_path):
+                files_to_copy.append(full_path)
 
         for path in files_to_copy:
             shutil.copy(path, os.path.join(temp_dir, os.path.basename(path)))
@@ -302,3 +301,154 @@ def delete_model(request: ModelRequest):
     return {"message": f"Model '{model}' deleted successfully for country '{country}'."}
     
     
+# Excel Sheet (Abstract Class) (GET)
+class SheetUpdate(BaseModel):
+    country: str
+    route: str
+    template_route: str
+    sheet_name: str
+    data: List[Dict[str, Any]]
+    key_fuels: str
+
+def sync_sheets_with_fuels(country, route, template_route, key_fuels):
+    allowed_sheets = c.FUELS.get(country, {}).get(key_fuels, [])
+    full_path = os.path.join(c.BASE_DIR, route)
+    template_path = os.path.join(c.BASE_DIR, template_route)
+
+    if not os.path.isfile(full_path):
+        if not os.path.isfile(template_path):
+            raise FileNotFoundError("Template not found")
+        os.makedirs(os.path.dirname(full_path), exist_ok=True)
+        copyfile(template_path, full_path)
+
+    wb = openpyxl.load_workbook(full_path)
+    wb_template = openpyxl.load_workbook(template_path)
+    changed = False
+
+    for fuel_sheet in allowed_sheets:
+        if fuel_sheet not in wb.sheetnames:
+            template_sheet = wb_template[fuel_sheet] if fuel_sheet in wb_template.sheetnames else wb_template["Electricity"]
+            new_sheet = wb.create_sheet(fuel_sheet)
+            for row in template_sheet.iter_rows():
+                for cell in row:
+                    new_sheet[cell.coordinate].value = cell.value
+                    if cell.has_style:
+                        new_sheet[cell.coordinate]._style = cell._style
+
+            for col_letter, dimension in template_sheet.column_dimensions.items():
+                new_sheet.column_dimensions[col_letter].width = dimension.width
+                new_sheet.column_dimensions[col_letter].hidden = dimension.hidden
+
+            changed = True
+
+    sheets_to_delete = [sheet for sheet in wb.sheetnames if sheet not in allowed_sheets]
+    for sheet in sheets_to_delete:
+        std = wb[sheet]
+        wb.remove(std)
+        changed = True
+
+    if changed:
+        wb.save(full_path)
+
+    wb.close()
+    wb_template.close()
+
+    return changed
+
+@app.get("/get-sheet")
+def get_sheet(country, route, template_route, sheet_name, key_fuels):
+    
+    if sheet_name not in c.FUELS.get(country, {}).get(key_fuels, []):
+        raise HTTPException(status_code=400, detail="Sheet name not allowed for this fuel and country")
+
+    try:
+        sync_sheets_with_fuels(country, route, template_route, key_fuels)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error syncing sheets: {str(e)}")
+
+    full_path = os.path.join(c.BASE_DIR, route)
+    df = pd.read_excel(full_path, sheet_name=sheet_name, engine="openpyxl")
+
+    return JSONResponse({"sheet": df.to_dict(orient="records")})
+
+@app.post("/save-sheet")
+async def save_sheet(update: SheetUpdate):
+    excel_path = os.path.join(c.BASE_DIR, update.route)
+    
+    if not os.path.isfile(excel_path):
+        raise HTTPException(status_code=404, detail="File not found")
+
+    wb = None
+    original_sheet = None
+    temp_sheet = None
+    
+    try:
+        wb = openpyxl.load_workbook(excel_path)
+        if update.sheet_name in wb.sheetnames:
+            original_sheet = wb[update.sheet_name]
+            
+            temp_sheet = wb.create_sheet("temp_style_sheet")
+            for row in original_sheet.iter_rows():
+                for cell in row:
+                    temp_cell = temp_sheet[cell.coordinate]
+                    temp_cell.value = cell.value
+                    if cell.has_style:
+                        temp_cell._style = cell._style
+            
+            wb.remove(original_sheet)
+        
+        new_sheet = wb.create_sheet(update.sheet_name)
+        df_data = pd.DataFrame(update.data)
+        
+        if original_sheet:
+            for cell in original_sheet[1]:
+                new_cell = new_sheet.cell(row=1, column=cell.column, value=cell.value)
+                if cell.has_style:
+                    new_cell._style = cell._style
+
+        for r_idx, row in enumerate(df_data.itertuples(index=False), start=2):
+            for c_idx, value in enumerate(row, start=1):
+                cell = new_sheet.cell(row=r_idx, column=c_idx, value=value)
+                
+                if temp_sheet:
+                    temp_cell = temp_sheet.cell(row=r_idx, column=c_idx)
+                    if temp_cell.has_style:
+                        cell._style = temp_cell._style
+        
+        if original_sheet:
+            for col_letter, dimension in original_sheet.column_dimensions.items():
+                new_sheet.column_dimensions[col_letter].width = dimension.width
+                new_sheet.column_dimensions[col_letter].hidden = dimension.hidden
+        
+        if temp_sheet:
+            wb.remove(temp_sheet)
+        wb.save(excel_path)
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error saving sheet: {str(e)}")
+    finally:
+        if wb:
+            wb.close()
+    
+    return {"message": f"Sheet '{update.sheet_name}' updated with preserved styles."}
+
+@app.post("/reset-sheet")
+async def reset_sheet(update: SheetUpdate):
+    excel_path = os.path.join(c.BASE_DIR, update.route)
+    template_path = os.path.join(c.BASE_DIR, update.template_route)
+
+    if not os.path.isfile(template_path):
+        raise HTTPException(status_code=404, detail="Template file not found")
+
+    if not os.path.isfile(excel_path):
+        raise HTTPException(status_code=404, detail="Target file not found")
+
+    try:
+        df_new = pd.read_excel(template_path, sheet_name=update.sheet_name, engine="openpyxl")
+    except ValueError:
+        df_new = pd.read_excel(template_path, sheet_name="Electricity", engine="openpyxl")
+
+    with pd.ExcelWriter(excel_path, engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
+        df_new.to_excel(writer, sheet_name=update.sheet_name, index=False)
+
+    return {"message": f"Sheet '{update.sheet_name}' in '{update.route}' reset successfully."}

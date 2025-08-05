@@ -11,18 +11,19 @@ from modules.summary_financing import SummaryFinancing
 
 class TechnoEconomicModels:
     
-    def __init__(self, api_url, subsection, model, fuel):
+    def __init__(self, excel_editor, api_url, subsection, model, fuel):
+        self.excel_editor = excel_editor
         self.api_url = api_url
         self.subsection = subsection
         self.model = model
         self.fuel = fuel
-        self.cell_validator = CellValidator()
+        #self.excell = CellValidator()
         self.subsections = {
             "manage_models": ManageModels(),
-            "technoeconomic_inputs": TechnoEconomicInputs(api_url, subsection, model, fuel, self.cell_validator),
-            "carbon_credits": CarbonCredits(api_url, subsection, model, self.cell_validator),
+            "technoeconomic_inputs": TechnoEconomicInputs(api_url, subsection, model, fuel),
+            "carbon_credits": CarbonCredits(api_url, subsection, model),
             "capex_fuels": CapexFuelMarket(api_url, subsection, model, fuel),
-            "design_capital": DesignCapitalStructure(api_url, subsection, model, fuel, self.cell_validator),
+            "design_capital": DesignCapitalStructure(api_url, subsection, model, fuel),
             "financial_statements": FinancialStatements(api_url, subsection, model, fuel),
             "summary_financing": SummaryFinancing(self.api_url)
         }

@@ -72,7 +72,7 @@ def show():
             st.markdown("---")
             if "Carbon Credits" in st.session_state.fuels_carbon:
                 if st.button(f"Carbon Credits Financial Inputs"):
-                        st.session_state.section = "Financial Inputs"
+                        st.session_state.section = "financial_inputs"
                         st.session_state.fuel = "Carbon Credits"
                         st.session_state.subsection = None
                         st.session_state.model = None

@@ -77,10 +77,12 @@ def add_fuel_to_backend():
         else:
             try:
                 response = requests.post(
-                    f"{API_URL}/fuels", 
+                    f"{API_URL}/add-fuels", 
                     json={"fuel": new_fuel, "country": country}
                 )
                 response.raise_for_status()
+                st.success(f"Fuel '{new_fuel}' added successfully to Financial Inputs.")
+                st.session_state.subsection = None
                 st.session_state.fuel = new_fuel
                 st.session_state.reload_fuels = True
                 st.rerun()
@@ -104,7 +106,7 @@ def download_country_files_from_backend(country):
 def delete_fuel_from_backend(fuel, country):
     try:
         response = requests.delete(
-            f"{API_URL}/fuels", 
+            f"{API_URL}/delete-fuels", 
             json={"fuel": fuel, "country": country}
         )
         response.raise_for_status()
@@ -169,3 +171,50 @@ def delete_model_from_backend(model):
     except Exception as e:
         st.error(f"Error deleting model: {e}")
         return False
+
+
+# Excel Sheets (Abstract Class) (GET, POST, RESET)
+def get_sheet_from_backend(country, route, template_route, sheet_name, key_fuels):
+    try:
+        payload = {
+            "country": country,
+            "route": route,
+            "template_route": template_route,
+            "sheet_name": sheet_name,
+            "key_fuels": key_fuels,
+            "data": []
+        }
+        response = requests.get(
+            f"{API_URL}/get-sheet", params=payload
+        )
+        response.raise_for_status()
+        return response.json().get("sheet", None)
+    except Exception as e:
+        st.error(f"Error fetching models: {e}")
+        return None
+
+def save_sheet_in_backend(df, route, sheet_name):
+    data_json = df.fillna("-").to_dict(orient="records")
+    payload = {
+        "country": "",
+        "route": route,
+        "template_route": "",
+        "sheet_name": sheet_name,
+        "data": data_json,
+        "key_fuels": "",
+    }
+    res = requests.post(f"{API_URL}/save-sheet", json=payload)
+    return res.status_code == 200
+
+def reset_sheet_in_backend(route, template_route, sheet_name):
+    payload = {
+        "country": "",
+        "route": route,
+        "template_route": template_route,
+        "sheet_name": sheet_name,
+        "data": [],
+        "key_fuels": "",
+    }
+    res = requests.post(f"{API_URL}/reset-sheet", json=payload)
+    return res.status_code == 200
+

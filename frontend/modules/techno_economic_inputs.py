@@ -8,7 +8,7 @@ from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 
 class TechnoEconomicInputs:
     
-    def __init__(self, api_base, subsection, model, fuel_market, cell_validator):
+    def __init__(self, api_base, subsection, model, fuel_market):
         self.api_base = api_base
         self.fuel_market_get_url = f"{self.api_base}/fuel-market-information"
         self.get_url = f"{self.api_base}/technoeconomic-inputs"
@@ -22,8 +22,7 @@ class TechnoEconomicInputs:
         self.df = None
         self.df_heights = {"Electricity": 580, "LPG": 500, "Rest of subsidies or taxes": 410}
         self.edited_df = None
-        self.editable_columns = ["Baseline"] + [str(year) for year in range(2020, 2051)]
-        self.cell_validator = cell_validator
+        self.editable_columns = ["Baseline"] + [str(year) for year in range(2021, 2051)]
     
     def get_technoeconomic_inputs(self):
         try:

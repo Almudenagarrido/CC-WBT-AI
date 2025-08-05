@@ -35,8 +35,8 @@ ELECTRICITY_VARIANTS = {
 MODELS = {}
 
 SHARED_ROUTES = [
-    "fuel-financial-inputs.xlsx",
-    "carbon-credits.xlsx",
+    "fuel-financial-inputs-{template}.xlsx",
+    "carbon-credits-{template}.xlsx",
 ]
 
 ROUTES = [

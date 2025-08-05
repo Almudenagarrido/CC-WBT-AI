@@ -6,17 +6,16 @@ import streamlit as st
 from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 
 class CarbonCredits:
-    def __init__(self, api_base, subsection, model, cell_validator):
+    def __init__(self, api_base, subsection, model):
         self.api_base = api_base
         self.subsection = subsection
         self.model = model
-        self.cell_validator = cell_validator
         self.get_url = f"{self.api_base}/carbon-credits"
         self.save_url = f"{self.api_base}/save-carbon-credits"
         self.reset_url = f"{self.api_base}/reset-carbon-credits"
         self.df = None
         self.edited_df = None
-        self.editable_columns = ["Baseline"] + [str(year) for year in range(2020, 2051)]
+        self.editable_columns = ["Baseline"] + [str(year) for year in range(2021, 2051)]
 
     def get_carbon_credits(self):
         try:

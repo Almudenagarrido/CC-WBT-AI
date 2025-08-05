@@ -8,12 +8,11 @@ from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 
 class DesignCapitalStructure:
     
-    def __init__(self, api_base, subsection, model, fuel_market, cell_validator):
+    def __init__(self, api_base, subsection, model, fuel_market):
         self.api_base = api_base
         self.subsection = subsection
         self.model = model
         self.fuel_market = fuel_market
-        self.cell_validator = cell_validator
         self.get_url = f"{self.api_base}/design-capital-structure"
         self.save_url = f"{self.api_base}/save-design-capital-structure"
         self.reset_url = f"{self.api_base}/reset-design-capital-structure"
@@ -35,7 +34,7 @@ class DesignCapitalStructure:
             "Finance": ["Amount"],
             "Total": ["Amount"],
             "Division": ["Amount"],
-            "Debts": ["Baseline"] + [str(year) for year in range(2020, 2051)]
+            "Debts": ["Baseline"] + [str(year) for year in range(1, 2051)]
         }
 
     def get_design_capital(self):
