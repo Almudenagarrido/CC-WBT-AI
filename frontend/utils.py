@@ -137,7 +137,7 @@ def create_model_in_backend(model, start_year, end_year):
             params={"country": country, "model": model, "start_year": start_year, "end_year": end_year}
         )
         response.raise_for_status()
-        return True, f"Model '{model}' created successfully."
+        return True, f"Model '{model}' created successfully for country '{country}'."
     except requests.exceptions.HTTPError as e:
         try:
             detail = response.json().get("detail", str(e))

@@ -1,16 +1,28 @@
 import os
 import stat
 import copy
+import json
 import shutil
 import tempfile
 import openpyxl
-import config as c
 import pandas as pd
 from shutil import copyfile
 from pydantic import BaseModel
 from typing import List, Dict, Any
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi import FastAPI, HTTPException, BackgroundTasks
+
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CONFIG_FILE = os.path.join(BASE_DIR, "config.json")
+
+def load_config():
+    with open(CONFIG_FILE, "r") as f:
+        return json.load(f)
+
+def save_config(config):
+    with open(CONFIG_FILE, "w") as f:
+        json.dump(config, f, indent=4)
 
 
 app = FastAPI()
@@ -22,28 +34,34 @@ class CountryRequest(BaseModel):
 
 @app.get("/countries")
 def get_countries():
-    return {"countries": c.COUNTRIES}
+    config = load_config()
+    return {"countries": config["COUNTRIES"]}
 
 @app.post("/countries")
 def add_country(request: CountryRequest):
+    config = load_config()
     new_country = request.name.strip()
     if not new_country:
         raise HTTPException(status_code=400, detail="Country name empty")
-    if new_country in c.COUNTRIES:
+    if new_country in config["COUNTRIES"]:
         raise HTTPException(status_code=400, detail="Country already exists")
 
-    c.COUNTRIES.append(new_country)
+    config["COUNTRIES"].append(new_country)
+    save_config(config)
     return {"message": f"Country '{new_country}' added."}
 
 @app.post("/countries/{country}")
 def create_templates_for_country(country: str):
-    dst = os.path.join(c.BASE_DIR, country)
+    dst = os.path.join(BASE_DIR, country)
+
     if os.path.exists(dst):
         return {"message": f"Templates for '{country}' already exist."}
     
     try:
-        shutil.copytree(c.TEMPLATES_DIR, dst)
+        templates_path = os.path.join(BASE_DIR, "{templates}")
+        shutil.copytree(templates_path, dst)
         return {"message": f"Templates for '{country}' created."}
+    
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error copying templates: {e}")
 
@@ -55,7 +73,7 @@ def remove_readonly(func, path, excinfo):
 def download_country_files(country: str, background_tasks: BackgroundTasks):
     temp_dir = tempfile.mkdtemp()
     try:
-        folder_path = os.path.join(c.BASE_DIR, country)        
+        folder_path = os.path.join(BASE_DIR, country)        
         internal_folder = os.path.join(temp_dir, country)
         os.makedirs(internal_folder, exist_ok=True)
 
@@ -88,13 +106,15 @@ def download_country_files(country: str, background_tasks: BackgroundTasks):
 
 @app.delete("/countries")
 def delete_country(request: CountryRequest):
+    config = load_config()
     country = request.name.strip()
-    if country not in c.COUNTRIES:
+    if country not in config["COUNTRIES"]:
         raise HTTPException(status_code=404, detail="Country not found")
 
-    c.COUNTRIES.remove(country)
+    config["COUNTRIES"].remove(country)
+    save_config(config)
 
-    folder = os.path.join(c.BASE_DIR, country)
+    folder = os.path.join(BASE_DIR, country)
     if os.path.exists(folder) and os.path.isdir(folder):
         try:
             shutil.rmtree(folder, onerror=remove_readonly)
@@ -110,35 +130,42 @@ class FuelRequest(BaseModel):
     country: str
 
 def sort_fuels(fuels):
-    return sorted(fuels, key=lambda x: (x not in c.ELECTRICITY_VARIANTS, x))
+    config = load_config()
+    return sorted(fuels, key=lambda x: (x not in config["ELECTRICITY_VARIANTS"], x))
 
 @app.get("/fuels")
 def get_fuels(key, country):
+    config = load_config()
     key = key.strip()
     country = country.strip()
-    if country not in c.FUELS:
-        if "template" not in c.FUELS:
-            raise HTTPException(status_code=500, detail="Template country not available.")
-        c.FUELS[country] = copy.deepcopy(c.FUELS["template"])
 
-    if key not in c.FUELS[country]:
+    if country not in config["FUELS"]:
+
+        if "template" not in config["FUELS"]:
+            raise HTTPException(status_code=500, detail="Template country not available.")
+        
+        config["FUELS"][country] = copy.deepcopy(config["FUELS"]["template"])
+
+    if key not in config["FUELS"][country]:
         raise HTTPException(status_code=404, detail=f"Key '{key}' not found in country '{country}'.")
     
-    return {"fuels": sort_fuels(c.FUELS[country][key])}
+    save_config(config)
+    return {"fuels": sort_fuels(config["FUELS"][country][key])}
 
 @app.post("/add-fuels")
 def add_fuel(request: FuelRequest):
+    config = load_config()
     fuel = request.fuel.strip()
     country = request.country.strip()
 
     if not fuel:
         raise HTTPException(status_code=400, detail="Fuel name is empty")
 
-    if country not in c.FUELS:
+    if country not in config["FUELS"]:
         raise HTTPException(status_code=404, detail=f"Country '{country}' not found in fuels.")
 
     added_to = []
-    for key in c.FUELS[country]:
+    for key in config["FUELS"][country]:
         if fuel == "Electricity":
             if key == "expanded":
                 values = ["Electricity & E-Cooking", "Electricity (Just access)"]
@@ -150,42 +177,45 @@ def add_fuel(request: FuelRequest):
             values = [fuel]
 
         for v in values:
-            if v not in c.FUELS[country][key]:
-                c.FUELS[country][key].append(v)
+            if v not in config["FUELS"][country][key]:
+                config["FUELS"][country][key].append(v)
                 added_to.append((key, v))
 
     if not added_to:
         return {"message": f"Fuel already present in all lists for {country}."}
     
+    save_config(config)
     return {"message": f"Fuel added to {country}: {added_to}"}
 
 @app.delete("/delete-fuels")
 def delete_fuel(request: FuelRequest):
+    config = load_config()
     fuel = request.fuel.strip()
     country = request.country.strip()
 
     if not fuel:
         raise HTTPException(status_code=400, detail="Fuel keyword is empty")
     
-    if country not in c.FUELS:
+    if country not in config["FUELS"]:
         raise HTTPException(status_code=404, detail=f"Country '{country}' not found in fuels.")
 
     if fuel.lower().startswith("electricity"):
-        to_delete = c.ELECTRICITY_VARIANTS
+        to_delete = config["ELECTRICITY_VARIANTS"]
     else:
         to_delete = {fuel}
 
     deleted = []
-    for key in c.FUELS[country]:
-        original = c.FUELS[country][key]
+    for key in config["FUELS"][country]:
+        original = config["FUELS"][country][key]
         filtered = [f for f in original if f not in to_delete]
         removed = set(original) - set(filtered)
-        c.FUELS[country][key] = filtered
+        config["FUELS"][country][key] = filtered
         deleted.extend(removed)
 
     if not deleted:
         raise HTTPException(status_code=404, detail="No matching fuel entries found")
 
+    save_config(config)
     return {"message": f"Removed entries: {sorted(set(deleted))}"}
 
 
@@ -196,27 +226,30 @@ class ModelRequest(BaseModel):
 
 @app.get("/models")
 def get_models(country):
+    config = load_config()
     country = country.strip()
-    if country not in c.MODELS:
-        c.MODELS[country] = []
+
+    if country not in config["MODELS"]:
+        config["MODELS"][country] = []
     
-    return {"models": c.MODELS[country]}
+    return {"models": config["MODELS"][country]}
 
 @app.post("/model")
 async def create_model(country: str, model: str, start_year: int, end_year: int):
+    config = load_config()
     country = country.strip()
     model = model.strip()
 
     if model.lower() == "bau":
-        if country not in c.COUNTRY_YEAR_RANGES:
-            c.COUNTRY_YEAR_RANGES[country] = {
+        if country not in config["COUNTRY_YEAR_RANGES"]:
+            config["COUNTRY_YEAR_RANGES"][country] = {
                 "start": start_year,
                 "end": end_year
             }
-            c.MODELS[country] = ["BAU"]
+            config["MODELS"][country] = ["BAU"]
     
     else:
-        expected_range = c.COUNTRY_YEAR_RANGES[country]
+        expected_range = config["COUNTRY_YEAR_RANGES"][country]
         if start_year != expected_range["start"] or end_year != expected_range["end"]:
             raise HTTPException(
                 status_code=400,
@@ -227,35 +260,38 @@ async def create_model(country: str, model: str, start_year: int, end_year: int)
                 )
             )
         
-        for route in c.ROUTES:
-            src_path = os.path.join(c.BASE_DIR, country, route)
-            dst_path = os.path.join(c.BASE_DIR, country, route.format(model=model))
+        for route in config["ROUTES"]:
+            src_path = os.path.join(BASE_DIR, country, route)
+            dst_path = os.path.join(BASE_DIR, country, route.format(model=model))
 
             if os.path.exists(src_path):
                 shutil.copy(src_path, dst_path)
             else:
                 raise HTTPException(status_code=404, detail=f"Template file not found: {src_path}")
                 
-        c.MODELS[country].append(model)
+        config["MODELS"][country].append(model)
 
+    save_config(config)
     return {"message": f"Model '{model}' created successfully for country '{country}'."}
 
 @app.get("/download-model")
 def download_model_files(country:str, model: str, background_tasks: BackgroundTasks):
+    config = load_config()
     temp_dir = tempfile.mkdtemp()
+
     try:
-        folder_path = os.path.join(c.BASE_DIR, country)
+        folder_path = os.path.join(BASE_DIR, country)
         files_to_copy = []
 
         if model.lower() != "bau":
-            for route in c.ROUTES:
+            for route in config["ROUTES"]:
                 filename = route.format(model=model)
                 full_path = os.path.join(folder_path, filename)
                 if not os.path.exists(full_path):
                     shutil.rmtree(temp_dir)
                 files_to_copy.append(full_path)
 
-        for shared_route in c.SHARED_ROUTES:
+        for shared_route in config["SHARED_ROUTES"]:
             full_path = os.path.join(folder_path, shared_route)
             if os.path.exists(full_path):
                 files_to_copy.append(full_path)
@@ -282,23 +318,23 @@ def download_model_files(country:str, model: str, background_tasks: BackgroundTa
 
 @app.delete("/model")
 def delete_model(request: ModelRequest):
+    config = load_config()
     country = request.country.strip()
     model = request.model.strip()
 
     if model.lower() == "bau":
-        c.MODELS.pop(country, None)
-        c.COUNTRY_YEAR_RANGES.pop(country, None)
+        config["MODELS"].pop(country, None)
+        config["COUNTRY_YEAR_RANGES"].pop(country, None)
     else:
-        for route in c.ROUTES:
-            file_path = os.path.join(c.BASE_DIR, country, route.format(model=model))
+        for route in config["ROUTES"]:
+            file_path = os.path.join(BASE_DIR, country, route.format(model=model))
             if os.path.exists(file_path):
                 os.remove(file_path)
 
-        c.MODELS[country].remove(model)
+        config["MODELS"][country].remove(model)
 
-        # Aquí iría la gestión de archivos en c.SHARED_ROUTES
-
-    return {"message": f"Model '{model}' deleted successfully for country '{country}'."}
+    save_config(config)
+    return {"message": f"{model}' deleted successfully for country '{country}'."}
     
     
 # Excel Sheet (Abstract Class) (GET)
@@ -311,9 +347,10 @@ class SheetUpdate(BaseModel):
     key_fuels: str
 
 def sync_sheets_with_fuels(country, route, template_route, key_fuels):
-    allowed_sheets = c.FUELS.get(country, {}).get(key_fuels, [])
-    full_path = os.path.join(c.BASE_DIR, route)
-    template_path = os.path.join(c.BASE_DIR, template_route)
+    config = load_config()
+    allowed_sheets = config["FUELS"].get(country, {}).get(key_fuels, [])
+    full_path = os.path.join(BASE_DIR, route)
+    template_path = os.path.join(BASE_DIR, template_route)
 
     if not os.path.isfile(full_path):
         if not os.path.isfile(template_path):
@@ -357,8 +394,9 @@ def sync_sheets_with_fuels(country, route, template_route, key_fuels):
 
 @app.get("/get-sheet")
 def get_sheet(country, route, template_route, sheet_name, key_fuels):
+    config = load_config()
     
-    if sheet_name not in c.FUELS.get(country, {}).get(key_fuels, []):
+    if sheet_name not in config["FUELS"].get(country, {}).get(key_fuels, []):
         raise HTTPException(status_code=400, detail="Sheet name not allowed for this fuel and country")
 
     try:
@@ -366,14 +404,14 @@ def get_sheet(country, route, template_route, sheet_name, key_fuels):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error syncing sheets: {str(e)}")
 
-    full_path = os.path.join(c.BASE_DIR, route)
+    full_path = os.path.join(BASE_DIR, route)
     df = pd.read_excel(full_path, sheet_name=sheet_name, engine="openpyxl")
 
     return JSONResponse({"sheet": df.to_dict(orient="records")})
 
 @app.post("/save-sheet")
 async def save_sheet(update: SheetUpdate):
-    excel_path = os.path.join(c.BASE_DIR, update.route)
+    excel_path = os.path.join(BASE_DIR, update.route)
     
     if not os.path.isfile(excel_path):
         raise HTTPException(status_code=404, detail="File not found")
@@ -434,8 +472,8 @@ async def save_sheet(update: SheetUpdate):
 
 @app.post("/reset-sheet")
 async def reset_sheet(update: SheetUpdate):
-    excel_path = os.path.join(c.BASE_DIR, update.route)
-    template_path = os.path.join(c.BASE_DIR, update.template_route)
+    excel_path = os.path.join(BASE_DIR, update.route)
+    template_path = os.path.join(BASE_DIR, update.template_route)
 
     if not os.path.isfile(template_path):
         raise HTTPException(status_code=404, detail="Template file not found")

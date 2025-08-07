@@ -84,10 +84,10 @@ class ManageModels:
                         if success:
                             st.success(msg)
                             st.session_state.models = u.get_models_from_backend()
+                            time.sleep(1)
+                            st.rerun()
                         else:
                             st.error(msg)
-                        time.sleep(1)
-                        st.rerun()
 
     def show_models(self, models):
         for model in models:
