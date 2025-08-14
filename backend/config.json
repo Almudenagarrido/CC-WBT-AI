@@ -1,8 +1,5 @@
 {
-    "COUNTRIES": [
-        "Mozambique",
-        "Rwanda"
-    ],
+    "COUNTRIES": [],
     "COUNTRY_YEAR_RANGES": {
         "template": {
             "start": 2020,
@@ -16,8 +13,6 @@
                 "LPG"
             ],
             "carbon": [
-                "Electricity",
-                "LPG",
                 "Carbon Credits"
             ],
             "rest": [
@@ -44,8 +39,7 @@
         "Electricity (Just access)",
         "Electricity (Only E-Cooking)"
     ],
-    "MODELS": {
-    },
+    "MODELS": {},
     "SHARED_ROUTES": [
         "fuel-financial-inputs.xlsx",
         "carbon-credits.xlsx"

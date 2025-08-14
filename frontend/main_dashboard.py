@@ -15,6 +15,6 @@ def show():
     if section == "financial_inputs" and (fuel or subsection):
         FuelFinancialInformation(excel_editor, country, subsection, fuel)()
     elif section == "technoeconomic_models" and subsection:
-        TechnoEconomicModels(excel_editor, u.API_URL, subsection, model, fuel)()
+        TechnoEconomicModels(excel_editor, country, subsection, model, fuel)()
 
     footer.show()

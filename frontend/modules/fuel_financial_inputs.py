@@ -4,10 +4,12 @@ import utils as u
 import pandas as pd
 import streamlit as st
 
+
 class FuelFinancialInformation:
 
     def __init__(self, excel_editor, country, subsection, fuel):
         self.excel_editor = excel_editor
+        self.country = country
         self.subsection = subsection
         self.fuel = fuel
         self.key_fuels = "carbon"
@@ -15,11 +17,11 @@ class FuelFinancialInformation:
         self.template_route = os.path.join(country, "fuel-financial-inputs-{template}.xlsx")
         self.df = None
         self.edited_df = None
-        self.editable_columns = ["Baseline"] + [str(year) for year in range(2021, 2051)]
         self.df_heights = {"Electricity": 170, "LPG": 170, "Carbon": 170}
+        self.editable_columns = ["Baseline"] + [str(year) for year in range(2021, 2061)]
         self.empty_rows = {
-            "Electricity": {"col": None, "rows": []},
-            "Carbon": {"col": "Inputs", "rows": ["Number of years that you could sell those carbon credits"]}
+            "Electricity": {"col": "", "partial": [], "full": []},
+            "Carbon Credits": {"col": "Inputs", "partial": ["Number of years that you could sell those carbon credits"], "full": []}
         }
 
     def show_excel_editor(self):
@@ -37,7 +39,7 @@ class FuelFinancialInformation:
             return
 
         sheet = u.get_sheet_from_backend(
-            st.session_state.country,
+            self.country,
             self.route,
             self.template_route,
             self.fuel,

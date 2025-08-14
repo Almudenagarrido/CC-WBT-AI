@@ -39,13 +39,12 @@ def show():
         
         # Financial Inputs
         with st.expander("Financial Inputs", expanded=False):
-            for fuel in st.session_state.fuels_carbon:
-                if fuel != "Carbon Credits":
-                    if st.button(f"{fuel} Financial Inputs"):
-                        st.session_state.section = "financial_inputs"
-                        st.session_state.fuel = fuel
-                        st.session_state.subsection = None
-                        st.session_state.model = None
+            for fuel in st.session_state.fuels:
+                if st.button(f"{fuel} Financial Inputs"):
+                    st.session_state.section = "financial_inputs"
+                    st.session_state.fuel = fuel
+                    st.session_state.subsection = None
+                    st.session_state.model = None
 
             st.markdown("---")
             if st.button("➕ Add new fuel market"):
@@ -55,15 +54,16 @@ def show():
                 st.session_state.model = None
             
             if st.session_state.section == "financial_inputs" and st.session_state.subsection is None and st.session_state.fuel is None:
-                if st.session_state.fuels_carbon:
-                    st.session_state.fuel = st.session_state.fuels_carbon[0]
+                if st.session_state.fuels:
+                    st.session_state.fuel = st.session_state.fuels[0]
                     st.session_state.subsection = None
                     st.session_state.model = None
             
-            fuel_to_delete = st.selectbox("Delete fuel market", options=st.session_state.fuels_carbon)
+            fuels_with_carbon = [*st.session_state.fuels, *st.session_state.fuels_carbon]
+            fuel_to_delete = st.selectbox("Delete fuel market", options=fuels_with_carbon)
             if st.button("🗑️"):
                 if u.delete_fuel_from_backend(fuel_to_delete, st.session_state.country):
-                    st.session_state.fuel = st.session_state.fuels_carbon[0]
+                    st.session_state.fuel = fuels_with_carbon[0]
                     st.session_state.subsection = None
                     st.session_state.model = None
                     st.session_state.reload_fuels = True
@@ -141,7 +141,7 @@ def show():
                         if st.button(f"{fuel} - FFSS"):
                             st.session_state.section = "technoeconomic_models"
                             st.session_state.subsection = "financial_statements"
-                            st.session_state.fuel = sheet
+                            st.session_state.fuel = fuel
                             st.rerun()
 
                     if st.session_state.section == "technoeconomic_models" and st.session_state.subsection == "financial_statements" and not st.session_state.fuel:

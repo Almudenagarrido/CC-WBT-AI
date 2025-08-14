@@ -4,6 +4,8 @@ import pandas as pd
 from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 
 
+import streamlit as st
+
 warnings.filterwarnings(
     "ignore",
     category=FutureWarning,
@@ -26,19 +28,25 @@ class ExcelEditor:
 
     def load_data(self, df, height, editable_columns, empty_rows):
         self.df = df.copy().replace("-", np.nan).infer_objects(copy=False)
+        self.df = self.df.dropna(how='all')
+        self.df = self.df.dropna(how='all', axis=1)
         self.height = height
         self.editable_columns = editable_columns
         self.empty_rows = empty_rows
 
     def show(self):
+
         df = self.df.copy()
-        gb = GridOptionsBuilder.from_dataframe(df)
+
+        df_filtered = df[~df.apply(lambda row: row.astype(str).str.contains(r"\{model\}", regex=True).any(), axis=1)]
+
+        gb = GridOptionsBuilder.from_dataframe(df_filtered)
         
-        for col in df.columns:
+        for col in df_filtered.columns:
             gb.configure_column(col, editable=(col in self.editable_columns))
         
-        for col in df.columns:
-            if (col.isdigit() and len(col) == 4) or col == "Baseline":
+        for col in df_filtered.columns:
+            if ((col).isdigit() and len(col) == 4) or col == "Baseline":
                 gb.configure_column(
                     col,
                     width=50,
@@ -47,10 +55,9 @@ class ExcelEditor:
                     suppressMovable=True
                 )
 
-        grid_options = gb.build()
         grid_response = AgGrid(
-            df,
-            gridOptions=grid_options,
+            df_filtered,
+            gridOptions=gb.build(),
             update_mode=GridUpdateMode.VALUE_CHANGED,
             allow_unsafe_jscode=True,
             enable_enterprise_modules=False,
@@ -58,23 +65,31 @@ class ExcelEditor:
             fit_columns_on_grid_load=False
         )
         edited_df = pd.DataFrame(grid_response["data"])
-        if not edited_df.index.equals(df.index):
-            edited_df.index = df.index
+
+        if not edited_df.index.equals(df_filtered.index):
+            edited_df.index = df_filtered.index
 
         for col in self.editable_columns:
             if col in edited_df.columns:
-                df[col] = edited_df[col]
+                df_filtered[col] = edited_df[col]
 
-        if self.empty_rows["col"] and self.empty_rows["rows"]:
-            for row_key in self.empty_rows["rows"]:
-                matching_rows = df[df[self.empty_rows["col"]] == row_key].index
+        if self.empty_rows.get("col"):
+            for row_key in self.empty_rows.get("partial", []):
+                matching_rows = df_filtered[df_filtered[self.empty_rows["col"]] == row_key].index
                 for idx in matching_rows:
                     for col in self.editable_columns:
                         if col != "Baseline":
-                            df.loc[idx, col] = np.nan
+                            df_filtered.loc[idx, col] = np.nan
 
-        self.df = df.copy()
-        return df
+            for row_key in self.empty_rows.get("full", []):
+                matching_rows = df_filtered[df_filtered[self.empty_rows["col"]] == row_key].index
+                for idx in matching_rows:
+                    for col in self.editable_columns:
+                        if col != self.empty_rows["col"]:
+                            df_filtered.loc[idx, col] = np.nan
+
+        self.df = df_filtered.copy()
+        return df_filtered
 
     def validate_percentage(self, value):
         try:
@@ -120,12 +135,15 @@ class ExcelEditor:
         df = self.df.copy()
         unit_col = next((col for col in df.columns if "units" in col.lower()), None)
 
+        name_cols = ["Inputs", "Financiation", "Total", "Division", "Type"]
+        name_col = next((col for col in name_cols if col in df.columns), None)
+
         for index, row in df.iterrows():
             units = str(row[unit_col]).lower() if unit_col else ""
-            input_name = row["Inputs"] if "Inputs" in df.columns else int(index) + 1
+            input_name = str(row[name_col]) if name_col else int(index + 1)
 
             for col in self.editable_columns:
-                value = row[col]
+                value = row.get(col, None)
                 error = self.validate_cell(value, units)
                 if error:
                     invalid_cells.append((input_name, col, value, error))

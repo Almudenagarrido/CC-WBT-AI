@@ -5,6 +5,7 @@ import json
 import shutil
 import tempfile
 import openpyxl
+import numpy as np
 import pandas as pd
 from shutil import copyfile
 from pydantic import BaseModel
@@ -112,6 +113,9 @@ def delete_country(request: CountryRequest):
         raise HTTPException(status_code=404, detail="Country not found")
 
     config["COUNTRIES"].remove(country)
+    for section in ["COUNTRY_YEAR_RANGES", "FUELS", "MODELS"]:
+        if country in config.get(section, {}):
+            del config[section][country]
     save_config(config)
 
     folder = os.path.join(BASE_DIR, country)
@@ -167,6 +171,9 @@ def add_fuel(request: FuelRequest):
     added_to = []
     for key in config["FUELS"][country]:
         if fuel == "Electricity":
+            if key == "carbon":
+                continue
+
             if key == "expanded":
                 values = ["Electricity & E-Cooking", "Electricity (Just access)"]
             elif key == "more_expanded":
@@ -357,14 +364,14 @@ def sync_sheets_with_fuels(country, route, template_route, key_fuels):
             raise FileNotFoundError("Template not found")
         os.makedirs(os.path.dirname(full_path), exist_ok=True)
         copyfile(template_path, full_path)
-
+    
     wb = openpyxl.load_workbook(full_path)
     wb_template = openpyxl.load_workbook(template_path)
     changed = False
-
+    
     for fuel_sheet in allowed_sheets:
         if fuel_sheet not in wb.sheetnames:
-            template_sheet = wb_template[fuel_sheet] if fuel_sheet in wb_template.sheetnames else wb_template["Electricity"]
+            template_sheet = wb_template[fuel_sheet] if fuel_sheet in wb_template.sheetnames else wb_template[allowed_sheets[0]]
             new_sheet = wb.create_sheet(fuel_sheet)
             for row in template_sheet.iter_rows():
                 for cell in row:
@@ -375,7 +382,6 @@ def sync_sheets_with_fuels(country, route, template_route, key_fuels):
             for col_letter, dimension in template_sheet.column_dimensions.items():
                 new_sheet.column_dimensions[col_letter].width = dimension.width
                 new_sheet.column_dimensions[col_letter].hidden = dimension.hidden
-
             changed = True
 
     sheets_to_delete = [sheet for sheet in wb.sheetnames if sheet not in allowed_sheets]
@@ -392,10 +398,54 @@ def sync_sheets_with_fuels(country, route, template_route, key_fuels):
 
     return changed
 
+def get_year_columns(sheet):
+    for row in range(1, sheet.max_row + 1):
+        for col in range(1, sheet.max_column + 1):
+            val = sheet.cell(row=row, column=col).value
+            if isinstance(val, str) and val.strip().lower() == "baseline":
+                year_columns = {}
+                year_columns[col] = "baseline"
+                for c in range(col + 1, sheet.max_column + 1):
+                    cell_val = sheet.cell(row=row, column=c).value
+                    try:
+                        year = int(cell_val)
+                        year_columns[c] = year
+                    except (TypeError, ValueError):
+                        continue
+                return row, year_columns
+    return None, {}
+
+def drop_out_of_range_years(wb_path, sheet_name, start_year, end_year):
+    wb = openpyxl.load_workbook(wb_path)
+    ws = wb[sheet_name]
+    row_idx, year_columns = get_year_columns(ws)
+
+    if not year_columns or row_idx is None:
+        wb.close()
+        return
+
+    cols_to_delete = []
+    for col_idx, year in year_columns.items():
+        if year == "baseline":
+            baseline_year = start_year
+        else:
+            if not isinstance(year, int):
+                continue
+            if year < start_year or year > end_year:
+                cols_to_delete.append(col_idx)
+            elif year == baseline_year:
+                cols_to_delete.append(col_idx)
+
+    for col in sorted(cols_to_delete, reverse=True):
+        ws.delete_cols(col)
+
+    wb.save(wb_path)
+    wb.close()
+
 @app.get("/get-sheet")
 def get_sheet(country, route, template_route, sheet_name, key_fuels):
     config = load_config()
-    
+
     if sheet_name not in config["FUELS"].get(country, {}).get(key_fuels, []):
         raise HTTPException(status_code=400, detail="Sheet name not allowed for this fuel and country")
 
@@ -405,7 +455,17 @@ def get_sheet(country, route, template_route, sheet_name, key_fuels):
         raise HTTPException(status_code=500, detail=f"Error syncing sheets: {str(e)}")
 
     full_path = os.path.join(BASE_DIR, route)
+
+    try:
+        year_range = config["COUNTRY_YEAR_RANGES"].get(country)
+        if year_range:
+            start_year, end_year = year_range["start"], year_range["end"]
+            drop_out_of_range_years(full_path, sheet_name, start_year, end_year)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error filtering years: {str(e)}")
+    
     df = pd.read_excel(full_path, sheet_name=sheet_name, engine="openpyxl")
+    df = df.where(pd.notnull(df), None)
 
     return JSONResponse({"sheet": df.to_dict(orient="records")})
 

@@ -1,128 +1,89 @@
-import requests
-import numpy as np
+import os
+import utils as u
 import pandas as pd
-from io import BytesIO
 import streamlit as st
-from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 
 
 class FinancialStatements:
     
-    def __init__(self, api_base, subsection, model, fuel_market):
-        self.api_base = api_base
+    def __init__(self, excel_editor, country, subsection, model, fuel):
+        self.excel_editor = excel_editor
+        self.country = country
         self.subsection = subsection
         self.model = model
-        self.fuel_market = fuel_market
-        self.get_url = f"{self.api_base}/financial-statements"
+        self.fuel = fuel
+        self.key_fuels = "more_expanded"
+        self.route = os.path.join(country, f"financial-statements-{model}.xlsx")
+        self.template_route = os.path.join(country, "financial-statements-{model}.xlsx")
         self.df = None
-        self.subtables = {"Profit & Loss": None, "Balance Sheet": None, "Cash Flow Statement": None, "PP&E - Capex": None, "Working Capital Calculations": None, "Equity Schedule": None, "Capital Structure": None}
-        self.section_starts = {
-            "Profit & Loss": 0,
-            "Balance Sheet": 36,
-            "Cash Flow Statement": 65,
-            "PP&E - Capex": 84,
-            "Working Capital Calculations": 92,
-            "Equity Schedule": 102,
-            "Capital Structure": 108
+        self.edited_df = None
+        self.subtables = {}
+        self.section_headers = ["P&L", "BS", "CFS", "PP&E - Capex", "WCC", "ES", "CS"]
+        self.subtable_heights = {"P&L": 1070, "BS": 870, "CFS": 580, "PP&E - Capex": 260, "WCC": 320, "ES": 200, "CS": 400}
+        self.empty_rows = {
+            "P&L": {"col": "", "partial": [], "full": []}
         }
-        self.subtable_heights = {"Profit & Loss": 1070, "Balance Sheet": 870, "Cash Flow Statement": 580, "PP&E - Capex": 260, "Working Capital Calculations": 320, "Equity Schedule": 200, "Capital Structure": 400}
-        if self.fuel_market == "Electricity (Low access)":
-            self.subtables["Transferred Capex"] = None
-            self.section_starts["Transferred Capex"] = 121
-            self.subtable_heights["Transferred Capex"] = 170
-    
-    def get_financial_statements(self):
-        try:
-            url = f"{self.get_url}/{self.model}"
-            res = requests.get(url)
-            if res.status_code != 200:
-                st.error(f"The file 'financial-statements-{self.model}.xlsx' was not found.")
-                return []
-
-            file_data = BytesIO(res.content)
-            xls = pd.ExcelFile(file_data)
-            return xls.sheet_names
-
-        except Exception as e:
-            st.error(f"Error fetching capital structure: {e}")
-            return []
-
-    def fetch_and_load(self):
-        url = f"{self.get_url}/{self.model}"
-        res = requests.get(url)
-        if res.status_code != 200:
-            st.error(f"Could not load 'financial-statements-{self.model}.xlsx'")
-            return False
-
-        if not self.subsection:
-            st.warning("No sheet found in file for selected subsection.")
-            return False
-        
-        file_data = BytesIO(res.content)
-        self.df = pd.read_excel(file_data, sheet_name=self.
-        fuel_market, engine="openpyxl", header=None, index_col=None)
-        self.split_into_subtables()
-        return True
     
     def split_into_subtables(self):
+        df = self.df.reset_index(drop=True)
+        self.subtables[self.fuel] = {}
+        first_col = df.iloc[:, 0].astype(str).str.strip().str.lower()
+        sections = {
+            h: first_col[first_col == h.lower()].index[0] 
+            for h in self.section_headers 
+            if h.lower() in first_col.values
+        }
         
-        df = self.df
-        sorted_sections = sorted(self.section_starts.items(), key=lambda x: x[1])
-
-        for i, (key, start_idx) in enumerate(sorted_sections):
-            end_idx = sorted_sections[i + 1][1] if i + 1 < len(sorted_sections) else len(df)
-            subdf = df.iloc[start_idx:end_idx].reset_index(drop=True)
+        if "P&L" not in sections and "BS" in sections:
+            sections["P&L"] = 0
+        
+        sorted_sections = sorted(sections.items(), key=lambda x: x[1])
+        for i, (section, start_idx) in enumerate(sorted_sections):
+            if i + 1 < len(sorted_sections):
+                end_idx = sorted_sections[i+1][1] - 1
+            else:
+                end_idx = len(df)
             
-            subdf = subdf.mask(subdf == "-", np.nan)
-            subdf.dropna(axis=0, how="all", inplace=True)
-            subdf.dropna(axis=1, how="all", inplace=True)
+            subdf = df.iloc[start_idx:end_idx+1].copy()
             
-            if not subdf.empty:
-                header_row = subdf.iloc[0]
-                subdf.columns = [str(int(x)) if isinstance(x, float) and x.is_integer() else str(x) for x in header_row]
-                subdf = subdf[1:].reset_index(drop=True)
-                subdf = subdf.loc[:, subdf.columns.notna()]
-                subdf = subdf.loc[:, subdf.columns.str.strip() != '']
-                subdf = subdf.loc[:, ~subdf.columns.duplicated()]
-                subdf = subdf.loc[:, ~subdf.columns.str.contains("^Unnamed", case=False)]
+            if not subdf.empty and str(subdf.iloc[0, 0]).strip().lower() == section.lower():
+                subdf.columns = [str(int(x)) if isinstance(x, float) and x.is_integer() else str(x) for x in subdf.iloc[0]]
+                subdf = subdf.iloc[1:]
             
-            self.subtables[key] = subdf
+            invalid_cols = {'Unnamed', 'None', '-'}
+            valid_cols = [
+                col for col in subdf.columns 
+                if str(col) not in invalid_cols 
+                and not str(col).startswith('Unnamed:') 
+                and not pd.isna(col)
+            ]
+            
+            subdf = subdf[valid_cols].dropna(how='all')
+            self.subtables[self.fuel][section] = subdf.reset_index(drop=True)
 
     def show_excel_editor(self):
-        st.subheader(f"{self.fuel_market} - FFSS")
+        st.subheader(f"{self.fuel} - FFSS")
 
-        for key, df in self.subtables.items():
-            st.markdown(f"##### {key}")
-            if df is not None and not df.empty:
-                df.columns = df.columns.astype(str)
-                
-                gb = GridOptionsBuilder.from_dataframe(df)
-                for col in df.columns:
-                
-                    if pd.api.types.is_numeric_dtype(df[col]):
-                        gb.configure_column(
-                            col,
-                            type=["numericColumn", "numberColumnFilter"]
-                        )
-                    else:
-                        gb.configure_column(
-                            col,
-                        )
-                
-                grid_options = gb.build()
-                grid_response = AgGrid(
-                    df,
-                    gridOptions=grid_options,
-                    update_mode=GridUpdateMode.VALUE_CHANGED,
-                    allow_unsafe_jscode=True,
-                    enable_enterprise_modules=False,
-                    height=self.subtable_heights[key],
-                    reload_data=False
-                )
+        for section, df in self.subtables[self.fuel].items():
+            if df.empty:
+                continue
+
+            height = self.subtable_heights.get(section, self.subtable_heights["P&L"])
+            empty_rows = self.empty_rows.get(section, self.empty_rows["P&L"])
+            self.excel_editor.load_data(df, height, [], empty_rows)
+            edited_df = self.excel_editor.show()
+            self.subtables[self.fuel][section] = edited_df
 
     def __call__(self):
-        if not self.fetch_and_load():
-            return
-        
+        sheet = u.get_sheet_from_backend(
+            self.country,
+            self.route,
+            self.template_route,
+            self.fuel,
+            self.key_fuels
+        )
+
+        self.df = pd.DataFrame(sheet)
+        self.split_into_subtables()
         self.show_excel_editor()
 

@@ -181,8 +181,7 @@ def get_sheet_from_backend(country, route, template_route, sheet_name, key_fuels
             "route": route,
             "template_route": template_route,
             "sheet_name": sheet_name,
-            "key_fuels": key_fuels,
-            "data": []
+            "key_fuels": key_fuels
         }
         response = requests.get(
             f"{API_URL}/get-sheet", params=payload

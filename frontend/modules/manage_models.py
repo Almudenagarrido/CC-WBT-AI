@@ -100,6 +100,7 @@ class ManageModels:
                         st.session_state.subsection = "carbon_credits"
                     else:
                         st.session_state.subsection = "technoeconomic_inputs"
+                        st.session_state.fuel = st.session_state.fuels_rest[0]
                     st.session_state.model = model
                     st.rerun()
 
@@ -122,7 +123,7 @@ class ManageModels:
                 if st.button("❌", key=f"delete_{model}"):
                     success = u.delete_model_from_backend(model)
                     if success:
-                        st.success(f"'{model}' was deleted successfully.")
+                        st.success(f"Model '{model}' deleted successfully from country '{country}'.")
                         st.session_state.models = u.get_models_from_backend()
                     st.rerun()
 
