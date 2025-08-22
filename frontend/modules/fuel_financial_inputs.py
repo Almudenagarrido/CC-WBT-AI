@@ -1,139 +1,72 @@
+import os
 import time
-import requests
 import utils as u
 import pandas as pd
-from io import BytesIO
 import streamlit as st
-from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
-from modules.cell_validator import CellValidator
 
 
 class FuelFinancialInformation:
 
-    def __init__(self, api_url, subsection, fuel_market):
-        self.api_base = api_url
+    def __init__(self, excel_editor, country, subsection, fuel):
+        self.excel_editor = excel_editor
+        self.country = country
         self.subsection = subsection
-        self.fuel_market = fuel_market
-        self.cell_validator = CellValidator()
-        self.get_url = f"{self.api_base}/fuel-market-information"
-        self.save_url = f"{self.api_base}/save-fuel-market-information"
-        self.reset_url = f"{self.api_base}/reset-fuel-market-information"
-        self.add_url = f"{self.api_base}/add-fuel-market"
-        self.delete_url = f"{self.api_base}/delete-fuel-market"
+        self.fuel = fuel
+        self.key_fuels = "normal"
+        self.route = os.path.join(country, "fuel-financial-inputs.xlsx")
+        self.template_route = os.path.join(country, "fuel-financial-inputs-{template}.xlsx")
         self.df = None
         self.edited_df = None
-        self.editable_columns = ["Baseline"] + [str(year) for year in range(2020, 2051)]
-        self.df_heights = {"Electricity": 170, "LPG": 290, "Carbon": 170}
-
-    def fetch_and_load(self):
-        res = requests.get(self.get_url)
-        if res.status_code != 200:
-            st.error("Could not load 'fuel-market-information.xlsx'")
-            return False
-
-        if not self.fuel_market:
-            st.warning("No sheet found in file for selected technology market.")
-            return False
-
-        file_data = BytesIO(res.content)
-        self.df = pd.read_excel(file_data, sheet_name=self.fuel_market, engine="openpyxl")
-
-        for col in self.df.columns:
-            if col not in ["Inputs", "Units"]:
-                self.df[col] = pd.to_numeric(self.df[col].replace("-", pd.NA), errors="coerce")
-        
-        return True
+        self.df_heights = {"Electricity": 170, "LPG": 170, "Carbon": 170}
+        self.editable_columns = ["Baseline"] + [str(year) for year in range(2021, 2061)]
+        self.empty_rows = {
+            "Electricity": {"col": "", "partial": [], "full": []},
+            "Carbon Credits": {"col": "Inputs", "partial": ["Number of years that you could sell those carbon credits"], "full": []}
+        }
 
     def show_excel_editor(self):
+        st.subheader(f"{self.fuel} Financial Inputs")
 
-        st.subheader(f"{self.fuel_market} Financial Inputs")
-        df = self.df.copy()
-        gb = GridOptionsBuilder.from_dataframe(df)
-        height = self.df_heights[self.fuel_market] if self.fuel_market in self.df_heights else self.df_heights["Electricity"]
-        
-        for col in df.columns:
-            if col in self.editable_columns:
-                gb.configure_column(col, editable=True)
-            else:
-                gb.configure_column(col, editable=False)
+        height = self.df_heights.get(self.fuel, self.df_heights["Electricity"])
+        empty_rows = self.empty_rows.get(self.fuel, self.empty_rows["Electricity"])
 
-        grid_options = gb.build()
-        grid_response = AgGrid(
-            df,
-            gridOptions=grid_options,
-            update_mode=GridUpdateMode.VALUE_CHANGED,
-            allow_unsafe_jscode=True,
-            enable_enterprise_modules=False,
-            height=height
-        )
-        self.edited_df = pd.DataFrame(grid_response["data"])
-           
-    def save_changes(self):
-        df = self.edited_df.copy()
-        df = df[self.df.columns]
-
-        for col in df.columns:
-            if col in self.editable_columns:
-                df[col] = df[col].fillna(0)
-
-        for i, row in df.iterrows():
-            if str(row.get("Inputs", "")).strip().lower() == "number of years that you could sell those carbon credits":
-                for col in df.columns:
-                    if col not in ["Inputs", "Units", "Baseline"]:
-                        df.at[i, col] = pd.NA
-        
-        editable_cols_in_df = [col for col in self.editable_columns if col in df.columns]
-        df[editable_cols_in_df] = df[editable_cols_in_df].astype(object)
-        df.loc[df.index[-1], editable_cols_in_df] = df.loc[df.index[-1], editable_cols_in_df].fillna("-")
-
-                
-        invalid_cells = self.cell_validator.cell_validations(df, self.editable_columns)
-
-        if invalid_cells:
-            for _, input_name, col, value, error in invalid_cells:
-                st.warning(f"Invalid value '{value}' in row '{input_name}' (column '{col}'): {error}")
-            return False
-
-        data_json = df.reset_index(drop=True).to_dict(orient="records")
-        payload = {
-            "model": "",
-            "sheet_name": self.fuel_market,
-            "data": data_json
-        }
-        res = requests.post(self.save_url, json=payload)
-        if res.status_code == 200:
-            st.success(f"Changes in '{self.fuel_market}' saved successfully.")
-        else:
-            st.error("Error saving the changes, try again later.")
-
-        return True
-
-    def reset_sheet(self):
-        response = requests.post(self.reset_url, json={"model": "", "sheet_name": self.fuel_market, "data": []})
-        if response.status_code == 200:
-            st.success(f"File '{self.fuel_market}' reset to template version.")
-        else:
-            st.error(response.json().get("error", "Something went wrong"))
+        self.excel_editor.load_data(self.df, height, self.editable_columns, empty_rows)
+        self.edited_df = self.excel_editor.show()
 
     def __call__(self):
-
         if self.subsection == "add":
             u.add_fuel_to_backend()
             return
-        
-        if not self.fetch_and_load():
-            return
-        
+
+        sheet = u.get_sheet_from_backend(
+            self.country,
+            self.route,
+            self.template_route,
+            self.fuel,
+            self.key_fuels
+        )
+
+        self.df = pd.DataFrame(sheet)
         self.show_excel_editor()
-        
-        if st.button("Save"):
-            saved = self.save_changes()
+
+        invalid_cells = self.excel_editor.validate()
+        save_disabled = bool(invalid_cells)
+
+        if st.button("Save", disabled=save_disabled):
+            saved = u.save_sheet_in_backend(self.edited_df, self.route, self.fuel)
             if saved:
+                st.success(f"Changes in '{self.fuel}' Financial Inputs saved successfully.")
                 time.sleep(2)
                 st.rerun()
 
-        if st.button("Reset"):
-            self.reset_sheet()
-            time.sleep(2)
-            st.rerun()
+        if save_disabled:
+            st.warning("Please fix invalid cells before saving.")
+            for input_name, col, value, error in invalid_cells:
+                st.error(f"Row '{input_name}' - Column '{col}': {error} (Current value: {value})")
 
+        if st.button("Reset"):
+            reset = u.reset_sheet_in_backend(self.route, self.template_route, self.fuel)
+            if reset:
+                st.success(f"'{self.fuel}' Financial Inputs reset to template successfully.")
+                time.sleep(2)
+                st.rerun()

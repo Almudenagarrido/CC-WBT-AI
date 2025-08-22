@@ -37,8 +37,8 @@ def show():
                     if u.delete_country_from_backend(country):
                         st.session_state.selected_country = None
                         st.session_state.countries = u.get_countries_from_backend()
-                        st.success(f"Deleted: {country}")
-                        time.sleep(1)
+                        st.success(f"Country scenario' {country}' deleted successfully.")
+                        time.sleep(2)
                         st.rerun()
 
     if st.session_state.selected_country:
@@ -61,6 +61,6 @@ def show():
             if new_country:
                 if u.add_country_to_backend(new_country):
                     st.session_state.countries = u.get_countries_from_backend()
-                    st.success(f"Added: {new_country}")
-                    time.sleep(1)
+                    st.success(f"Country scenario' {new_country}' added successfully.")
+                    time.sleep(2)
                     st.rerun()
