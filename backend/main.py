@@ -5,13 +5,12 @@ import json
 import shutil
 import tempfile
 import openpyxl
-import numpy as np
 import pandas as pd
 from shutil import copyfile
 from pydantic import BaseModel
 from typing import List, Dict, Any
 from fastapi.responses import FileResponse, JSONResponse
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException, BackgroundTasks, UploadFile, File
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -323,6 +322,47 @@ def download_model_files(country:str, model: str, background_tasks: BackgroundTa
             shutil.rmtree(temp_dir)
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/download-template")
+def download_template_file(country: str, template: str):
+    
+    try:
+        template_path = os.path.join(BASE_DIR, country, template)
+        
+        if not os.path.exists(template_path):
+            raise HTTPException(
+                status_code=404,
+                detail=f"Template file not found."
+            )
+            
+        return FileResponse(
+            template_path,
+            media_type="application/vnd.ms-excel",
+            filename=template
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/upload-template")
+async def upload_template_file(country: str, model: str, file: UploadFile = File(...)):
+    try:
+        expected_name = f"upload-bau.xlsx" if model.lower() == "bau" else f"upload-{model.lower()}.xlsx"
+        
+        if file.filename != expected_name:
+            raise HTTPException(
+                status_code=400
+            )
+
+        # Aquí puedes agregar lógica adicional de validación si necesitas
+        # Por ahora solo verificamos el nombre y devolvemos éxito
+        
+        return {"status": "success", "filename": file.filename}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
 @app.delete("/model")
 def delete_model(request: ModelRequest):
     config = load_config()
@@ -446,6 +486,7 @@ def drop_out_of_range_years(wb_path, sheet_name, start_year, end_year):
 def get_sheet(country, route, template_route, sheet_name, key_fuels):
     config = load_config()
 
+    key_fuels = "carbon" if sheet_name == "Carbon Credits" else key_fuels
     if sheet_name not in config["FUELS"].get(country, {}).get(key_fuels, []):
         raise HTTPException(status_code=400, detail="Sheet name not allowed for this fuel and country")
 

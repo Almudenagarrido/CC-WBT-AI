@@ -159,6 +159,31 @@ def download_model_files_from_backend(country, model):
         st.error(f"Download failed: {e}")
         return None
     
+def download_template_file_from_backend(country, template):
+    try:
+        response = requests.get(
+            f"{API_URL}/download-template",
+            params={"country": country, "template": template}
+        )
+        response.raise_for_status()
+        return response.content
+    except Exception as e:
+        st.error(f"Download failed: {e}")
+        return None
+
+def upload_template_file_to_backend(country: str, model: str, file_content: bytes, filename: str):
+    try:
+        response = requests.post(
+            f"{API_URL}/upload-template",
+            files={"file": (filename, file_content)},
+            params={"country": country, "model": model}
+        )
+        response.raise_for_status()
+        return True
+    except Exception as e:
+        st.error(f"Template upload failed: {e}")
+        return False
+    
 def delete_model_from_backend(model):
     try:
         country = st.session_state.country

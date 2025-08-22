@@ -17,7 +17,7 @@ class TechnoEconomicModels:
         self.model = model
         self.fuel = fuel
         self.subsections = {
-            "manage_models": ManageModels(),
+            "manage_models": ManageModels(country),
             "technoeconomic_inputs": TechnoEconomicInputs(excel_editor, country, subsection, model, fuel),
             "carbon_credits": CarbonCredits(excel_editor, country, subsection, model),
             "capex_fuels": CapexFuelMarket(excel_editor, country, subsection, model, fuel),

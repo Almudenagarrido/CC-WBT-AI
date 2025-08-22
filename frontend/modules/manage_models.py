@@ -1,30 +1,17 @@
 import time
-import uuid
-import requests
 import utils as u
 import streamlit as st
 
 
 class ManageModels:
 
-    def __init__(self):
-        self.upload_extensions = ["xlsx", "xlsm", "xls", "xltx", "xltm"]
-
-    ## ALGORIOTMO PARA CARGAR ARCHIVOS
-    """def upload_technoeconomic_model(self, name, file):
-        files = {"file": (file.name, file, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")}
-        res = requests.post(f"{self.upload_url}/{name}", files=files)
-
-        if res.status_code == 200:
-            return True
-        else:
-            try:
-                error_detail = res.json().get("detail", res.text)
-            except ValueError:
-                error_detail = res.text
-            st.error(f"Upload failed: {error_detail}")
-            return False
-    """
+    def __init__(self, country):
+        self.country = country
+        self.key_fuels = "rest"
+        self.template_files = {
+            "BAU": "upload-bau.xlsx",
+            "default": "upload-{model}.xlsx"
+        }
 
     def model_creator(self, models):
         st.markdown("#### ➕ Create New Techno-Economic Model")
@@ -37,28 +24,36 @@ class ManageModels:
                 start_year = st.number_input("Start Year (BAU)", step=1, format="%d")
                 end_year = st.number_input("End Year (BAU)", step=1, format="%d")
 
-                upload_file = st.file_uploader("Upload Excel file for BAU (optional)", type=self.upload_extensions)
-
+                upload_file = st.file_uploader("Upload Excel file for BAU", type=["xlsx"])
                 create = st.form_submit_button("Create BAU Model")
 
                 if create:
                     if start_year >= end_year:
                         st.error("Start year must be less than end year.")
                     else:
-                        u.create_model_in_backend("BAU", start_year, end_year)
-                        st.success(f"BAU model created succesfully.")
-                        st.session_state.models = u.get_models_from_backend()
+                        success, msg = u.create_model_in_backend("BAU", start_year, end_year)
+                        if success:
+                            st.success(msg)
 
-                        ### ALGORITMO PARA CARGAR ARCHIVO BAU
-                        """if upload_file:
-                            upload_success = self.upload_technoeconomic_model("BAU", upload_file)
-                            if upload_success:
-                                st.success("Excel file successfully uploaded for BAU.")
-                            else:
-                                st.error("Failed to upload Excel file for BAU.")"""
-                        
-                        time.sleep(1)
-                        st.rerun()
+                            if upload_file:
+                                expected_name = self.template_files["BAU"]
+                                if upload_file.name != expected_name:
+                                    st.error(
+                                        f"Upload rejected. File must be named '{expected_name}', as the template downloaded for this model."
+                                    )
+                                else:
+                                    u.upload_template_file_to_backend(
+                                        self.country,
+                                        model="BAU",
+                                        file_content=upload_file.getvalue(),
+                                        filename=upload_file.name
+                                    )
+
+                            st.session_state.models = u.get_models_from_backend()
+                            time.sleep(1)
+                            st.rerun()
+                        else:
+                            st.error(msg)
 
         else:
             with st.form("create_model_form"):
@@ -91,7 +86,7 @@ class ManageModels:
 
     def show_models(self, models):
         for model in models:
-            col1, col2, col3, col4 = st.columns([0.7, 0.1, 0.1, 0.1])
+            col1, col2, col3, col4, col5 = st.columns([0.6, 0.1, 0.1, 0.1, 0.1])
             
             with col1:
                 if st.button(f"📄 {model}"):
@@ -105,47 +100,66 @@ class ManageModels:
                     st.rerun()
 
             with col2:
-                country = st.session_state.country
-                content = u.download_model_files_from_backend(country, model)
+                content = u.download_model_files_from_backend(self.country, model)
                 if content:
                     st.download_button(
                         "⬇️",
                         data=content,
-                        file_name=f"{country}_{model}_files.zip",
+                        file_name=f"{self.country}_{model}_files.zip",
                         mime="application/zip"
                     )
-
+            
             with col3:
-                if st.button("📤", key=f"trigger_upload_{model}"):
-                    st.session_state[f"show_uploader_{model}"] = True
+                template_path = self.template_files["BAU"] if model == "BAU" else self.template_files["default"]
+                template_content = u.download_template_file_from_backend(self.country, template_path)
+                if template_content:
+                    st.download_button(
+                        "📝",
+                        data=template_content,
+                        file_name=template_path.format(model=model.lower()),
+                        mime="application/vnd.ms-excel",
+                        key=f"download_template_{model}"
+                    )
 
             with col4:
+                if st.button("📤", key=f"upload_{model}"):
+                    st.session_state[f"show_uploader_{model}"] = True
+
+            with col5:
                 if st.button("❌", key=f"delete_{model}"):
                     success = u.delete_model_from_backend(model)
                     if success:
-                        st.success(f"Model '{model}' deleted successfully from country '{country}'.")
+                        st.success(f"Model '{model}' deleted successfully from country '{self.country}'.")
                         st.session_state.models = u.get_models_from_backend()
                     st.rerun()
 
-            ## ALGORITMO PARA CARGAR ARCHIVOS PARA MODELO
-            """ if st.session_state.get(f"show_uploader_{model}", False):
-                file = st.file_uploader(
+            if st.session_state.get(f"show_uploader_{model}", False):
+                uploaded_file = st.file_uploader(
                     f"Upload file for {model}",
-                    type=self.upload_extensions,
-                    key=f"upload_{model}",
-                    label_visibility="collapsed"
+                    type=["xlsx"],
+                    key=f"uploader_{model}"
                 )
-                if file:
-                    if any(file.name.lower().endswith(f".{ext}") for ext in self.upload_extensions):
-                        upload_success = self.upload_technoeconomic_model(model, file)
-                        if upload_success:
-                            st.success(f"Information uploaded to 'Techno-Economic Inputs' file for model '{model}'")
-                            st.session_state[f"show_uploader_{model}"] = False
-                            time.sleep(2)
-                            st.rerun()
+                
+                if uploaded_file:
+                    expected_name = self.template_files["BAU"] if model == "BAU" else self.template_files["default"].format(model=model.lower())
+                    
+                    if uploaded_file.name != expected_name:
+                        st.error(f"Upload rejected. File must be named '{expected_name}', as the template downloaded for this model.")
                     else:
-                        st.error(f"Only Excel files are allowed: {', '.join(self.upload_extensions)}")
-            """
+                        success = u.upload_template_file_to_backend(
+                            self.country,
+                            model=model,
+                            file_content=uploaded_file.getvalue(),
+                            filename=uploaded_file.name
+                        )
+                        
+                        if success:
+                            st.success(f"File for '{model}' uploaded successfully!")
+                            st.session_state[f"show_uploader_{model}"] = False
+                            time.sleep(1)
+                            st.rerun()
+                        else:
+                            st.error("Failed to upload file")
     
     def __call__(self):
         st.subheader("Manage Techno-Economic Inputs")
