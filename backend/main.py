@@ -1,4 +1,5 @@
 import os
+import uuid
 import stat
 import copy
 import json
@@ -9,12 +10,14 @@ import pandas as pd
 from shutil import copyfile
 from pydantic import BaseModel
 from typing import List, Dict, Any
+from excel_formula_engine import ExcelFormulaProcessor
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi import FastAPI, HTTPException, BackgroundTasks, UploadFile, File
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_FILE = os.path.join(BASE_DIR, "config.json")
+JSON_FORMULAS = "formulas_map.json"
 
 def load_config():
     with open(CONFIG_FILE, "r") as f:
@@ -26,6 +29,7 @@ def save_config(config):
 
 
 app = FastAPI()
+excel_processor = ExcelFormulaProcessor()
 
 
 # Countries (GET, POST, COPY, DELETE)
@@ -108,6 +112,7 @@ def download_country_files(country: str, background_tasks: BackgroundTasks):
 def delete_country(request: CountryRequest):
     config = load_config()
     country = request.name.strip()
+    
     if country not in config["COUNTRIES"]:
         raise HTTPException(status_code=404, detail="Country not found")
 
@@ -322,122 +327,6 @@ def download_model_files(country:str, model: str, background_tasks: BackgroundTa
             shutil.rmtree(temp_dir)
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/download-template")
-def download_template_file(country: str, template: str):
-    
-    try:
-        template_path = os.path.join(BASE_DIR, country, template)
-        
-        if not os.path.exists(template_path):
-            raise HTTPException(
-                status_code=404,
-                detail=f"Template file not found."
-            )
-            
-        return FileResponse(
-            template_path,
-            media_type="application/vnd.ms-excel",
-            filename=template
-        )
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/upload-template")
-async def upload_template_file(country: str, model: str, file: UploadFile = File(...)):
-    try:
-        expected_name = f"upload-bau.xlsx" if model.lower() == "bau" else f"upload-{model.lower()}.xlsx"
-        
-        if file.filename != expected_name:
-            raise HTTPException(
-                status_code=400
-            )
-
-        # Aquí puedes agregar lógica adicional de validación si necesitas
-        # Por ahora solo verificamos el nombre y devolvemos éxito
-        
-        return {"status": "success", "filename": file.filename}
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    
-@app.delete("/model")
-def delete_model(request: ModelRequest):
-    config = load_config()
-    country = request.country.strip()
-    model = request.model.strip()
-
-    if model.lower() == "bau":
-        config["MODELS"].pop(country, None)
-        config["COUNTRY_YEAR_RANGES"].pop(country, None)
-    else:
-        for route in config["ROUTES"]:
-            file_path = os.path.join(BASE_DIR, country, route.format(model=model))
-            if os.path.exists(file_path):
-                os.remove(file_path)
-
-        config["MODELS"][country].remove(model)
-
-    save_config(config)
-    return {"message": f"{model}' deleted successfully for country '{country}'."}
-    
-    
-# Excel Sheet (Abstract Class) (GET)
-class SheetUpdate(BaseModel):
-    country: str
-    route: str
-    template_route: str
-    sheet_name: str
-    data: List[Dict[str, Any]]
-    key_fuels: str
-
-def sync_sheets_with_fuels(country, route, template_route, key_fuels):
-    config = load_config()
-    allowed_sheets = config["FUELS"].get(country, {}).get(key_fuels, [])
-    full_path = os.path.join(BASE_DIR, route)
-    template_path = os.path.join(BASE_DIR, template_route)
-
-    if not os.path.isfile(full_path):
-        if not os.path.isfile(template_path):
-            raise FileNotFoundError("Template not found")
-        os.makedirs(os.path.dirname(full_path), exist_ok=True)
-        copyfile(template_path, full_path)
-    
-    wb = openpyxl.load_workbook(full_path)
-    wb_template = openpyxl.load_workbook(template_path)
-    changed = False
-    
-    for fuel_sheet in allowed_sheets:
-        if fuel_sheet not in wb.sheetnames:
-            template_sheet = wb_template[fuel_sheet] if fuel_sheet in wb_template.sheetnames else wb_template[allowed_sheets[0]]
-            new_sheet = wb.create_sheet(fuel_sheet)
-            for row in template_sheet.iter_rows():
-                for cell in row:
-                    new_sheet[cell.coordinate].value = cell.value
-                    if cell.has_style:
-                        new_sheet[cell.coordinate]._style = cell._style
-
-            for col_letter, dimension in template_sheet.column_dimensions.items():
-                new_sheet.column_dimensions[col_letter].width = dimension.width
-                new_sheet.column_dimensions[col_letter].hidden = dimension.hidden
-            changed = True
-
-    sheets_to_delete = [sheet for sheet in wb.sheetnames if sheet not in allowed_sheets]
-    for sheet in sheets_to_delete:
-        std = wb[sheet]
-        wb.remove(std)
-        changed = True
-
-    if changed:
-        wb.save(full_path)
-
-    wb.close()
-    wb_template.close()
-
-    return changed
-
 def get_year_columns(sheet):
     for row in range(1, sheet.max_row + 1):
         for col in range(1, sheet.max_column + 1):
@@ -455,19 +344,19 @@ def get_year_columns(sheet):
                 return row, year_columns
     return None, {}
 
-def drop_out_of_range_years(wb_path, sheet_name, start_year, end_year):
-    wb = openpyxl.load_workbook(wb_path)
+def drop_out_of_range_years_from_workbook(wb, sheet_name, start_year, end_year):
     ws = wb[sheet_name]
     row_idx, year_columns = get_year_columns(ws)
 
     if not year_columns or row_idx is None:
-        wb.close()
         return
 
     cols_to_delete = []
+    baseline_year = start_year
+    
     for col_idx, year in year_columns.items():
         if year == "baseline":
-            baseline_year = start_year
+            continue
         else:
             if not isinstance(year, int):
                 continue
@@ -479,32 +368,369 @@ def drop_out_of_range_years(wb_path, sheet_name, start_year, end_year):
     for col in sorted(cols_to_delete, reverse=True):
         ws.delete_cols(col)
 
-    wb.save(wb_path)
-    wb.close()
-
-@app.get("/get-sheet")
-def get_sheet(country, route, template_route, sheet_name, key_fuels):
+def sync_sheets_with_fuels(country, route, template_route, expected_sheets):
     config = load_config()
-
-    key_fuels = "carbon" if sheet_name == "Carbon Credits" else key_fuels
-    if sheet_name not in config["FUELS"].get(country, {}).get(key_fuels, []):
-        raise HTTPException(status_code=400, detail="Sheet name not allowed for this fuel and country")
-
-    try:
-        sync_sheets_with_fuels(country, route, template_route, key_fuels)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error syncing sheets: {str(e)}")
-
     full_path = os.path.join(BASE_DIR, route)
+    template_path = os.path.join(BASE_DIR, template_route)
 
+    if not os.path.isfile(full_path):
+        if not os.path.isfile(template_path):
+            raise FileNotFoundError("Template not found")
+        os.makedirs(os.path.dirname(full_path), exist_ok=True)
+        copyfile(template_path, full_path)
+    
+    wb = openpyxl.load_workbook(full_path)
+    wb_template = openpyxl.load_workbook(template_path)
+    changed = False
+    
+    for fuel_sheet in expected_sheets:
+        if fuel_sheet not in wb.sheetnames:
+            template_source_sheet = None
+            if fuel_sheet in wb_template.sheetnames:
+                template_source_sheet = wb_template[fuel_sheet]
+            else:
+                template_source_sheet = wb_template[expected_sheets[0]]
+            
+            new_sheet = wb.create_sheet(fuel_sheet)
+            for row in template_source_sheet.iter_rows():
+                for cell in row:
+                    new_sheet[cell.coordinate].value = cell.value
+                    if cell.has_style:
+                        new_sheet[cell.coordinate]._style = cell._style
+
+            for col_letter, dimension in template_source_sheet.column_dimensions.items():
+                new_sheet.column_dimensions[col_letter].width = dimension.width
+                new_sheet.column_dimensions[col_letter].hidden = dimension.hidden
+            
+            changed = True
+
+    year_range = config["COUNTRY_YEAR_RANGES"].get(country)    
+    if year_range:
+        start_year, end_year = year_range["start"], year_range["end"]
+        for sheet_name in wb.sheetnames:
+            drop_out_of_range_years_from_workbook(wb, sheet_name, start_year, end_year)
+        changed = True
+
+    sheets_to_delete = [sheet for sheet in wb.sheetnames if sheet not in expected_sheets]
+    
+    for sheet in sheets_to_delete:
+        std = wb[sheet]
+        wb.remove(std)
+        changed = True
+
+    if changed:
+        wb.save(full_path)
+
+    wb.close()
+    wb_template.close()
+
+    return changed
+
+def add_carbon_credits_sheet(country, download_path, template_path, model):
     try:
+        carbon_sheet = "Carbon Credits"
+        config = load_config()
+        
+        wb_download = openpyxl.load_workbook(download_path)
+        wb_template = openpyxl.load_workbook(template_path)
+        
+        if carbon_sheet in wb_template.sheetnames and carbon_sheet not in wb_download.sheetnames:
+            template_sheet = wb_template[carbon_sheet]
+            new_sheet = wb_download.create_sheet(carbon_sheet)
+            
+            for row in template_sheet.iter_rows():
+                for cell in row:
+                    new_sheet[cell.coordinate].value = cell.value
+                    if cell.has_style:
+                        new_sheet[cell.coordinate]._style = cell._style
+        
+        if model:
+            for sheet_name in wb_download.sheetnames:
+                worksheet = wb_download[sheet_name]
+                for row in worksheet.iter_rows():
+                    for cell in row:
+                        if cell.value and isinstance(cell.value, str) and "{model}" in cell.value:
+                            cell.value = cell.value.replace("{model}", model)
+
         year_range = config["COUNTRY_YEAR_RANGES"].get(country)
         if year_range:
             start_year, end_year = year_range["start"], year_range["end"]
-            drop_out_of_range_years(full_path, sheet_name, start_year, end_year)
+            for sheet_name in wb_download.sheetnames:
+                drop_out_of_range_years_from_workbook(wb_download, sheet_name, start_year, end_year)
+            
+        wb_download.save(download_path)
+        
+        wb_download.close()
+        wb_template.close()
+        
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error filtering years: {str(e)}")
+        try:
+            wb_download.close()
+            wb_template.close()
+        except:
+            pass
+        raise e
+  
+@app.get("/download-template")
+def download_template_file(country, template, model, key_fuels):
+    config = load_config()
+    expected_sheets = config["FUELS"].get(country, {}).get(key_fuels, [])
+    temp_file_path = None
     
+    try:
+        template_path = os.path.join(BASE_DIR, country, template)
+        
+        if not os.path.exists(template_path):
+            raise HTTPException(status_code=404, detail="Template file not found")
+        
+        temp_dir = tempfile.gettempdir()
+        temp_filename = f"synced_{uuid.uuid4().hex[:8]}_{template}"
+        temp_file_path = os.path.join(temp_dir, temp_filename)
+        
+        if "bau" not in template.lower():
+            sync_sheets_with_fuels(
+                country=country,
+                route=temp_file_path,
+                template_route=template_path,
+                expected_sheets=expected_sheets
+            )
+            add_carbon_credits_sheet(country, temp_file_path, template_path, model)
+
+        else:
+            shutil.copy2(template_path, temp_file_path)
+            year_range = config["COUNTRY_YEAR_RANGES"].get(country)
+            if year_range:
+                start_year, end_year = year_range["start"], year_range["end"]
+                wb = openpyxl.load_workbook(temp_file_path)
+                drop_out_of_range_years_from_workbook(wb, "Carbon Credits", start_year, end_year)
+                wb.save(temp_file_path)
+                wb.close()
+
+        return FileResponse(
+            temp_file_path,
+            media_type="application/vnd.ms-excel",
+            filename=template
+        )
+        
+    except Exception as e:
+        if temp_file_path and os.path.exists(temp_file_path):
+            try:
+                os.unlink(temp_file_path)
+            except:
+                pass
+        raise HTTPException(status_code=500, detail=str(e))
+ 
+@app.post("/upload-template")
+async def upload_template_file(country: str, model: str, file: UploadFile = File(...)):
+    try:
+        expected_name = f"upload-BAU.xlsx" if model.lower() == "bau" else f"upload-{model}.xlsx"
+        
+        if file.filename != expected_name:
+            raise HTTPException(
+                status_code=400
+            )
+        
+        country_dir = os.path.join(BASE_DIR, country)
+        os.makedirs(country_dir, exist_ok=True)
+        file_path = os.path.join(country_dir, file.filename)
+        
+        with open(file_path, "wb") as buffer:
+            content = await file.read()
+            buffer.write(content)
+        
+        return {"status": "success", "filename": file.filename}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@app.delete("/model")
+def delete_model(request: ModelRequest):
+    config = load_config()
+    country = request.country.strip()
+    model = request.model.strip()
+
+    if model.lower() == "bau":
+        all_models = config["MODELS"].get(country, [])
+        for m in all_models:
+            for route in config["ROUTES"]:
+                file_path = os.path.join(BASE_DIR, country, route.format(model=m))
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+            
+            upload_path = os.path.join(BASE_DIR, country, f"upload-{m}.xlsx")
+            if os.path.exists(upload_path):
+                os.remove(upload_path)
+
+        config["MODELS"].pop(country, None)
+        config["COUNTRY_YEAR_RANGES"].pop(country, None)
+    else:
+        for route in config["ROUTES"]:
+            file_path = os.path.join(BASE_DIR, country, route.format(model=model))
+            if os.path.exists(file_path):
+                os.remove(file_path)
+        
+        upload_path = os.path.join(BASE_DIR, country, f"upload-{model}.xlsx")
+        if os.path.exists(upload_path):
+            os.remove(upload_path)
+
+        config["MODELS"][country].remove(model)
+
+    save_config(config)
+    return {"message": f"{model}' deleted successfully for country '{country}'."}
+    
+    
+# Excel Sheet (Abstract Class) (REMOVE, EXPAND, GET, POST, RESET)
+class SheetUpdate(BaseModel):
+    country: str
+    route: str
+    template_route: str
+    sheet_name: str
+    data: List[Dict[str, Any]]
+    models: List[str]
+    key_fuels: str
+
+@app.post("/remove-models")
+async def remove_models(remove_request: SheetUpdate):
+    try:
+        route = remove_request.route
+        sheet_name = remove_request.sheet_name
+        models = remove_request.models
+        full_path = os.path.join(BASE_DIR, route)
+        
+        wb = openpyxl.load_workbook(full_path)            
+        ws = wb[sheet_name]
+        
+        rows_to_delete = []
+        for row_idx in range(1, ws.max_row + 1):
+            cell_val = ws.cell(row=row_idx, column=1).value
+            if cell_val and isinstance(cell_val, str):
+                for model in models:
+                    if model in cell_val and "{model}" not in cell_val:
+                        rows_to_delete.append(row_idx)
+                        break
+        
+        for row_idx in sorted(set(rows_to_delete), reverse=True):
+            ws.delete_rows(row_idx)
+        
+        wb.save(full_path)
+        wb.close()
+
+        return {
+            "message": f"Removed {len(rows_to_delete)} rows for {len(models)} models", 
+            "removed": True,
+        }
+            
+    except Exception as e:
+        if 'wb' in locals():
+            wb.close()
+        raise HTTPException(status_code=500, detail=f"Error removing models: {str(e)}")
+
+import traceback
+@app.post("/expand-sheet")
+async def expand_sheet(expand_request: SheetUpdate):
+    try:
+        route = expand_request.route
+        sheet_name = expand_request.sheet_name
+        models = expand_request.models
+        full_path = os.path.join(BASE_DIR, route)
+                
+        wb = openpyxl.load_workbook(full_path)            
+        ws = wb[sheet_name]
+        
+        template_rows = []
+        for row_idx in range(1, ws.max_row + 1):
+            cell_val = ws.cell(row=row_idx, column=1).value
+            if cell_val and isinstance(cell_val, str) and "{model}" in cell_val:
+                row_data = {
+                    'original_idx': row_idx,
+                    'cells': [ws.cell(row=row_idx, column=col_idx) 
+                             for col_idx in range(1, ws.max_column + 1)],
+                    'content_type': cell_val.split('{model}')[0].strip()
+                }
+                template_rows.append(row_data)
+        
+        if not template_rows:
+            wb.close()
+            return {"message": "No rows with {model} found", "expanded": False}
+        
+        template_rows.sort(key=lambda x: x['original_idx'])
+        current_offset = 0
+        
+        for template in template_rows:
+            original_idx = template['original_idx'] + current_offset
+            cells_to_copy = template['cells']
+                        
+            for model in models:
+                exists = False
+                for row in ws.iter_rows(min_row=1, max_row=ws.max_row, values_only=True):
+                    first_val = row[0] if row else None
+                    if first_val and isinstance(first_val, str) and model in first_val:
+                        if template['content_type'] in first_val:
+                            exists = True
+                            break
+                
+                if exists:
+                    continue
+                
+                insert_pos = original_idx + 1
+                ws.insert_rows(insert_pos)
+                current_offset += 1
+                
+                for col_idx, orig_cell in enumerate(cells_to_copy, start=1):
+                    new_cell = ws.cell(row=insert_pos, column=col_idx)
+                    
+                    if (orig_cell.value and isinstance(orig_cell.value, str) and 
+                        "{model}" in orig_cell.value):
+                        new_cell.value = orig_cell.value.replace("{model}", model)
+                    else:
+                        new_cell.value = orig_cell.value
+                    
+                    if orig_cell.has_style:
+                        new_cell._style = orig_cell._style
+        
+        wb.save(full_path)
+        wb.close()
+
+        return {
+            "message": f"Expanded {len(template_rows)} template rows for {len(models)} models", 
+            "expanded": True,
+        }
+            
+    except Exception as e:
+        print(f"❌ ERROR: {str(e)}")
+        traceback.print_exc()
+        if 'wb' in locals():
+            wb.close()
+        raise HTTPException(status_code=500, detail=f"Error expanding sheet: {str(e)}")
+
+@app.get("/get-sheet")
+def get_sheet(country, route, template_route, sheet_name, key_fuels):
+
+    config = load_config()
+    fuels = config["FUELS"].get(country, {}).get("normal", [])
+    expected_sheets = config["FUELS"].get(country, {}).get(key_fuels, [])
+    models = config["MODELS"].get(country, [])
+
+    if sheet_name not in expected_sheets:
+        raise HTTPException(status_code=400, detail="Sheet name not allowed for this fuel and country")
+
+    try:
+        sync_sheets_with_fuels(country, route, template_route, expected_sheets)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error syncing sheets: {str(e)}")
+    
+    excel_processor.apply_formulas(
+        file_path=route,
+        formulas_json_path=JSON_FORMULAS,
+        country=country,
+        models=models,
+        fuels=fuels,
+        expected_sheets=expected_sheets
+    )
+
+    full_path = os.path.join(BASE_DIR, route)
     df = pd.read_excel(full_path, sheet_name=sheet_name, engine="openpyxl")
     df = df.where(pd.notnull(df), None)
 

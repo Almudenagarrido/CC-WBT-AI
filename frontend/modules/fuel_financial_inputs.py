@@ -12,7 +12,7 @@ class FuelFinancialInformation:
         self.country = country
         self.subsection = subsection
         self.fuel = fuel
-        self.key_fuels = "normal"
+        self.key_fuels = "carbon"
         self.route = os.path.join(country, "fuel-financial-inputs.xlsx")
         self.template_route = os.path.join(country, "fuel-financial-inputs-{template}.xlsx")
         self.df = None

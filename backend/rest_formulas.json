@@ -1,0 +1,1495 @@
+{
+  "./financial-statements/financial-statements-{model}.xlsx": {
+    "{ffss_section}": [
+        {
+            "formula_steps": [
+            { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
+            { "op": "addition", "operands": [["index", "temp1"], ["index", 2]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Total Revenues",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Tariff Income - Energy & SHS", 
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Grants",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Long term subsidies"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "offset", "operands": [["index", 0], ["literal", 1]], "result": "temp1" },
+            { "op": "safe_divide_subtract_one", "operands": [["index", 0], ["index", "temp1"]], "result": "temp2" },
+            { "op": "percentage", "operands": [["index", "temp2"]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Total Revenues:Growth",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Total Revenues"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["index", 0]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Tariff Income - Energy & SHS",
+            "source_labels": [
+                "./technoeconomic-inputs/technoeconomic-inputs-{model}.xlsx::Electricity::Revenues GRID & OFF GRID"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "offset", "operands": [["index", 0], ["literal", 1]], "result": "temp1" },
+            { "op": "safe_divide_subtract_one", "operands": [["index", 0], ["index", "temp1"]], "result": "temp2" },
+            { "op": "percentage", "operands": [["index", "temp2"]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Tariff Income - Energy & SHS:Growth",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Tariff Income - Energy & SHS"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["index", 0]], "result": "temp1" },
+            { "op": "negative", "operands": [["index", "temp1"]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Grants",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::GRANTS:- Realisation"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["index", 0]], "result": "temp1"},
+            { "op": "negative", "operands": [["index", "temp1"]], "result": "final"}
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Grants",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::GRANTS:- Realisation"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "offset", "operands": [["index", 0], ["literal", 1]], "result": "temp1" },
+            { "op": "safe_divide_subtract_one", "operands": [["index", 0], ["index", "temp1"]], "result": "temp2" },
+            { "op": "percentage", "operands": [["index", "temp2"]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Grants:Growth",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Grants"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "safe_divide", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
+            { "op": "negative", "operands": [["index", "temp1"]], "result": "temp2" },
+            { "op": "percentage", "operands": [["index", "temp2"]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Grants:Revenues",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Grants",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Total Revenues"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "offset", "operands": [["index", 0], ["literal", 1]], "result": "temp1" },
+            { "op": "safe_divide_subtract_one", "operands": [["index", 0], ["index", "temp1"]], "result": "temp2" },
+            { "op": "percentage", "operands": [["index", "temp2"]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Long term subsidies:Growth",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Long term subsidies"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "safe_divide", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
+            { "op": "negative", "operands": [["index", "temp1"]], "result": "temp2" },
+            { "op": "percentage", "operands": [["index", "temp2"]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Long term subsidies:Revenues",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Long term subsidies",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Total Revenues"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "offset", "operands": [["index", 0], ["literal", 1]], "result": "temp1" },
+            { "op": "safe_divide_subtract_one", "operands": [["index", 0], ["index", "temp1"]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Upstream Cost of Energy:Growth",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Upstream Cost of Energy"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "safe_divide", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
+            { "op": "percentage", "operands": [["index", "temp1"]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Upstream Cost of Energy:Revenues",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Upstream Cost of Energy",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Total Revenues"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
+            { "op": "addition", "operands": [["index", 2], ["index", 3]], "result": "temp2" },
+            { "op": "addition", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "temp3" },
+            { "op": "negative", "operands": [["index", "temp3"]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::OPEX",
+            "source_labels": [
+                "./technoeconomic-inputs/technoeconomic-inputs-{model}.xlsx::Electricity::OPEX - GRID:Operation and Maintenence expenses for the generation component",
+                "./technoeconomic-inputs/technoeconomic-inputs-{model}.xlsx::Electricity::OPEX - GRID:Operation and Maintenence expenses for the grid component",
+                "./technoeconomic-inputs/technoeconomic-inputs-{model}.xlsx::Electricity::OPEX - OFF GRID:Operation and Maintenence expenses for the generation component",
+                "./technoeconomic-inputs/technoeconomic-inputs-{model}.xlsx::Electricity::OPEX - OFF GRID:Operation and Maintenence expenses for the grid component"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "offset", "operands": [["index", 0], ["literal", 1]], "result": "temp1" },
+            { "op": "safe_divide_subtract_one", "operands": [["index", 0], ["index", "temp1"]], "result": "temp2" },
+            { "op": "percentage", "operands": [["index", "temp2"]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::OPEX:Growth",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::OPEX"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "safe_divide", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
+            { "op": "negative", "operands": [["index", "temp1"]], "result": "temp2" },
+            { "op": "percentage", "operands": [["index", "temp2"]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::OPEX:Revenues",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::OPEX",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Total Revenues"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "negative", "operands": [["index", 0]], "result": "temp1" },
+            { "op": "multiply_per", "operands": [["index", "temp1"], ["index", 1]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Provisions for bad debt",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Tariff Income - Energy & SHS",
+                "./fuel-market-information/fuel-market-information.xlsx::Electricity::Expected non-technical losses"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "offset", "operands": [["index", 0], ["literal", 1]], "result": "temp1" },
+            { "op": "safe_divide_subtract_one", "operands": [["index", 0], ["index", "temp1"]], "result": "temp2" },
+            { "op": "percentage", "operands": [["index", "temp2"]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Provisions for bad debt:Growth",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Provisions for bad debt"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "safe_divide", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
+            { "op": "negative", "operands": [["index", "temp1"]], "result": "temp2" },
+            { "op": "percentage", "operands": [["index", "temp2"]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Provisions for bad debt:Revenues",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Provisions for bad debt",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Total Revenues"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
+            { "op": "addition", "operands": [["index", 2], ["index", 3]], "result": "temp2" },
+            { "op": "addition", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::EBITDA",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Total Revenues",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Upstream Cost of Energy",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::OPEX",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Provisions for bad debt"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "safe_divide", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
+            { "op": "percentage", "operands": [["index", "temp1"]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::EBITDA:Revenues",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::EBITDA",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Total Revenues"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "subtract", "operands": [["index", 0], ["index", 1]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::EBITDA (exGrants)",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::EBITDA", 
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Grants"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "safe_divide", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
+            { "op": "percentage", "operands": [["index", "temp1"]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::EBITDA (exGrants):Revenues",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::EBITDA (exGrants)",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Total Revenues"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "negative", "operands": [["index", 0]], "result": "temp1" },
+            { "op": "subtract", "operands": [["index", "temp1"], ["index", 1]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::D&A",
+            "source_labels": [
+                "./capex-fuel-markets/capex-market-{model}.xlsx::Electricity::G:Total Annual Depreciation",
+                "./capex-fuel-markets/capex-market-{model}.xlsx::Electricity::O-G:Total Annual Depreciation"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "safe_divide", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
+            { "op": "negative", "operands": [["index", "temp1"]], "result": "temp2" },
+            { "op": "percentage", "operands": [["index", "temp2"]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::D&A:Revenues",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::D&A",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Total Revenues"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::EBIT",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::EBITDA", 
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::D&A"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "safe_divide", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
+            { "op": "percentage", "operands": [["index", "temp1"]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::EBIT:Revenues",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::EBIT",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Total Revenues"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["index", 0]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Financial Expenses",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::DEBT:LT financial expense"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::EBT",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::EBIT",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Financial Expenses"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "subtract", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
+            { "op": "subtract", "operands": [["index", "temp1"], ["index", 2]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::EBT (ex-Grants, ex-Subsidies)",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::EBT",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Grants",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Long term subsidies"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["index", 0]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::% Tax rate",
+            "source_labels": [
+                "./fuel-market-information/fuel-market-information.xlsx::Electricity::Tax rate"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "offset", "operands": [["index", 0], ["literal", 1]], "result": "temp1" },
+            { "op": "negative", "operands": [["index", "temp1"]], "result": "temp2" },
+            { "op": "lt", "operands": [["index", "temp2"], ["index", 1]], "result": "temp3" },
+            { "op": "addition", "operands": [["index", "temp1"], ["index", 1]], "result": "temp4" },
+            { "op": "negative", "operands": [["index", "temp4"]], "result": "temp5" },
+            { "op": "multiply_per", "operands": [["index", "temp5"], ["index", 2]], "result": "temp6" },
+            { "op": "if", "operands": [["index", "temp3"], ["index", "temp6"], ["literal", 0]], "result": "temp7" },
+            { "op": "gt", "operands": [["index", "temp1"], ["literal", 0]], "result": "temp8" },
+            { "op": "negative", "operands": [["index", 2]], "result": "temp9" },
+            { "op": "multiply_per", "operands": [["index", "temp9"], ["index", 1]], "result": "temp10" },
+            { "op": "if", "operands": [["index", "temp8"], ["index", "temp10"], ["index", "temp7"]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Taxes",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Cumulative tax losses",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::EBT (ex-Grants, ex-Subsidies)",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::% Tax rate"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "offset", "operands": [["index", 0], ["literal", 1]], "result": "temp1" },
+            { "op": "addition", "operands": [["index", "temp1"], ["index", 1]], "result": "temp2" },
+            { "op": "min", "operands": [["index", "temp2"], ["literal", 0]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Cumulative tax losses",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Cumulative tax losses",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::EBT (ex-Grants, ex-Subsidies)" 
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Net Income",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::EBT",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Taxes" 
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "safe_divide", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
+            { "op": "percentage", "operands": [["index", "temp1"]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Net Income:Revenues",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Net Income",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Total Revenues" 
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["index", 0]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Non-current assets",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::PP&E"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["index", 0]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::PP&E",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::PP&E - EoP"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
+            { "op": "addition", "operands": [["index", "temp1"], ["index", 2]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Current assets",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Cash and equivalents",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Trade receivables",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Inventories"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["index", 0]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Cash and equivalents",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Cash EoP"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["index", 0]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Trade receivables",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::+ Trade receivables"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["index", 0]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Inventories",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::+ Inventories"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Total Assets",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Non-current assets",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Current assets"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
+            { "op": "addition", "operands": [["index", "temp1"], ["index", 2]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Total Shareholders' Equity",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Share capital & treasury shares",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Retained earnings",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Reserves"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["index", 0]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Share capital & treasury shares",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::+/- Capital Increase/Reduction"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "subtract", "operands": [["index", 0], ["index", 1]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Retained earnings",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Net Income",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::- Dividends (% Net Income)"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["index", 0]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Reserves",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::PP&E - BoP"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Long term liabilities",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Grants liabilities",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::LT financial liabilities"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["index", 0]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Grants liabilities",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::GRANTS:EoP"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["index", 0]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::LT financial liabilities",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::DEBT:EoP"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["index", 0]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Short term liabilities",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Trade payables"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["index", 0]], "result": "temp1" },
+            { "op": "negative", "operands": [["index", "temp1"]], "result": "temp1" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Trade payables",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::- Trade payables"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
+            { "op": "addition", "operands": [["index", "temp1"], ["index", 2]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Total Liabilities",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Total Shareholders' Equity",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Long term liabilities",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Short term liabilities"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "subtract", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
+            { "op": "abs", "operands": [["index", "temp1"]], "result": "temp2" },
+            { "op": "lt", "operands": [["index", "temp2"], ["literal", 0.001]], "result": "temp3" },
+            { "op": "if", "operands": [["index", "temp3"], ["literal", 0], ["index", "temp1"]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Check",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Total Assets",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Total Liabilities"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["index", 0]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::- EBITDA (ex-Grants)",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::EBITDA (exGrants)"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["index", 0]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::- Taxes",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Taxes"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["index", 0]], "result": "temp1" },
+            { "op": "negative", "operands": [["index", "temp1"]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::- (+/-) Change in WC",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Variation"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
+            { "op": "addition", "operands": [["index", "temp1"], ["index", 2]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Operating Cash Flow",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::- EBITDA (ex-Grants)", 
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::- Taxes",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::- (+/-) Change in WC"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["index", 0]], "result": "temp1" },
+            { "op": "negative", "operands": [["index", "temp1"]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Capex for e-cooking + electrification plan",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::CAPEX"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["index", 0]], "result": "final"}
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Investing Cash Flow",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Capex for e-cooking + electrification plan"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Cash Flow from Assets",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Operating Cash Flow", 
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Investing Cash Flow"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["index", 0]], "result": "temp1"},
+            { "op": "negative", "operands": [["index", "temp1"]], "result": "final"}
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Financial Expense",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::DEBT:LT financial expense"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["index", 0]], "result": "final"}
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Debt repayment",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::DEBT:- Repayment"
+            ]
+        },                
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["index", 0]], "result": "final"}
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Debt increase",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::DEBT:+ Increase"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["index", 0]], "result": "final"}
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Grants/Sub-debt financing",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::GRANTS:+ Increase"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["index", 0]], "result": "temp1" },
+            { "op": "negative", "operands": [["index", "temp1"]], "result": "temp1" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Dividends",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::- Dividends (% Net Income)"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["index", 0]], "result": "final"}
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::+/- Capital Increase/Reduction",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::+/- Capital Increase/Reduction"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
+            { "op": "addition", "operands": [["index", 2], ["index", 3]], "result": "temp2" },
+            { "op": "addition", "operands": [["index", 4], ["index", 5]], "result": "temp3" },
+            { "op": "addition", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "temp4" },
+            { "op": "addition", "operands": [["index", "temp3"], ["index", "temp4"]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Financing Cash Flow",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Financial Expense", 
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Debt repayment",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Debt increase", 
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Grants/Sub-debt financing",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Dividends",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::+/- Capital Increase/Reduction"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
+            { "op": "addition", "operands": [["index", "temp1"], ["index", 2]], "result": "final" }
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Cash movement",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Operating Cash Flow", 
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Investing Cash Flow",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Financing Cash Flow"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "offset", "operands": [["index", 0], ["literal", 1]], "result": "final"}
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Cash BoP",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Cash EoP"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["index", 0]], "result": "final"}
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::- Cash movement",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Cash movement"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "final"}
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Cash EoP",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Cash BoP",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::- Cash movement"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "final"}
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::CAPEX",
+            "source_labels": [
+                "./capex-fuel-markets/capex-market-{model}.xlsx::Electricity::G:Total CAPEX",
+                "./capex-fuel-markets/capex-market-{model}.xlsx::Electricity::O-G:Total CAPEX"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "safe_divide", "operands": [["index", 0], ["index", 1]], "result": "temp1"},
+            { "op": "percentage", "operands": [["index", "temp1"]], "result": "final"}
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::CAPEX:Revenues",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::CAPEX",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Total Revenues"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["index", 0]], "result": "final"}
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::+ Capex",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::CAPEX"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "negative", "operands": [["index", 0]], "result": "temp1"},
+            { "op": "copy", "operands": [["index", "temp1"]], "result": "final"}
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::- D&A",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::D&A"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "temp1"},
+            { "op": "addition", "operands": [["index", 2], ["index", 3]], "result": "temp2"},
+            { "op": "subtract", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "final"}
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::PP&E - EoP",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::PP&E - BoP",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::+ Capex",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::- Divestiture",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::- D&A"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "offset", "operands": [["index", 0], ["literal", 1]], "result": "temp1"},
+            { "op": "copy", "operands": [["index", "temp1"]], "result": "final"}
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::PP&E - BoP",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::PP&E - EoP"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["index", 0]], "result": "final"}
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Trade receivables - Days of revenues",
+            "source_labels": [
+                "./fuel-market-information/fuel-market-information.xlsx::Electricity::Trade receivables - Days of revenues"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["index", 0]], "result": "final"}
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Trade payables - Days of OPEX costs",
+            "source_labels": [
+                "./fuel-market-information/fuel-market-information.xlsx::Electricity::Trade payables - Days of OPEX costs"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "safe_divide", "operands": [["index", 0], ["literal", 365]], "result": "temp1"},
+            { "op": "multiply", "operands": [["index", "temp1"], ["index", 1]], "result": "final"}
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::+ Trade receivables",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Trade receivables - Days of revenues",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Tariff Income - Energy & SHS"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "temp1"},
+            { "op": "safe_divide", "operands": [["index", 2], ["literal", 365]], "result": "temp2"},
+            { "op": "multiply", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "final"}
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::+ Inventories",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Upstream Cost of Energy",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::OPEX",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Inventories - Days of COGS"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "temp1"},
+            { "op": "safe_divide", "operands": [["index", 2], ["literal", 365]], "result": "temp2"},
+            { "op": "multiply", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "final"}
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::- Trade payables",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Upstream Cost of Energy",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::OPEX",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Trade payables - Days of OPEX costs"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "temp1"},
+            { "op": "addition", "operands": [["index", "temp1"], ["index", 2]], "result": "final"}
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Working Capital",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::+ Trade receivables",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::+ Inventories",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::- Trade payables"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "offset", "operands": [["index", 0], ["literal", 1]], "result": "temp1"},
+            { "op": "subtract", "operands": [["index", 0], ["index", "temp1"]], "result": "final"}
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Variation",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Working Capital"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "multiply_per", "operands": [["index", 0], ["index", 1]], "result": "final"}
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::+/- Capital Increase/Reduction",
+            "source_labels": [
+                "./design-capital-structure/design-capital-structure-{model}.xlsx::Electricity & E-Cooking::How much to be finance (till 2034)",
+                "./design-capital-structure/design-capital-structure-{model}.xlsx::Electricity & E-Cooking::1.- Equity (to be injected in year 0)"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["index", 0]], "result": "final"}
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::+/- Change in Equity/Net income",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Net Income"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "temp1"},
+            { "op": "addition", "operands": [["index", "temp1"], ["index", 2]], "result": "temp2"},
+            { "op": "max", "operands": [["index", "temp2"], ["literal", 0]], "result": "temp2"}
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::- Dividends (% Net Income)",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Cash Flow from Assets",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Financial Expense",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Debt repayment"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "temp1"},
+            { "op": "addition", "operands": [["index", "temp1"], ["index", 2]], "result": "final"}
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Equity - EoP",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Equity - BoP",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::+/- Capital Increase/Reduction",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::+/- Change in Equity/Net income",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::- Dividends (% Net Income)"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "offset", "operands": [["index", 0], ["literal", 1]], "result": "temp1"},
+            { "op": "copy", "operands": [["index", "temp1"]], "result": "final"}
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Equity - BoP",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::Equity - EoP"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "offset", "operands": [["index", 0], ["literal", 1]], "result": "final"}
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::GRANTS:BoP",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::GRANTS:EoP"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "multiply_per", "operands": [["index", 0], ["index", 1]], "result": "temp1"},
+            { "op": "safe_divide", "operands": [["index", "temp1"], ["literal", 2]], "result": "final"}
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::GRANTS:+ Increase",
+            "source_labels": [
+                "./design-capital-structure/design-capital-structure-{model}.xlsx::Electricity & E-Cooking::How much to be finance (till 2030 - SDG 7 targets)",
+                "./design-capital-structure/design-capital-structure-{model}.xlsx::Electricity & E-Cooking::2.- Grants (inyected in the first two years but linked to CAPEX deployment)"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "sum_range", "operands": [["index", 0], ["literal", 8]], "direction": "forward", "start_index": 0, "result": "temp1"},
+            { "op": "safe_divide", "operands": [["index", 0], ["index", "temp1"]], "result": "temp2"},
+            { "op": "percentage", "operands": [["index", "temp2"]], "result": "final"}
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::GRANTS:- Realisation (% capex)",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::CAPEX"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "sum_range", "operands": [["index", 0], ["literal", 2]], "direction": "forward", "start_index": 0, "result": "temp1"},
+            { "op": "multiply_per", "operands": [["index", 1], ["index", "temp1"]], "result": "temp2"},
+            { "op": "negative", "operands": [["index", "temp2"]], "result": "final"}
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::GRANTS:- Realisation",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::GRANTS:+ Increase",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::GRANTS:- Realisation (% capex)"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "temp1"},
+            { "op": "addition", "operands": [["index", "temp1"], ["index", 2]], "result": "final"}
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::GRANTS:EoP",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::GRANTS:BoP",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::GRANTS:+ Increase",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::GRANTS:- Realisation"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "offset", "operands": [["index", 0], ["literal", 1]], "result": "final"}
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::DEBT:BoP",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::DEBT:EoP"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["index", 0]], "result": "final"}
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::DEBT:+ Increase",
+            "source_labels": [
+                "./design-capital-structure/design-capital-structure-{model}.xlsx::Electricity & E-Cooking::Debt increase"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "range", "operands": [], "result": "temp1"},
+            { "op": "first_nz_idx", "operands": [["index", 0]], "result": "temp2" },
+            { "op": "addition", "operands": [["index", 1], ["index", "temp2"]], "result": "temp3"},
+            { "op": "gt_eq", "operands": [["index", "temp1"], ["index", "temp3"]], "result": "temp4"},
+            { "op": "sum_range", "operands": [["index", 0], ["literal", 0]], "direction": "forward", "start_index": 0, "result": "temp5"},
+            { "op": "safe_divide", "operands": [["index", "temp5"], ["index", 2]], "result": "temp6"},
+            { "op": "if", "operands": [["index", "temp4"], ["index", "temp6"], ["literal", 0]], "result": "temp7"},
+            { "op": "equal", "operands": [["index", "temp5"], ["literal", 0]], "result": "temp8"},
+            { "op": "if", "operands": [["index", "temp8"], ["literal", 0], ["index", "temp7"]], "result": "temp9"},
+            { "op": "negative", "operands": [["index", "temp9"]], "result": "final"}
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::DEBT:- Repayment",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::DEBT:+ Increase",
+                "./design-capital-structure/design-capital-structure-{model}.xlsx::Electricity & E-Cooking::Grace period",
+                "./design-capital-structure/design-capital-structure-{model}.xlsx::Electricity & E-Cooking::Amortization period"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "temp1"},
+            { "op": "addition", "operands": [["index", "temp1"], ["index", 2]], "result": "final"}
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::DEBT:EoP",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::DEBT:BoP",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::DEBT:+ Increase",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::DEBT:- Repayment"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["index", 0]], "result": "final"}
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::DEBT:Interest rate LT",
+            "source_labels": [
+                "./design-capital-structure/design-capital-structure-{model}.xlsx::Electricity & E-Cooking::Interests"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "avg_range", "operands": [["index", 0], ["literal", 2]], "direction": "backward","result": "temp1"},
+            { "op": "multiply_per", "operands": [["index", "temp1"], ["index", 1]], "result": "final"}
+            ],
+            "targets": "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::DEBT:LT financial expense",
+            "source_labels": [
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::DEBT:EoP",
+                "./financial-statements/financial-statements-{model}.xlsx::{ffss_section}::DEBT:Interest rate LT"
+            ]
+        }
+    ]
+  },
+  "./capex-fuel-markets/capex-market-{model}.xlsx": {
+    "Electricity": [
+        {
+            "formula_steps": [
+            {"op": "addition", "operands": [["index", 0], ["index", 1]], "result": "final"}
+            ],
+            "targets": "./capex-fuel-markets/capex-market-{model}.xlsx::Electricity::G:Growth Capex",
+            "source_labels": [
+                "./technoeconomic-inputs/technoeconomic-inputs-{model}.xlsx::Electricity::CAPEX - GRID:Investments of generation",
+                "./technoeconomic-inputs/technoeconomic-inputs-{model}.xlsx::Electricity::CAPEX - GRID:Investments of the grid"
+            ]
+        },
+        {
+            "formula_steps": [
+            {"op": "offset", "operands": [["index", 0], ["literal", 1]], "result": "temp1"},
+            {"op": "addition", "operands": [["index", "temp1"], ["index", 1]], "result": "final"}
+            ],
+            "targets": "./capex-fuel-markets/capex-market-{model}.xlsx::Electricity::G:Acc. Growth CAPEX",
+            "source_labels": [
+                "./capex-fuel-markets/capex-market-{model}.xlsx::Electricity::G:Acc. Growth CAPEX",
+                "./capex-fuel-markets/capex-market-{model}.xlsx::Electricity::G:Growth Capex"
+            ]
+        },
+        {
+            "formula_steps": [
+            {"op": "offset", "operands": [["index", 0], ["literal", 1]], "result": "temp1"},
+            {"op": "addition", "operands": [["index", "temp1"], ["index", 1]], "result": "final"}
+            ],
+            "targets": "./capex-fuel-markets/capex-market-{model}.xlsx::Electricity::G:ACC. Growth CAPEX",
+            "source_labels": [
+                "./capex-fuel-markets/capex-market-{model}.xlsx::Electricity::G:ACC. Growth CAPEX",
+                "./capex-fuel-markets/capex-market-{model}.xlsx::Electricity::G:Maintenance CAPEX"
+            ]
+        },
+        {
+            "formula_steps": [
+            {"op": "addition", "operands": [["index", 0], ["index", 1]], "result": "final"}
+            ],
+            "targets": "./capex-fuel-markets/capex-market-{model}.xlsx::Electricity::G:Total CAPEX",
+            "source_labels": [
+                "./capex-fuel-markets/capex-market-{model}.xlsx::Electricity::G:Growth Capex",
+                "./capex-fuel-markets/capex-market-{model}.xlsx::Electricity::G:Maintenance CAPEX"
+            ]
+        },
+        {
+            "formula_steps": [
+            {"op": "addition", "operands": [["index", 0], ["index", 1]], "result": "final"}
+            ],
+            "targets": "./capex-fuel-markets/capex-market-{model}.xlsx::Electricity::G:Acc. Total CAPEX",
+            "source_labels": [
+                "./capex-fuel-markets/capex-market-{model}.xlsx::Electricity::G:Acc. Growth CAPEX",
+                "./capex-fuel-markets/capex-market-{model}.xlsx::Electricity::G:ACC. Growth CAPEX"
+            ]
+        },
+        {
+            "formula_steps": [
+            {"op": "copy", "operands": [["index", 0]], "result": "final"}
+            ],
+            "targets": "./capex-fuel-markets/capex-market-{model}.xlsx::Electricity::G:Total Depreciation",
+            "source_labels": [
+                "./technoeconomic-inputs/technoeconomic-inputs-{model}.xlsx::Electricity::GRID:Depreciation & Amortization (D&A) schedule of the assets"
+            ]
+        },
+        {
+            "formula_steps": [
+            {"op": "range", "operands": [], "result": "temp1"},
+            {"op": "min", "operands": [["index", "temp1"], ["index", 1]], "result": "temp2"},
+            {"op": "offset", "operands": [["index", 0], ["index", "temp2"]], "result": "temp3"},
+            {"op": "sum_range", "operands": [["index", "temp3"], ["index", "temp2"]], "direction": "backward", "result": "temp4"},
+            {"op": "safe_divide", "operands": [["index", "temp4"], ["index", 1]], "result": "final"}
+            ],
+            "targets": "./capex-fuel-markets/capex-market-{model}.xlsx::Electricity::G:Total Annual Depreciation",
+            "source_labels": [
+                "./capex-fuel-markets/capex-market-{model}.xlsx::Electricity::G:Total CAPEX",
+                "./capex-fuel-markets/capex-market-{model}.xlsx::Electricity::G:Total Depreciation"
+            ]
+        },
+        {
+            "formula_steps": [
+            {"op": "addition", "operands": [["index", 0], ["index", 1]], "result": "final"}
+            ],
+            "targets": "./capex-fuel-markets/capex-market-{model}.xlsx::Electricity::O-G:Growth Capex",
+            "source_labels": [
+                "./technoeconomic-inputs/technoeconomic-inputs-{model}.xlsx::Electricity::CAPEX - OFF GRID:Investments of generation",
+                "./technoeconomic-inputs/technoeconomic-inputs-{model}.xlsx::Electricity::CAPEX - OFF GRID:Investments of the grid"
+            ]
+        },
+        {
+            "formula_steps": [
+            {"op": "offset", "operands": [["index", 0], ["literal", 1]], "result": "temp1"},
+            {"op": "addition", "operands": [["index", "temp1"], ["index", 1]], "result": "final"}
+            ],
+            "targets": "./capex-fuel-markets/capex-market-{model}.xlsx::Electricity::O-G:Acc. Growth CAPEX",
+            "source_labels": [
+                "./capex-fuel-markets/capex-market-{model}.xlsx::Electricity::O-G:Acc. Growth CAPEX",
+                "./capex-fuel-markets/capex-market-{model}.xlsx::Electricity::O-G:Growth Capex"
+            ]
+        },
+        {
+            "formula_steps": [
+            {"op": "offset", "operands": [["index", 0], ["literal", 1]], "result": "temp1"},
+            {"op": "addition", "operands": [["index", "temp1"], ["index", 1]], "result": "final"}
+            ],
+            "targets": "./capex-fuel-markets/capex-market-{model}.xlsx::Electricity::O-G:ACC. Growth CAPEX",
+            "source_labels": [
+                "./capex-fuel-markets/capex-market-{model}.xlsx::Electricity::O-G:ACC. Growth CAPEX",
+                "./capex-fuel-markets/capex-market-{model}.xlsx::Electricity::O-G:Maintenance CAPEX"
+            ]
+        },
+        {
+            "formula_steps": [
+            {"op": "addition", "operands": [["index", 0], ["index", 1]], "result": "final"}
+            ],
+            "targets": "./capex-fuel-markets/capex-market-{model}.xlsx::Electricity::O-G:Total CAPEX",
+            "source_labels": [
+                "./capex-fuel-markets/capex-market-{model}.xlsx::Electricity::O-G:Growth Capex",
+                "./capex-fuel-markets/capex-market-{model}.xlsx::Electricity::O-G:Maintenance CAPEX"
+            ]
+        },
+        {
+            "formula_steps": [
+            {"op": "addition", "operands": [["index", 0], ["index", 1]], "result": "final"}
+            ],
+            "targets": "./capex-fuel-markets/capex-market-{model}.xlsx::Electricity::O-G:Acc. Total CAPEX",
+            "source_labels": [
+                "./capex-fuel-markets/capex-market-{model}.xlsx::Electricity::O-G:Acc. Growth CAPEX",
+                "./capex-fuel-markets/capex-market-{model}.xlsx::Electricity::O-G:ACC. Growth CAPEX"
+            ]
+        },
+        {
+            "formula_steps": [
+            {"op": "copy", "operands": [["index", 0]], "result": "final"}
+            ],
+            "targets": "./capex-fuel-markets/capex-market-{model}.xlsx::Electricity::O-G:Total Depreciation",
+            "source_labels": [
+                "./technoeconomic-inputs/technoeconomic-inputs-{model}.xlsx::Electricity::OFF GRID:Depreciation & Amortization (D&A) schedule of the assets"
+            ]
+        },
+        {
+            "formula_steps": [
+            {"op": "range", "operands": [], "result": "temp1"},
+            {"op": "min", "operands": [["index", "temp1"], ["index", 1]], "result": "temp2"},
+            {"op": "offset", "operands": [["index", 0], ["index", "temp2"]], "result": "temp3"},
+            {"op": "sum_range", "operands": [["index", "temp3"], ["index", "temp2"]], "direction": "backward", "result": "temp4"},
+            {"op": "safe_divide", "operands": [["index", "temp4"], ["index", 1]], "result": "final"}
+            ],
+            "targets": "./capex-fuel-markets/capex-market-{model}.xlsx::Electricity::O-G:Total Annual Depreciation",
+            "source_labels": [
+                "./capex-fuel-markets/capex-market-{model}.xlsx::Electricity::O-G:Total CAPEX",
+                "./capex-fuel-markets/capex-market-{model}.xlsx::Electricity::O-G:Total Depreciation"
+            ]
+        }
+    ],
+    "LPG": [
+        {
+            "formula_steps": [
+            {"op": "copy", "operands": [["index", 0]], "result": "final"}
+            ],
+            "targets": "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::LP:Growth Capex",
+            "source_labels": [
+                "./technoeconomic-inputs/technoeconomic-inputs-{model}.xlsx::LPG::CAPEX - LOCAL:Investments of the processing"
+            ]
+        },
+        {
+            "formula_steps": [
+            {"op": "offset", "operands": [["index", 1], ["literal", 1]], "result": "temp1"},
+            {"op": "addition", "operands": [["index", 0], ["index", "temp1"]], "result": "final"}
+            ],
+            "targets": "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::LP:Acc. Growth CAPEX",
+            "source_labels": [
+                "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::LP:Growth Capex",
+                "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::LP:Acc. Growth CAPEX"
+            ]
+        },
+        {
+            "formula_steps": [
+            {"op": "offset", "operands": [["index", 1], ["literal", 1]], "result": "temp1"},
+            {"op": "addition", "operands": [["index", 0], ["index", "temp1"]], "result": "final"}
+            ],
+            "targets": "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::LP:ACC. Growth CAPEX",
+            "source_labels": [
+                "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::LP:Maintenance CAPEX",
+                "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::LP:ACC. Growth CAPEX"
+            ]
+        },
+        {
+            "formula_steps": [
+            {"op": "addition", "operands": [["index", 0], ["index", 1]], "result": "final"}
+            ],
+            "targets": "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::LP:Total CAPEX",
+            "source_labels": [
+                "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::LP:Growth Capex",
+                "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::LP:Maintenance CAPEX"
+            ]
+        },
+        {
+            "formula_steps": [
+            {"op": "addition", "operands": [["index", 0], ["index", 1]], "result": "final"}
+            ],
+            "targets": "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::LP:Acc. Total CAPEX",
+            "source_labels": [
+                "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::LP:Acc. Growth CAPEX",
+                "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::LP:ACC. Growth CAPEX"
+            ]
+        },
+        {
+            "formula_steps": [
+            {"op": "copy", "operands": [["index", 0]], "result": "final"}
+            ],
+            "targets": "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::LP:Total Depreciation",
+            "source_labels": [
+                "./technoeconomic-inputs/technoeconomic-inputs-{model}.xlsx::LPG::LOCAL:Depreciation & Amortization (D&A) schedule of the assets for processing"
+            ]
+        },
+        {
+            "formula_steps": [
+            {"op": "range", "operands": [], "result": "temp1"},
+            {"op": "min", "operands": [["index", "temp1"], ["index", 1]], "result": "temp2"},
+            {"op": "offset", "operands": [["index", 0], ["index", "temp2"]], "result": "temp3"},
+            {"op": "sum_range", "operands": [["index", "temp3"], ["index", "temp2"]], "direction": "backward", "result": "temp4"},
+            {"op": "safe_divide", "operands": [["index", "temp4"], ["index", 1]], "result": "final"}
+            ],
+            "targets": "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::LP:Total Annual Depreciation",
+            "source_labels": [
+                "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::LP:Total CAPEX",
+                "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::LP:Total Depreciation"
+            ]
+        },
+        {
+            "formula_steps": [
+            {"op": "copy", "operands": [["index", 0]], "result": "final"}
+            ],
+            "targets": "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::LT:Growth Capex",
+            "source_labels": [
+                "./technoeconomic-inputs/technoeconomic-inputs-{model}.xlsx::LPG::CAPEX - LOCAL:Investments of the transport segment"
+            ]
+        },
+        {
+            "formula_steps": [
+            {"op": "offset", "operands": [["index", 1], ["literal", 1]], "result": "temp1"},
+            {"op": "addition", "operands": [["index", 0], ["index", "temp1"]], "result": "final"}
+            ],
+            "targets": "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::LT:Acc. Growth CAPEX",
+            "source_labels": [
+                "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::LT:Growth Capex",
+                "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::LT:Acc. Growth CAPEX"
+            ]
+        },
+        {
+            "formula_steps": [
+            {"op": "offset", "operands": [["index", 1], ["literal", 1]], "result": "temp1"},
+            {"op": "addition", "operands": [["index", 0], ["index", "temp1"]], "result": "final"}
+            ],
+            "targets": "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::LT:ACC. Growth CAPEX",
+            "source_labels": [
+                "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::LT:Maintenance CAPEX",
+                "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::LT:ACC. Growth CAPEX"
+            ]
+        },
+        {
+            "formula_steps": [
+            {"op": "addition", "operands": [["index", 0], ["index", 1]], "result": "final"}
+            ],
+            "targets": "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::LT:Total CAPEX",
+            "source_labels": [
+                "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::LT:Growth Capex",
+                "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::LT:Maintenance CAPEX"
+            ]
+        },
+        {
+            "formula_steps": [
+            {"op": "addition", "operands": [["index", 0], ["index", 1]], "result": "final"}
+            ],
+            "targets": "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::LT:Acc. Total CAPEX",
+            "source_labels": [
+                "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::LT:Acc. Growth CAPEX",
+                "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::LT:ACC. Growth CAPEX"
+            ]
+        },
+        {
+            "formula_steps": [
+            {"op": "copy", "operands": [["index", 0]], "result": "final"}
+            ],
+            "targets": "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::LT:Total Depreciation",
+            "source_labels": [
+                "./technoeconomic-inputs/technoeconomic-inputs-{model}.xlsx::LPG::LOCAL:Depreciation & Amortization (D&A) schedule of the assets for transport"
+            ]
+        },
+        {
+            "formula_steps": [
+            {"op": "range", "operands": [], "result": "temp1"},
+            {"op": "min", "operands": [["index", "temp1"], ["index", 1]], "result": "temp2"},
+            {"op": "offset", "operands": [["index", 0], ["index", "temp2"]], "result": "temp3"},
+            {"op": "sum_range", "operands": [["index", "temp3"], ["index", "temp2"]], "direction": "backward", "result": "temp4"},
+            {"op": "safe_divide", "operands": [["index", "temp4"], ["index", 1]], "result": "final"}
+            ],
+            "targets": "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::LT:Total Annual Depreciation",
+            "source_labels": [
+                "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::LT:Total CAPEX",
+                "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::LT:Total Depreciation"
+            ]
+        },
+        {
+            "formula_steps": [
+            {"op": "addition", "operands": [["index", 0], ["index", 1]], "result": "final"}
+            ],
+            "targets": "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::U:Growth Capex",
+            "source_labels": [
+                "./technoeconomic-inputs/technoeconomic-inputs-{model}.xlsx::LPG::CAPEX - UPSTREAM:Investments of the processing",
+                "./technoeconomic-inputs/technoeconomic-inputs-{model}.xlsx::LPG::CAPEX - UPSTREAM:Investments of the transport segment"
+            ]
+        },
+        {
+            "formula_steps": [
+            {"op": "offset", "operands": [["index", 1], ["literal", 1]], "result": "temp1"},
+            {"op": "addition", "operands": [["index", 0], ["index", "temp1"]], "result": "final"}
+            ],
+            "targets": "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::U:Acc. Growth CAPEX",
+            "source_labels": [
+                "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::U:Growth Capex",
+                "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::U:Acc. Growth CAPEX"
+            ]
+        },
+        {
+            "formula_steps": [
+            {"op": "offset", "operands": [["index", 1], ["literal", 1]], "result": "temp1"},
+            {"op": "addition", "operands": [["index", 0], ["index", "temp1"]], "result": "final"}
+            ],
+            "targets": "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::U:ACC. Growth CAPEX",
+            "source_labels": [
+                "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::U:Maintenance CAPEX",
+                "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::U:ACC. Growth CAPEX"
+            ]
+        },
+        {
+            "formula_steps": [
+            {"op": "addition", "operands": [["index", 0], ["index", 1]], "result": "final"}
+            ],
+            "targets": "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::U:Total CAPEX",
+            "source_labels": [
+                "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::U:Growth Capex",
+                "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::U:Maintenance CAPEX"
+            ]
+        },
+        {
+            "formula_steps": [
+            {"op": "addition", "operands": [["index", 0], ["index", 1]], "result": "final"}
+            ],
+            "targets": "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::U:Acc. Total CAPEX",
+            "source_labels": [
+                "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::U:Acc. Growth CAPEX",
+                "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::U:ACC. Growth CAPEX"
+            ]
+        },
+        {
+            "formula_steps": [
+            {"op": "copy", "operands": [["index", 0]], "result": "final"}
+            ],
+            "targets": "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::U:Total Depreciation",
+            "source_labels": [
+                "./technoeconomic-inputs/technoeconomic-inputs-{model}.xlsx::LPG::UPSTREAM:Depreciation & Amortization (D&A) schedule of the assets"
+            ]
+        },
+        {
+            "formula_steps": [
+            {"op": "range", "operands": [], "result": "temp1"},
+            {"op": "min", "operands": [["index", "temp1"], ["index", 1]], "result": "temp2"},
+            {"op": "offset", "operands": [["index", 0], ["index", "temp2"]], "result": "temp3"},
+            {"op": "sum_range", "operands": [["index", "temp3"], ["index", "temp2"]], "direction": "backward", "result": "temp4"},
+            {"op": "safe_divide", "operands": [["index", "temp4"], ["index", 1]], "result": "final"}
+            ],
+            "targets": "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::U:Total Annual Depreciation",
+            "source_labels": [
+                "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::U:Total CAPEX",
+                "./capex-fuel-markets/capex-market-{model}.xlsx::LPG::U:Total Depreciation"
+            ]
+        }
+    ]
+  }
+}
+
+
+,
+        {
+            "formula_steps": [
+            { "op": "subtract", "operands": [["index", 0], ["index", 1]], "result": "final" }
+            ],
+            "targets": "./carbon-credits/carbon-credits.xlsx::Carbon Credits::{model} vs. BAU",
+            "source_labels": [
+                "./carbon-credits/carbon-credits.xlsx::Carbon Credits::CO2 emited - BAU scenario", 
+                "./carbon-credits/carbon-credits.xlsx::Carbon Credits::CO2 emited - {model} scenario"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "range", "operands": [], "result": "temp1" },
+            { "op": "gt", "operands": [["index", "temp1"], ["index", 0]], "result": "temp2" },
+            { "op": "offset", "operands": [["index", 1], ["index", 0]], "result": "temp3" },
+            { "op": "if", "operands": [["index", "temp2"], ["index", "temp3"], ["index", 1]], "result": "temp4" },
+            { "op": "multiply_per", "operands": [["index", "temp4"], ["index", 2]], "result": "temp5" },
+            { "op": "pos_or_cero", "operands": [["index", "temp5"]], "result": "final" }
+            ],
+            "targets": "./carbon-credits/carbon-credits.xlsx::Carbon Credits::CO2 equivalent avoided in the {model}",
+            "source_labels": [
+                "./fuel-market-information/fuel-market-information.xlsx::Carbon::Number of years that you could sell those carbon credits", 
+                "./carbon-credits/carbon-credits.xlsx::Carbon Credits::{model} vs. BAU",
+                "./fuel-market-information/fuel-market-information.xlsx::Carbon::CO2 certificate (%) - from the total CO2 avoided"
+            ]
+        },
+        {
+            "formula_steps": [
+            {"op": "multiply_per", "operands": [["index", 0], ["index", 1]], "result": "temp1"},
+            {"op": "multiply", "operands": [["index", "temp1"], ["index", 2]], "result": "final"}
+            ],
+            "targets": "./carbon-credits/carbon-credits.xlsx::Carbon Credits::Potential income from Carbon Credits in the {model} Plan - right",
+            "source_labels": [
+                "./carbon-credits/carbon-credits.xlsx::Carbon Credits::CO2 equivalent avoided in the {model}",
+                "./fuel-market-information/fuel-market-information.xlsx::Carbon::Liquidity",
+                "./fuel-market-information/fuel-market-information.xlsx::Carbon::Price per TON"
+            ]
+        }

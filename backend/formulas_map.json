@@ -1,0 +1,50 @@
+{
+  "{country}\\carbon-credits-general.xlsx": {
+    "Carbon Credits": [
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["index", 0]], "result": "final" }
+            ],
+            "target": "CO2 emited - BAU scenario",
+            "sources": [
+                "{country}\\upload-BAU.xlsx::Carbon Credits::CO2 emited - BAU scenario"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["index", 0]], "result": "final" }
+            ],
+            "target": "CO2 emited - {model} scenario",
+            "sources": [
+                "{country}\\upload-{model}.xlsx::Carbon Credits::CO2 emited - {model} scenario"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "subtract", "operands": [["index", 0], ["index", 1]], "result": "final" }
+            ],
+            "target": "{model} vs. BAU",
+            "sources": [
+                "{country}\\carbon-credits-general.xlsx::Carbon Credits::CO2 emited - BAU scenario",
+                "{country}\\carbon-credits-general.xlsx::Carbon Credits::CO2 emited - {model} scenario"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "range", "operands": [], "result": "temp1" },
+            { "op": "gt", "operands": [["index", "temp1"], ["index", 0]], "result": "temp2" },
+            { "op": "offset", "operands": [["index", 1], ["index", 0]], "result": "temp3" },
+            { "op": "if", "operands": [["index", "temp2"], ["index", "temp3"], ["index", 1]], "result": "temp4" },
+            { "op": "multiply_per", "operands": [["index", "temp4"], ["index", 2]], "result": "temp5" },
+            { "op": "pos_or_cero", "operands": [["index", "temp5"]], "result": "final" }
+            ],
+            "target": "CO2 equivalent avoided in the {model}",
+            "sources": [
+                "{country}\\fuel-financial-inputs.xlsx::Carbon Credits::Number of years that you could sell those carbon credits", 
+                "{country}\\carbon-credits-general.xlsx::Carbon Credits::{model} vs. BAU",
+                "{country}\\fuel-financial-inputs.xlsx::Carbon Credits::CO2 certificate (%) - from the total CO2 avoided"
+            ]
+        }
+    ]
+  }
+}
