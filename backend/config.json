@@ -13,6 +13,8 @@
                 "LPG"
             ],
             "carbon": [
+                "Electricity",
+                "LPG",
                 "Carbon Credits"
             ],
             "rest": [
@@ -42,7 +44,7 @@
     "MODELS": {},
     "SHARED_ROUTES": [
         "fuel-financial-inputs.xlsx",
-        "carbon-credits.xlsx"
+        "carbon-credits-general.xlsx"
     ],
     "ROUTES": [
         "technoeconomic-inputs-{model}.xlsx",

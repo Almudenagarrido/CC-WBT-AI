@@ -9,7 +9,7 @@ class ManageModels:
         self.country = country
         self.key_fuels = "rest"
         self.template_files = {
-            "BAU": "upload-bau.xlsx",
+            "BAU": "upload-BAU.xlsx",
             "default": "upload-{model}.xlsx"
         }
 
@@ -23,31 +23,15 @@ class ManageModels:
             with st.form("create_bau_form"):
                 start_year = st.number_input("Start Year (BAU)", step=1, format="%d")
                 end_year = st.number_input("End Year (BAU)", step=1, format="%d")
+                create_bau = st.form_submit_button("Create BAU Model")
 
-                upload_file = st.file_uploader("Upload Excel file for BAU", type=["xlsx"])
-                create = st.form_submit_button("Create BAU Model")
-
-                if create:
+                if create_bau:
                     if start_year >= end_year:
                         st.error("Start year must be less than end year.")
                     else:
                         success, msg = u.create_model_in_backend("BAU", start_year, end_year)
                         if success:
                             st.success(msg)
-
-                            if upload_file:
-                                expected_name = self.template_files["BAU"]
-                                if upload_file.name != expected_name:
-                                    st.error(
-                                        f"Upload rejected. File must be named '{expected_name}', as the template downloaded for this model."
-                                    )
-                                else:
-                                    u.upload_template_file_to_backend(
-                                        self.country,
-                                        model="BAU",
-                                        file_content=upload_file.getvalue(),
-                                        filename=upload_file.name
-                                    )
 
                             st.session_state.models = u.get_models_from_backend()
                             time.sleep(1)
@@ -106,27 +90,29 @@ class ManageModels:
                         "⬇️",
                         data=content,
                         file_name=f"{self.country}_{model}_files.zip",
-                        mime="application/zip"
+                        mime="application/zip",
+                        help="Download files"
                     )
             
             with col3:
                 template_path = self.template_files["BAU"] if model == "BAU" else self.template_files["default"]
-                template_content = u.download_template_file_from_backend(self.country, template_path)
+                template_content = u.download_template_file_from_backend(self.country, template_path, model, self.key_fuels)
                 if template_content:
                     st.download_button(
                         "📝",
                         data=template_content,
-                        file_name=template_path.format(model=model.lower()),
+                        file_name=template_path.format(model=model),
                         mime="application/vnd.ms-excel",
-                        key=f"download_template_{model}"
+                        key=f"download_template_{model}",
+                        help="Download template"
                     )
 
             with col4:
-                if st.button("📤", key=f"upload_{model}"):
+                if st.button("📤", key=f"upload_{model}", help="Upload template"):
                     st.session_state[f"show_uploader_{model}"] = True
 
             with col5:
-                if st.button("❌", key=f"delete_{model}"):
+                if st.button("❌", key=f"delete_{model}", help="Delete model"):
                     success = u.delete_model_from_backend(model)
                     if success:
                         st.success(f"Model '{model}' deleted successfully from country '{self.country}'.")
@@ -141,10 +127,10 @@ class ManageModels:
                 )
                 
                 if uploaded_file:
-                    expected_name = self.template_files["BAU"] if model == "BAU" else self.template_files["default"].format(model=model.lower())
+                    expected_name = self.template_files["BAU"] if model == "BAU" else self.template_files["default"].format(model=model)
                     
                     if uploaded_file.name != expected_name:
-                        st.error(f"Upload rejected. File must be named '{expected_name}', as the template downloaded for this model.")
+                        st.error(f"Upload rejected. File must be named '{expected_name}' as the template downloaded for this model, , got {uploaded_file.name}.")
                     else:
                         success = u.upload_template_file_to_backend(
                             self.country,
@@ -154,7 +140,7 @@ class ManageModels:
                         )
                         
                         if success:
-                            st.success(f"File for '{model}' uploaded successfully!")
+                            st.success(f"File for '{model}' uploaded successfully.")
                             st.session_state[f"show_uploader_{model}"] = False
                             time.sleep(1)
                             st.rerun()

@@ -43,6 +43,18 @@ def create_templates_if_missing(country):
         st.error(f"Error creating templates for {country}: {e}")
         return None
 
+def download_country_files_from_backend(country):
+    try:
+        response = requests.get(
+            f"{API_URL}/download-country",
+            params={"country": country}
+        )
+        response.raise_for_status()
+        return response.content
+    except Exception as e:
+        st.error(f"Download failed: {e}")
+        return None
+
 def delete_country_from_backend(country):
     try:
         response = requests.delete(f"{API_URL}/countries", json={"name": country})
@@ -90,18 +102,6 @@ def add_fuel_to_backend():
             except Exception as e:
                 st.error(f"Error adding fuel: {e}")
                 return False
-
-def download_country_files_from_backend(country):
-    try:
-        response = requests.get(
-            f"{API_URL}/download-country",
-            params={"country": country}
-        )
-        response.raise_for_status()
-        return response.content
-    except Exception as e:
-        st.error(f"Download failed: {e}")
-        return None
            
 def delete_fuel_from_backend(fuel, country):
     try:
@@ -159,11 +159,11 @@ def download_model_files_from_backend(country, model):
         st.error(f"Download failed: {e}")
         return None
     
-def download_template_file_from_backend(country, template):
+def download_template_file_from_backend(country, template, model, key_fuels):
     try:
         response = requests.get(
             f"{API_URL}/download-template",
-            params={"country": country, "template": template}
+            params={"country": country, "template": template, "model": model, "key_fuels": key_fuels}
         )
         response.raise_for_status()
         return response.content
@@ -198,7 +198,35 @@ def delete_model_from_backend(model):
         return False
 
 
-# Excel Sheets (Abstract Class) (GET, POST, RESET)
+# Excel Sheets (REMOVE, EXPAND, GET, POST, RESET)
+def remove_models_from_backend(country, route, sheet_name, models):
+    payload = {
+        "country": country,
+        "route": route,
+        "template_route": "",
+        "sheet_name": sheet_name,
+        "data": [],
+        "models": models,
+        "key_fuels": "",
+    }
+    
+    res = requests.post(f"{API_URL}/remove-models", json=payload)
+    return res.json() if res.status_code == 200 else None
+
+def expand_sheet_in_backend(country, route, sheet_name, models):
+    payload = {
+        "country": country,
+        "route": route,
+        "template_route": "",
+        "sheet_name": sheet_name,
+        "data": [],
+        "models": models,
+        "key_fuels": "",
+    }
+    
+    res = requests.post(f"{API_URL}/expand-sheet", json=payload)
+    return res.json() if res.status_code == 200 else None
+    
 def get_sheet_from_backend(country, route, template_route, sheet_name, key_fuels):
     try:
         payload = {
@@ -225,6 +253,7 @@ def save_sheet_in_backend(df, route, sheet_name):
         "template_route": "",
         "sheet_name": sheet_name,
         "data": data_json,
+        "models": [""],
         "key_fuels": "",
     }
     res = requests.post(f"{API_URL}/save-sheet", json=payload)
@@ -237,6 +266,7 @@ def reset_sheet_in_backend(route, template_route, sheet_name):
         "template_route": template_route,
         "sheet_name": sheet_name,
         "data": [],
+        "models": [""],
         "key_fuels": "",
     }
     res = requests.post(f"{API_URL}/reset-sheet", json=payload)
