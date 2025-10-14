@@ -6,6 +6,8 @@
             "end": 2060
         }
     },
+    "TAX_RATES": {},
+    "INFLATIONS": {},
     "FUELS": {
         "template": {
             "normal": [
@@ -19,8 +21,7 @@
             ],
             "rest": [
                 "Electricity",
-                "LPG",
-                "Rest of subsidies or taxes"
+                "LPG"
             ],
             "expanded": [
                 "Electricity & E-Cooking",
@@ -33,6 +34,11 @@
                 "Electricity (Just access)",
                 "LPG"
             ]
+        }
+    },
+    "CONSUMER_TYPES": {
+        "template": {
+            "model": []
         }
     },
     "ELECTRICITY_VARIANTS": [

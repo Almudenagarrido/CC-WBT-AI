@@ -149,7 +149,6 @@ class DesignCapitalStructure:
                 st.rerun()
 
         if save_disabled:
-            st.warning("Please fix invalid cells before saving.")
             for section, input_name, col, value, error in invalid_cells:
                 st.error(f"Section '{section}' - Row '{input_name}' - Column '{col}': {error} (Current value: {value})")
 

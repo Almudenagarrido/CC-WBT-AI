@@ -22,11 +22,11 @@ def get_countries_from_backend():
         st.error(f"Error fetching countries: {e}")
         return []
     
-def add_country_to_backend(country):
+def add_country_to_backend(country, tax_rate, inflation):
     try:
         response = requests.post(
             f"{API_URL}/countries",
-            json={"name": country}
+            json={"name": country, "tax_rate":tax_rate, "inflation": inflation}
         )
         response.raise_for_status()
         return response.json()
@@ -57,7 +57,7 @@ def download_country_files_from_backend(country):
 
 def delete_country_from_backend(country):
     try:
-        response = requests.delete(f"{API_URL}/countries", json={"name": country})
+        response = requests.delete(f"{API_URL}/countries", json={"name": country, "tax_rate": 0, "inflation": 0})
         response.raise_for_status()
         return response.json()
     except Exception as e:
@@ -195,6 +195,43 @@ def delete_model_from_backend(model):
         return True
     except Exception as e:
         st.error(f"Error deleting model: {e}")
+        return False
+
+
+# Consumers (GET, POST, DELETE)
+def get_consumers_from_backend(country, model):
+    try:
+        response = requests.get(
+            f"{API_URL}/consumers",
+            params={"country": country, "model": model}
+        )
+        return response.json().get("consumers", [])
+    except Exception as e:
+        st.error(f"Error fetching consumer types: {e}")
+        return []
+
+def add_consumer_to_backend(country, model, consumer):
+    try:
+        response = requests.post(
+            f"{API_URL}/add-consumer",
+            json={"country": country, "model": model, "consumer": consumer}
+        )
+        response.raise_for_status()
+        return True
+    except Exception as e:
+        st.error(f"Error adding consumer: {e}")
+        return False
+           
+def delete_consumer_from_backend(country, model, consumer):
+    try:
+        response = requests.delete(
+            f"{API_URL}/delete-consumer", 
+            json={"country": country, "model": model, "consumer": consumer}
+        )
+        response.raise_for_status()
+        return True
+    except Exception as e:
+        st.error(f"Error deleting consumer: {e}")
         return False
 
 

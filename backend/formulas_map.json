@@ -5,15 +5,6 @@
             "formula_steps": [
             { "op": "copy", "operands": [["index", 0]], "result": "final" }
             ],
-            "target": "CO2 emited - BAU scenario",
-            "sources": [
-                "{country}\\upload-BAU.xlsx::Carbon Credits::CO2 emited - BAU scenario"
-            ]
-        },
-        {
-            "formula_steps": [
-            { "op": "copy", "operands": [["index", 0]], "result": "final" }
-            ],
             "target": "CO2 emited - {model} scenario",
             "sources": [
                 "{country}\\upload-{model}.xlsx::Carbon Credits::CO2 emited - {model} scenario"

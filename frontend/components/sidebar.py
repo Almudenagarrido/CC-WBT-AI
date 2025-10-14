@@ -91,11 +91,10 @@ def show():
             st.rerun()
 
         if st.session_state.model:
-            if st.session_state.model != "BAU":
 
-                st.markdown("##### Inputs")
+            st.markdown("##### Inputs")
 
-                with st.expander("Techno-Economic Inputs", expanded=False):
+            with st.expander("Techno-Economic Inputs", expanded=False):
                     for fuel in st.session_state.fuels_rest:
                         if st.button(f"{fuel} Inputs"):
                             st.session_state.section = "technoeconomic_models"

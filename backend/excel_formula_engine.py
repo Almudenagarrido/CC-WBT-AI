@@ -304,15 +304,20 @@ class ExcelFormulaProcessor:
         values = []
         for col in range(start_col, ws.max_column + 1):
             cell = ws.cell(row=target_row, column=col)
+            cell_value = cell.value
             
-            if cell.value is None:
+            if cell_value is None:
                 break
                 
             numeric_value = self._convert_to_numeric(cell.value)
             
-            if numeric_value != 0 or (isinstance(cell.value, (int, float)) and cell.value == 0):
+            if self._is_numeric_value(cell_value):
+                numeric_value = self._convert_to_numeric(cell_value)
                 values.append(numeric_value)
-
+            else:
+                break
+        
+        print(f"    📊 Valores obtenidos para '{label_part}': {values}")
         return values
     
     def _execute_formula_steps(self, formula_steps, source_values_list):
