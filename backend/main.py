@@ -729,7 +729,7 @@ async def remove_models(remove_request: SheetUpdate):
         raise HTTPException(status_code=500, detail=f"Error removing models: {str(e)}")
 
 @app.post("/expand-sheet")
-async def expand_sheet_endpoint(expand_request: SheetUpdate):
+async def expand_sheet(expand_request: SheetUpdate):
     try:
         route = expand_request.route
         sheet_name = expand_request.sheet_name
@@ -838,6 +838,7 @@ async def get_sheet(country, route, template_route, sheet_name, key_fuels):
             raise HTTPException(status_code=500, detail=f"Error syncing sheets: {str(e)}")
 
     wb.close()
+    excel_processor.clear_workbook_cache()
     excel_processor.apply_formulas(
         file_path=route,
         formulas_json_path=JSON_FORMULAS,

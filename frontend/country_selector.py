@@ -62,8 +62,8 @@ def show():
 
     with st.expander("➕ Add a new country"):
         new_country = st.text_input("Country name", key="new_country_input")
-        tax_rate = st.number_input("Tax Rate (%)", value=0.0)
-        inflation = st.number_input("Inflation (%)", value=0.0)
+        tax_rate = st.number_input("Tax Rate (%)", value=0)
+        inflation = st.number_input("Inflation (%)", value=0)
         
         if st.button("Add", key="add_country_btn"):
             new_country = new_country.strip()

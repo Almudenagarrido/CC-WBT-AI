@@ -38,6 +38,10 @@ class ExcelFormulaProcessor:
     def __init__(self):
         self.workbook_cache = {}
     
+    def clear_workbook_cache(self):
+        self._get_workbook.cache_clear()
+        self.workbook_cache.clear()
+
     def apply_formulas(self, file_path, formulas_json_path, country, models, fuels, expected_sheets):
         try:            
             with open(formulas_json_path) as f:
@@ -126,7 +130,6 @@ class ExcelFormulaProcessor:
         return load_workbook(file_path, read_only=read_only, data_only=data_only)
     
     def _process_formulas_sheet_file(self, file_path, formulas_sheet_file):
-
         wb = self._get_workbook(file_path, read_only=False)
         try:
             for sheet_name, formulas in formulas_sheet_file.items():
