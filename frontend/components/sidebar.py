@@ -110,18 +110,19 @@ def show():
                 st.session_state.subsection = "carbon_credits"
                 st.rerun()
 
-            if st.session_state.model != "BAU":
-                with st.expander("Capex Fuel Market", expanded=False):
-                    for fuel in st.session_state.fuels:
-                        if st.button(f"{fuel} - CAPEX"):
-                            st.session_state.section = "technoeconomic_models"
-                            st.session_state.subsection = "capex_fuels"
-                            st.session_state.fuel = fuel
-                            st.rerun()
-                        
-                    if st.session_state.section == "technoeconomic_models" and st.session_state.subsection == "capex_fuels " and not st.session_state.fuel:
-                        st.session_state.fuel = st.session_state.fuels[0]
+            with st.expander("Capex Fuel Market", expanded=False):
+                for fuel in st.session_state.fuels:
+                    if st.button(f"{fuel} - CAPEX"):
+                        st.session_state.section = "technoeconomic_models"
+                        st.session_state.subsection = "capex_fuels"
+                        st.session_state.fuel = fuel
+                        st.rerun()
+                    
+                if st.session_state.section == "technoeconomic_models" and st.session_state.subsection == "capex_fuels " and not st.session_state.fuel:
+                    st.session_state.fuel = st.session_state.fuels[0]
 
+            if st.session_state.model != "BAU":
+                
                 with st.expander("Design Capital Structure", expanded=False):
                     for fuel in st.session_state.fuels_expanded:
                         if st.button(f"{fuel} Financial Plan"):

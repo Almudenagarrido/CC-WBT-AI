@@ -60,7 +60,7 @@ class FuelFinancialInformation:
 
         if save_disabled:
             for input_name, col, value, error in invalid_cells:
-                st.error(f"Row '{input_name}' - Column '{col}': {error} (Current value: {value})")
+                st.warning(f"Row '{input_name}' - Column '{col}': {error} (Current value: {value})")
 
         if st.button("Reset"):
             reset = u.reset_sheet_in_backend(self.route, self.template_route, self.fuel)

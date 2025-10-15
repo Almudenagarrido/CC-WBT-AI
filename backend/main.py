@@ -502,24 +502,13 @@ def download_template_file(country, template, model, key_fuels):
         temp_filename = f"synced_{uuid.uuid4().hex[:8]}_{template}"
         temp_file_path = os.path.join(temp_dir, temp_filename)
         
-        if "bau" not in template.lower():
-            sync_sheets_with_fuels(
-                country=country,
-                route=temp_file_path,
-                template_route=template_path,
-                expected_sheets=expected_sheets
-            )
-            add_carbon_credits_sheet(country, temp_file_path, template_path, model)
-
-        else:
-            shutil.copy2(template_path, temp_file_path)
-            year_range = config["COUNTRY_YEAR_RANGES"].get(country)
-            if year_range:
-                start_year, end_year = year_range["start"], year_range["end"]
-                wb = openpyxl.load_workbook(temp_file_path)
-                drop_out_of_range_years_from_workbook(wb, "Carbon Credits", start_year, end_year)
-                wb.save(temp_file_path)
-                wb.close()
+        sync_sheets_with_fuels(
+            country=country,
+            route=temp_file_path,
+            template_route=template_path,
+            expected_sheets=expected_sheets
+        )
+        add_carbon_credits_sheet(country, temp_file_path, template_path, model)
 
         return FileResponse(
             temp_file_path,

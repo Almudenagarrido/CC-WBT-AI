@@ -13,7 +13,8 @@ class TechnoEconomicInputs:
         self.subsection = subsection
         self.model = model
         self.fuel = fuel
-        self.key_fuels = "rest"
+        self.key_fuels_technoeconomic = "rest"
+        self.key_fuels_financial = "carbon"
         self.route = os.path.join(country, f"technoeconomic-inputs-{model}.xlsx")
         self.template_route = os.path.join(country, "technoeconomic-inputs-{model}.xlsx")
         self.route_fuels = os.path.join(country, "fuel-financial-inputs.xlsx")
@@ -49,7 +50,7 @@ class TechnoEconomicInputs:
             self.route_fuels,
             self.template_route_fuels,
             self.fuel,
-            self.key_fuels
+            self.key_fuels_financial
         )
         self.df_fuels = pd.DataFrame(sheet_fuels)
 
@@ -58,7 +59,7 @@ class TechnoEconomicInputs:
             self.route,
             self.template_route,
             self.fuel,
-            self.key_fuels
+            self.key_fuels_technoeconomic
         )
         self.df = pd.DataFrame(sheet)
 
@@ -75,7 +76,7 @@ class TechnoEconomicInputs:
 
         if save_disabled:
             for input_name, col, value, error in invalid_cells:
-                st.error(f"Row '{input_name}' - Column '{col}': {error} (Current value: {value})")
+                st.warning(f"Row '{input_name}' - Column '{col}': {error} (Current value: {value})")
 
         if st.button("Reset"):
             reset = u.reset_sheet_in_backend(self.route, self.template_route, self.fuel)
