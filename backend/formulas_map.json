@@ -12,7 +12,7 @@
         },
         {
             "formula_steps": [
-            { "op": "subtract", "operands": [["index", 0], ["index", 1]], "result": "final" }
+            { "op": "subtraction", "operands": [["index", 0], ["index", 1]], "result": "final" }
             ],
             "target": "{model} vs. BAU",
             "sources": [
@@ -22,7 +22,24 @@
         },
         {
             "formula_steps": [
-            { "op": "multiply", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
+                {"op": "range", "operands": [["literal", 1]], "result": "temp1"},
+                {"op": "value", "operands": [["index", 0], ["literal", 0]], "result": "temp2"},
+                {"op": "gt", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "temp3"},
+                {"op": "sum_range", "operands": [["index", 1], ["index", "temp2"]], "direction": "backward", "result": "temp4"},
+                {"op": "if", "operands": [["index", "temp3"], ["index", "temp4"], ["index", 1]], "result": "temp5"}, 
+                {"op": "multiply_per", "operands": [["index", "temp5"], ["index", 2]], "result": "temp6"},
+                {"op": "max", "operands": [["index", "temp6"], ["literal", 0]], "result": "final"}
+            ],
+            "target": "CO2 equivalent avoided in the {model}",
+            "sources": [
+                "{country}\\fuel-financial-inputs.xlsx::Carbon Credits::Number of years that you could sell those carbon credits", 
+                "{country}\\carbon-credits-general.xlsx::Carbon Credits::{model} vs. BAU",
+                "{country}\\fuel-financial-inputs.xlsx::Carbon Credits::CO2 certificate (%) - from the total CO2 avoided"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "multiply_per", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
             { "op": "multiply", "operands": [["index", 2], ["index", "temp1"]], "result": "final" }
             ],
             "target": "Potential income from Carbon Credits in the {model} Plan - right",
@@ -188,16 +205,192 @@
         },
         {
             "formula_steps": [
-                { "op": "copy", "operands": [["index", 0]], "result": "final" }
+                {"op": "sum_range", "operands": [["index", 0], ["literal", 0]], "direction": "backward", "result": "final"}
             ],
-            "target": "Acc. Growth CAPEX",
+            "target": "Acc. Growth CAPEX", 
+            "sources": [
+                "{country}\\capex-fuels-{model}.xlsx::{fuel}::Growth Capex"
+            ]
+        },
+        {
+            "formula_steps": [
+                {"op": "copy", "operands": [["index", 0]], "result": "final"}
+            ],
+            "target": "Total Depreciation", 
+            "sources": [
+                "{country}\\technoeconomic-inputs-{model}.xlsx::{fuel}::D&A"
+            ]
+        },
+        {
+            "formula_steps": [
+                {"op": "addition", "operands": [["index", 0], ["index", 1]], "result": "final"}
+            ],
+            "target": "Total CAPEX", 
             "sources": [
                 "{country}\\capex-fuels-{model}.xlsx::{fuel}::Growth Capex",
-                "{country}\\capex-fuels-{model}.xlsx::{fuel}::Acc. Growth CAPEX"
+                "{country}\\capex-fuels-{model}.xlsx::{fuel}::Maintenance CAPEX"
+            ]
+        },
+        {
+            "formula_steps": [
+                {"op": "sum_range", "operands": [["index", 0], ["literal", 0]], "direction": "backward", "result": "final"}
+            ],
+            "target": "Acc. Total CAPEX", 
+            "sources": [
+                "{country}\\capex-fuels-{model}.xlsx::{fuel}::Total CAPEX"
+            ]
+        },
+        {
+            "formula_steps": [
+                {"op": "range", "operands": [["literal", 1]], "result": "temp1"},
+                {"op": "value", "operands": [["index", 0], ["literal", 0]], "result": "temp2"},
+                {"op": "min", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "temp3"},
+                {"op": "sum_range", "operands": [["index", 1], ["index", "temp3"]], "direction": "backward", "result": "temp4"},
+                {"op": "divide", "operands": [["index", "temp4"], ["index", "temp2"]], "result": "final"}
+            ],
+            "target": "Total Annual Depreciation", 
+            "sources": [
+                "{country}\\capex-fuels-{model}.xlsx::{fuel}::Total Depreciation",
+                "{country}\\capex-fuels-{model}.xlsx::{fuel}::Total CAPEX"
             ]
         }
     ],
     "Electricity": [
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["index", 0]], "result": "final" }
+            ],
+            "target": "GRID:Growth Capex",
+            "sources": [
+                "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity::CAPEX - GRID"
+            ]
+        },
+        {
+            "formula_steps": [
+                {"op": "sum_range", "operands": [["index", 0], ["literal", 0]], "direction": "backward", "result": "final"}
+            ],
+            "target": "GRID:Acc. Growth CAPEX", 
+            "sources": [
+                "{country}\\capex-fuels-{model}.xlsx::Electricity::GRID:Growth Capex"
+            ]
+        },
+        {
+            "formula_steps": [
+                {"op": "copy", "operands": [["index", 0]], "result": "final"}
+            ],
+            "target": "GRID:Total Depreciation", 
+            "sources": [
+                "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity::D&A - GRID"
+            ]
+        },
+        {
+            "formula_steps": [
+                {"op": "addition", "operands": [["index", 0], ["index", 1]], "result": "final"}
+            ],
+            "target": "GRID:Total CAPEX", 
+            "sources": [
+                "{country}\\capex-fuels-{model}.xlsx::Electricity::GRID:Growth Capex",
+                "{country}\\capex-fuels-{model}.xlsx::Electricity::GRID:Maintenance CAPEX"
+            ]
+        },
+        {
+            "formula_steps": [
+                {"op": "sum_range", "operands": [["index", 0], ["literal", 0]], "direction": "backward", "result": "final"}
+            ],
+            "target": "GRID:Acc. Total CAPEX", 
+            "sources": [
+                "{country}\\capex-fuels-{model}.xlsx::Electricity::GRID:Total CAPEX"
+            ]
+        },
+        {
+            "formula_steps": [
+                {"op": "range", "operands": [["literal", 1]], "result": "temp1"},
+                {"op": "value", "operands": [["index", 0], ["literal", 0]], "result": "temp2"},
+                {"op": "min", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "temp3"},
+                {"op": "sum_range", "operands": [["index", 1], ["index", "temp3"]], "direction": "backward", "result": "temp4"},
+                {"op": "divide", "operands": [["index", "temp4"], ["index", "temp2"]], "result": "final"}
+            ],
+            "target": "GRID:Total Annual Depreciation", 
+            "sources": [
+                "{country}\\capex-fuels-{model}.xlsx::Electricity::GRID:Total Depreciation",
+                "{country}\\capex-fuels-{model}.xlsx::Electricity::GRID:Total CAPEX"
+            ]
+        },
+
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["index", 0]], "result": "final" }
+            ],
+            "target": "OFF-GRID:Growth Capex",
+            "sources": [
+                "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity::CAPEX - OFF-GRID"
+            ]
+        },
+        {
+            "formula_steps": [
+                {"op": "sum_range", "operands": [["index", 0], ["literal", 0]], "direction": "backward", "result": "final"}
+            ],
+            "target": "OFF-GRID:Acc. Growth CAPEX", 
+            "sources": [
+                "{country}\\capex-fuels-{model}.xlsx::Electricity::OFF-GRID:Growth Capex"
+            ]
+        },
+        {
+            "formula_steps": [
+                {"op": "copy", "operands": [["index", 0]], "result": "final"}
+            ],
+            "target": "OFF-GRID:Total Depreciation", 
+            "sources": [
+                "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity::D&A - OFF-GRID"
+            ]
+        },
+        {
+            "formula_steps": [
+                {"op": "addition", "operands": [["index", 0], ["index", 1]], "result": "final"}
+            ],
+            "target": "OFF-GRID:Total CAPEX", 
+            "sources": [
+                "{country}\\capex-fuels-{model}.xlsx::Electricity::OFF-GRID:Growth Capex",
+                "{country}\\capex-fuels-{model}.xlsx::Electricity::OFF-GRID:Maintenance CAPEX"
+            ]
+        },
+        {
+            "formula_steps": [
+                {"op": "sum_range", "operands": [["index", 0], ["literal", 0]], "direction": "backward", "result": "final"}
+            ],
+            "target": "OFF-GRID:Acc. Total CAPEX", 
+            "sources": [
+                "{country}\\capex-fuels-{model}.xlsx::Electricity::OFF-GRID:Total CAPEX"
+            ]
+        },
+        {
+            "formula_steps": [
+                {"op": "range", "operands": [["literal", 1]], "result": "temp1"},
+                {"op": "value", "operands": [["index", 0], ["literal", 0]], "result": "temp2"},
+                {"op": "min", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "temp3"},
+                {"op": "sum_range", "operands": [["index", 1], ["index", "temp3"]], "direction": "backward", "result": "temp4"},
+                {"op": "divide", "operands": [["index", "temp4"], ["index", "temp2"]], "result": "final"}
+            ],
+            "target": "OFF-GRID:Total Annual Depreciation", 
+            "sources": [
+                "{country}\\capex-fuels-{model}.xlsx::Electricity::OFF-GRID:Total Depreciation",
+                "{country}\\capex-fuels-{model}.xlsx::Electricity::OFF-GRID:Total CAPEX"
+            ]
+        }
+    ]
+  },
+  "{country}\\design-capital-{model}.xlsx": {
+    "{sheet}": [
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["literal", 10]], "result": "final" }
+            ],
+            "target": "How much to be financed",
+            "sources": [
+                "{country}\\design-capital-{model}.xlsx::{sheet}:: Equity - GRID"
+            ]
+        }
     ]
   }
+  
 }

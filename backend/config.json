@@ -1,15 +1,51 @@
 {
-    "COUNTRIES": [],
+    "COUNTRIES": [
+        "Rwanda"
+    ],
     "COUNTRY_YEAR_RANGES": {
         "template": {
             "start": 2020,
             "end": 2060
+        },
+        "Rwanda": {
+            "start": 2023,
+            "end": 2034
         }
     },
-    "TAX_RATES": {},
-    "INFLATIONS": {},
+    "TAX_RATES": {
+        "Rwanda": 28
+    },
+    "INFLATIONS": {
+        "Rwanda": 10
+    },
     "FUELS": {
         "template": {
+            "normal": [
+                "Electricity",
+                "LPG"
+            ],
+            "carbon": [
+                "Electricity",
+                "LPG",
+                "Carbon Credits"
+            ],
+            "rest": [
+                "Electricity",
+                "LPG"
+            ],
+            "expanded": [
+                "Electricity & E-Cooking",
+                "Electricity (Just access)",
+                "LPG"
+            ],
+            "more_expanded": [
+                "Electricity (Only E-Cooking)",
+                "Electricity & E-Cooking",
+                "Electricity (Just access)",
+                "LPG"
+            ]
+        },
+        "Rwanda": {
             "normal": [
                 "Electricity",
                 "LPG"
@@ -47,7 +83,12 @@
         "Electricity (Just access)",
         "Electricity (Only E-Cooking)"
     ],
-    "MODELS": {},
+    "MODELS": {
+        "Rwanda": [
+            "BAU",
+            "CleanStep"
+        ]
+    },
     "SHARED_ROUTES": [
         "fuel-financial-inputs.xlsx",
         "carbon-credits-general.xlsx"

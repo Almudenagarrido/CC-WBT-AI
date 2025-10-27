@@ -27,7 +27,7 @@ class TechnoEconomicInputs:
         self.df_heights_fuels = {"Electricity": 140, "LPG": 140, "C02": 170}
         self.editable_columns = ["Baseline"] + [str(year) for year in range(2021, 2061)]
         self.empty_rows = {
-            "Electricity": {"col": "Inputs", "partial": ["D&A - GRID", "D&A - OFF GRID"], "full": ["Outputs - GRID", "Outputs - OFF-GRID"]},
+            "Electricity": {"col": "Inputs", "partial": ["D&A - GRID", "D&A - OFF-GRID"], "full": ["Outputs - GRID", "Outputs - OFF-GRID"]},
             "LPG":{"col": "Inputs", "partial": ["D&A"], "full": ["Outputs"]}
         }
     

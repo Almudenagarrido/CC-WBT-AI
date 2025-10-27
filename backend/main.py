@@ -800,7 +800,7 @@ async def get_sheet(country, route, template_route, sheet_name, key_fuels):
     if sheet_name not in expected_sheets:
         raise HTTPException(status_code=400, detail="Sheet name not allowed for this fuel and country")
 
-    is_carbon_credits = "carbon" in route.lower() or "carbon" in template_route.lower()
+    is_carbon_credits = "carbon" in sheet_name.lower()
     
     full_path = os.path.join(BASE_DIR, route)
     template_full_path = os.path.join(BASE_DIR, template_route)
