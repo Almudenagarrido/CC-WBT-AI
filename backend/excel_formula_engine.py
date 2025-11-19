@@ -19,6 +19,7 @@ OPS_MAP = {
     "safe_divide": lambda x, y: (x / y) if y != 0 else 0,
     "safe_divide_minus": lambda x, y, z: (x / y - z) if y != 0 else 0,
     "gt": lambda x, y: x > y,
+    "gt_eq": lambda x, y: x >= y,
     "lt": lambda x, y: x < y,
     "equal": lambda x, y: x == y,
     "if": lambda condition, true_val, false_val: true_val if condition else false_val,
@@ -628,36 +629,19 @@ class ExcelFormulaProcessor:
                     operands, current_values, results, source_cells_list, cell_index, default_ws, step
                 )
             elif op == "range":
-                # CORRECCIÓN: Usar _get_operand_value para obtener el valor numérico
                 range_value = self._get_operand_value(operands[0], current_values, results)
                 result = cell_index + range_value
                     
             elif op == "value":
-                if len(operands) >= 2:
-                    # CORRECCIÓN: Si el operando es ["index", N], usar N directamente como índice
-                    if isinstance(operands[0], list) and operands[0][0] == "index":
-                        source_index = operands[0][1]  # Usar el valor literal del índice
-                    else:
-                        source_index = self._get_operand_value(operands[0], current_values, results)
-                    
-                    if isinstance(operands[1], list) and operands[1][0] == "literal":
-                        cell_index_to_get = operands[1][1]  # Usar el valor literal
-                    else:
-                        cell_index_to_get = self._get_operand_value(operands[1], current_values, results)
-                    
-                    # Convertir a enteros
-                    source_index = int(source_index)
-                    cell_index_to_get = int(cell_index_to_get)
-                    
-                    if 0 <= source_index < len(source_cells_list):
-                        cell_refs = source_cells_list[source_index]
-                        if 0 <= cell_index_to_get < len(cell_refs):
-                            result = self._get_cell_value_from_ref(cell_refs[cell_index_to_get], default_ws)  
-                        else:
-                            result = 0
-                    else:
-                        result = 0
-                    
+                result = self._execute_value_operation(
+                    operands, current_values, results, source_cells_list, cell_index, default_ws
+                )
+            
+            elif op == "index_match":
+                result = self._execute_index_match_operation(
+                    operands, current_values, results, source_cells_list, cell_index, default_ws
+                )
+            
             else:
                 # Para otras operaciones, usar el método existente
                 ops_args = []
@@ -675,6 +659,75 @@ class ExcelFormulaProcessor:
         final_result = results.get("final", 0)
         print(f"      ✅ Resultado final: {final_result}")
         return final_result
+
+    def _execute_value_operation(self, operands, current_values, current_results, source_cells_list, current_index, default_ws):
+        """Operación value: obtiene un valor específico de una fuente"""
+        if len(operands) >= 2:
+            if isinstance(operands[0], list) and operands[0][0] == "index":
+                source_index = operands[0][1]
+            else:
+                source_index = self._get_operand_value(operands[0], current_values, current_results)
+            
+            if isinstance(operands[1], list) and operands[1][0] == "literal":
+                cell_index_to_get = operands[1][1]
+            else:
+                cell_index_to_get = self._get_operand_value(operands[1], current_values, current_results)
+            
+            source_index = int(source_index)
+            cell_index_to_get = int(cell_index_to_get)
+            
+            if 0 <= source_index < len(source_cells_list):
+                cell_refs = source_cells_list[source_index]
+                if 0 <= cell_index_to_get < len(cell_refs):
+                    return self._get_cell_value_from_ref(cell_refs[cell_index_to_get], default_ws)  
+        
+        return 0
+
+    def _execute_index_match_operation(self, operands, current_values, current_results, source_cells_list, current_index, default_ws):
+        """
+        Operación index_match: INDICE + COINCIDIR
+        Busca el primer valor ≠ 0 en el rango inferior y devuelve el valor de arriba
+        """
+        if len(operands) >= 2:
+            # Obtener índices de los rangos (fuente superior e inferior)
+            if isinstance(operands[0], list) and operands[0][0] == "index":
+                top_source_index = operands[0][1]
+            else:
+                top_source_index = self._get_operand_value(operands[0], current_values, current_results)
+            
+            if isinstance(operands[1], list) and operands[1][0] == "index":
+                bottom_source_index = operands[1][1]
+            else:
+                bottom_source_index = self._get_operand_value(operands[1], current_values, current_results)
+            
+            top_source_index = int(top_source_index)
+            bottom_source_index = int(bottom_source_index)
+            
+            print(f"         INDEX_MATCH: top_index={top_source_index}, bottom_index={bottom_source_index}")
+            
+            # Verificar que los índices son válidos
+            if (0 <= top_source_index < len(source_cells_list) and 
+                0 <= bottom_source_index < len(source_cells_list)):
+                
+                top_cell_refs = source_cells_list[top_source_index]
+                bottom_cell_refs = source_cells_list[bottom_source_index]
+                
+                # Buscar el primer valor ≠ 0 en el rango inferior
+                found_index = -1
+                for i in range(min(len(bottom_cell_refs), len(top_cell_refs))):
+                    value = self._get_cell_value_from_ref(bottom_cell_refs[i], default_ws)
+                    print(f"         INDEX_MATCH: celda {i} valor={value}")
+                    if value != 0:
+                        found_index = i
+                        break
+                
+                # Si se encontró, devolver el valor del rango superior
+                if found_index >= 0 and found_index < len(top_cell_refs):
+                    result = self._get_cell_value_from_ref(top_cell_refs[found_index], default_ws)
+                    print(f"         INDEX_MATCH: encontrado en índice {found_index}, resultado={result}")
+                    return result
+            
+        return 0
     
     def _execute_sum_range_operation(self, operands, current_values, current_results, source_cells_list, current_index, default_ws, step=None):
         
@@ -690,6 +743,9 @@ class ExcelFormulaProcessor:
         
         direction = step.get("direction", "forward") if step else "forward"
         
+        # NUEVO: Obtener condición si existe (ej: "<0", ">0", etc.)
+        condition = step.get("condition") if step else None
+        
         if 0 <= source_index < len(source_cells_list):
             cell_refs = source_cells_list[source_index]
             
@@ -697,7 +753,9 @@ class ExcelFormulaProcessor:
                 total = 0
                 for ref in cell_refs:
                     value = self._get_cell_value_from_ref(ref, default_ws)
-                    total += value
+                    # NUEVO: Aplicar condición si existe
+                    if self._meets_condition(value, condition):
+                        total += value
                 return total
             
             total = 0
@@ -711,7 +769,9 @@ class ExcelFormulaProcessor:
                     for i in range(start_index, end_index):
                         if i < len(cell_refs):
                             value = self._get_cell_value_from_ref(cell_refs[i], default_ws)
-                            total += value
+                            # NUEVO: Aplicar condición
+                            if self._meets_condition(value, condition):
+                                total += value
 
                 else:
                     
@@ -721,8 +781,10 @@ class ExcelFormulaProcessor:
                     for i in range(start_index, end_index):
                         if i < len(cell_refs):
                             value = self._get_cell_value_from_ref(cell_refs[i], default_ws)
-                            total += value
-                            
+                            # NUEVO: Aplicar condición
+                            if self._meets_condition(value, condition):
+                                total += value
+                                
             else:
                 start_index = current_index
                 end_index = min(len(cell_refs), current_index + width)
@@ -730,12 +792,40 @@ class ExcelFormulaProcessor:
                 for i in range(start_index, end_index):
                     if i < len(cell_refs):
                         value = self._get_cell_value_from_ref(cell_refs[i], default_ws)
-                        total += value
-                        
+                        # NUEVO: Aplicar condición
+                        if self._meets_condition(value, condition):
+                            total += value
+                            
             return total
         else:
             return 0
-    
+
+    def _meets_condition(self, value, condition):
+        """
+        Evalúa si un valor cumple con una condición dada
+        """
+        if condition is None:
+            return True  # Sin condición, incluir todos los valores
+        
+        try:
+            if condition == "<0":
+                return value < 0
+            elif condition == ">0":
+                return value > 0
+            elif condition == "<=0":
+                return value <= 0
+            elif condition == ">=0":
+                return value >= 0
+            elif condition == "==0":
+                return value == 0
+            elif condition == "!=0":
+                return value != 0
+            else:
+                # Para condiciones más complejas, podrías usar eval (con precaución)
+                return True  # Por defecto, incluir todos
+        except:
+            return True  # En caso de error, incluir el valor
+
     def _execute_offset_operation(self, operands, current_values, current_results, source_cells_list, current_index, default_ws):
     
         # PRIMERO obtener source_index

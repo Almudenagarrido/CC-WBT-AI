@@ -504,7 +504,58 @@
   },
   "{country}\\design-capital-{model}.xlsx": {
     "{sheet}": [
-        
+        {
+            "formula_steps": [
+            { "op": "gt", "operands": [["index", 0], ["literal", 0]], "result": "temp1" },
+            { "op": "if", "operands": [["index", "temp1"], ["literal", "ok"],  ["literal", "increase debt"]], "result": "final" }
+            ],
+            "target": "Annual debt needs",
+            "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::Cash EoP"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "lt", "operands": [["index", 0], ["literal", 0]], "result": "temp1" },
+            { "op": "negative", "operands": [["index", 0]], "result": "temp2" },
+            { "op": "if", "operands": [["index", "temp1"], ["index", "temp2"],  ["literal", 0]], "result": "final" }
+            ],
+            "target": "How much to increase",
+            "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::Cash EoP"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "sum_range", "operands": [["index", 0], ["literal", "all"]], "direction": "backward", "condition": "<0", "result": "temp1" },
+            { "op": "negative", "operands": [["index", "temp1"]], "result": "final" }
+            ],
+            "target": "How much to be financed",
+            "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::Cash Flow from Assets"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "sum_range", "operands": [["index", 0], ["literal", "all"]], "direction": "backward", "result": "final" }
+            ],
+            "target": "Equity",
+            "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::+/- Capital increase/reduction"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "sum_range", "operands": [["index", 0], ["literal", "all"]], "direction": "backward", "result": "final" }
+            ],
+            "target": "Grants",
+            "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::GRANTS:+ Increase"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "sum_range", "operands": [["index", 0], ["literal", "all"]], "direction": "backward", "result": "final" }
+            ],
+            "target": "Debt",
+            "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::DEBT:+ Increase"
+            ]
+        }
     ]
   },
   "{country}\\financial-statements-{model}.xlsx": {
@@ -1450,8 +1501,8 @@
             ],
             "target": "GRANTS:- Realisation",
             "sources": [
-                "{country}\\financial-statements-{model}.xlsx::{fuel}::+ Increase",
-                "{country}\\financial-statements-{model}.xlsx::{fuel}::- Realisation (% capex)"
+                "{country}\\financial-statements-{model}.xlsx::{fuel}::GRANTS:+ Increase",
+                "{country}\\financial-statements-{model}.xlsx::{fuel}::GRANTS:- Realisation (% capex)"
             ]
         },
         {
@@ -1461,11 +1512,10 @@
             ],
             "target": "GRANTS:EoP",
             "sources": ["{country}\\financial-statements-{model}.xlsx::{fuel}::BoP",
-            "{country}\\financial-statements-{model}.xlsx::{fuel}::+ Increase",
-            "{country}\\financial-statements-{model}.xlsx::{fuel}::- Realisation"
+            "{country}\\financial-statements-{model}.xlsx::{fuel}::GRANTS:+ Increase",
+            "{country}\\financial-statements-{model}.xlsx::{fuel}::GRANTS:- Realisation"
             ]
         },
-
         {
             "formula_steps": [
             { "op": "offset", "operands": [["index", 0], ["literal", 1]], "result": "final" }
@@ -1484,17 +1534,55 @@
         },
         {
             "formula_steps": [
-            { "op": "sum_range", "operands": [["index", 0], ["literal", "all"]],"direction": "backward", "result": "temp1" },
+            { "op": "sum_range", "operands": [["index", 0], ["literal", "all"]], "direction": "backward", "result": "temp1" },
             { "op": "equal", "operands": [["index", "temp1"], ["literal", 0]], "result": "temp2" },
-            
-            { "op": "value", "operands": [["index", 0], ["literal", 0]], "result": "temp3" },
+            { "op": "value", "operands": [["index", 1], ["literal", 0]], "result": "temp3" },
             { "op": "range", "operands": [["literal", 0]], "result": "temp4" },
-            { "op": "addition", "operands": [["index", "temp3"], ["index", "temp4"]], "result": "temp5" }
-            
+            { "op": "addition", "operands": [["index", "temp3"], ["index", "temp4"]], "result": "temp4" },
+            {"op": "index_match",
+            "operands": [["index", "temp3"], ["index", 0]], "result": "temp5"},
+            { "op": "addition", "operands": [["index", 2], ["index", "temp5"]], "result": "temp6" },
+            { "op": "gt_eq", "operands": [["index", "temp4"], ["index", "temp6"]], "result": "temp7" },
+            { "op": "divide", "operands": [["index", "temp1"], ["index", 3]], "result": "temp8" },
+            { "op": "if", "operands": [["index", "temp7"], ["index", "temp8"], ["literal", 0]], "result": "temp9" },
+            { "op": "if", "operands": [["index", "temp2"], ["literal", 0], ["index", "temp9"]], "result": "temp10" },
+            { "op": "negative", "operands": [["index", "temp10"]], "result": "final" }
             ],
             "target": "DEBT:- Repayment",
-            "sources": ["{country}\\design-capital-{model}.xlsx::{sheet}::DEBT:+ Increase",
-            "config.json::{country}::COUNTRY_YEAR_RANGES:start"
+            "sources": ["{country}\\financial-statements-{model}.xlsx::{fuel}::DEBT:+ Increase",
+            "config.json::{country}::COUNTRY_YEAR_RANGES:start",
+            "{country}\\design-capital-{model}.xlsx::{sheet}::Grace period",
+            "{country}\\design-capital-{model}.xlsx::{sheet}::Amortization period"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "offset", "operands": [["index", 0], ["literal", 1]], "result": "final" }
+            ],
+            "target": "DEBT:EoP",
+            "sources": ["{country}\\financial-statements-{model}.xlsx::{fuel}::DEBT:BoP",
+            "{country}\\financial-statements-{model}.xlsx::{fuel}::DEBT:+ Increase",
+            "{country}\\financial-statements-{model}.xlsx::{fuel}::DEBT:- Repayment"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["index", 0]], "result": "final" }
+            ],
+            "target": "DEBT:Interest rate LT",
+            "sources": ["{country}\\design-capital-{model}.xlsx::{sheet}::Cost of Debt"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "offset", "operands": [["index", 0], ["literal", 1]], "result": "temp1" },
+            { "op": "addition", "operands": [["index", "temp1"], ["index", 0]], "result": "temp2" },
+            { "op": "divide", "operands": [["index", "temp2"], ["literal", 2]], "result": "temp3" },
+            { "op": "multiply", "operands": [["index", 1], ["index", "temp3"]], "result": "final" }
+            ],
+            "target": "DEBT:LT Financial expense",
+            "sources": ["{country}\\design-capital-{model}.xlsx::{sheet}::Cost of Debt",
+            "{country}\\financial-statements-{model}.xlsx::{fuel}::DEBT:EoP"
             ]
         }
     ]

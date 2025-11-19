@@ -46,3 +46,4 @@ urllib3==1.26.20
 uvicorn==0.21.1
 watchdog==6.0.0
 python-multipart
+openpyxl
