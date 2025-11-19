@@ -950,7 +950,8 @@
         },
         {
             "formula_steps": [
-            { "op": "safe_divide", "operands": [["index", 0], ["index", 1]], "result": "final" }
+            { "op": "safe_divide", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
+            { "op": "percentage", "operands": [["index", "temp1"]], "result": "final" }
             ],
             "target": "Net Income:% Revenues",
             "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::Net Income",
@@ -1473,6 +1474,15 @@
             ],
             "target": "GRANTS:BoP",
             "sources": ["{country}\\financial-statements-{model}.xlsx::{fuel}::GRANTS:EoP"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "safe_divide", "operands": [["index", 0], ["index", 1]], "result": "final" }
+            ],
+            "target": "GRANTS:% with grants",
+            "sources": ["{country}\\financial-statements-{model}.xlsx::{fuel}::GRANTS:- Realisation",
+            "{country}\\financial-statements-{model}.xlsx::{fuel}::CAPEX"
             ]
         },
         {

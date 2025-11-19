@@ -6,10 +6,10 @@ import streamlit as st
 
 class FinancialStatements:
     
-    def __init__(self, excel_editor, country, subsection, model, fuel):
+    def __init__(self, excel_editor, country, suBalance Sheetection, model, fuel):
         self.excel_editor = excel_editor
         self.country = country
-        self.subsection = subsection
+        self.suBalance Sheetection = suBalance Sheetection
         self.model = model
         self.fuel = fuel
         self.key_fuels = "more_expanded"
@@ -18,10 +18,10 @@ class FinancialStatements:
         self.df = None
         self.edited_df = None
         self.subtables = {}
-        self.section_headers = ["P&L", "BS", "CFS", "PP&E - Capex", "WCC", "ES", "CS"]
-        self.subtable_heights = {"P&L": 1070, "BS": 870, "CFS": 580, "PP&E - Capex": 230, "WCC": 320, "ES": 200, "CS": 410}
+        self.section_headers = ["Profit & Loss", "Balance Sheet", "Cash Flow Statement", "Property, Plant & Equipement (PP&E) - Capex", "Working Capital Calculations", "Equity Schedule", "Capital Structure"]
+        self.subtable_heights = {"Profit & Loss": 1070, "Balance Sheet": 870, "Cash Flow Statement": 580, "Property, Plant & Equipement (PP&E) - Capex": 230, "Working Capital Calculations": 320, "Equity Schedule": 200, "Capital Structure": 410}
         self.empty_rows = {
-            "P&L": {"col": "", "partial": [], "full": []}
+            "Profit & Loss": {"col": "", "partial": [], "full": []}
         }
     
     def split_into_subtables(self):
@@ -34,8 +34,8 @@ class FinancialStatements:
             if h.lower() in first_col.values
         }
         
-        if "P&L" not in sections and "BS" in sections:
-            sections["P&L"] = 0
+        if "Profit & Loss" not in sections and "Balance Sheet" in sections:
+            sections["Profit & Loss"] = 0
         
         sorted_sections = sorted(sections.items(), key=lambda x: x[1])
         for i, (section, start_idx) in enumerate(sorted_sections):
@@ -68,8 +68,8 @@ class FinancialStatements:
             if df.empty:
                 continue
 
-            height = self.subtable_heights.get(section, self.subtable_heights["P&L"])
-            empty_rows = self.empty_rows.get(section, self.empty_rows["P&L"])
+            height = self.subtable_heights.get(section, self.subtable_heights["Profit & Loss"])
+            empty_rows = self.empty_rows.get(section, self.empty_rows["Profit & Loss"])
             self.excel_editor.load_data(df, height, [], empty_rows)
             edited_df = self.excel_editor.show()
             self.subtables[self.fuel][section] = edited_df
