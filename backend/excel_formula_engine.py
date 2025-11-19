@@ -7,18 +7,28 @@ from functools import lru_cache
 from openpyxl import load_workbook
 
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CONFIG_FILE = os.path.join(BASE_DIR, "config.json")
+
 OPS_MAP = {
     "addition": lambda *args: sum(args),
     "subtraction": lambda x, y: x - y,
     "multiply": lambda x, y: x * y,
     "multiply_per": lambda x, y: (x * y)/100,
     "divide": lambda x, y: x / y,
+    "safe_divide": lambda x, y: (x / y) if y != 0 else 0,
+    "safe_divide_minus": lambda x, y, z: (x / y - z) if y != 0 else 0,
     "gt": lambda x, y: x > y,
+    "lt": lambda x, y: x < y,
+    "equal": lambda x, y: x == y,
     "if": lambda condition, true_val, false_val: true_val if condition else false_val,
     "copy": lambda x: x,
     "min": lambda x, y: min(x, y),
     "max": lambda x, y: max(x, y),
     "abs": lambda x: abs(x),
+    "negative": lambda x: - x,
+    "percentage": lambda x: x*100,
+    "int": lambda x: int(x)
 }
 
 
@@ -81,8 +91,42 @@ class ExcelFormulaProcessor:
         except Exception as e:
             raise RuntimeError(f"Error applying number formatting: {str(e)}")
 
-    def apply_formulas(self, file_path, formulas_json_path, country, models, fuels, expected_sheets):
-        
+    def _manage_upload_flag(self, file_path, action="read", value=None):
+
+        try:
+            flag_path = file_path + ".upload_flag"
+            
+            if action == "read":
+                if os.path.exists(flag_path):
+                    with open(flag_path, 'r') as f:
+                        return f.read().strip() == "True"
+                return False
+                
+            elif action == "write":
+                if value is None:
+                    raise ValueError()
+                with open(flag_path, 'w') as f:
+                    f.write(str(value))
+                return None
+                
+            elif action == "clear":
+                if os.path.exists(flag_path):
+                    os.remove(flag_path)
+                return None
+                
+            else:
+                raise ValueError(f"Not a valid action.")
+                
+        except Exception as e:
+            if action == "read":
+                return False
+            return None
+
+    def apply_formulas(self, file_path, formulas_json_path, country, models, fuels, expected_sheets, just_uploaded=False):
+
+        just_uploaded = self._manage_upload_flag(file_path, "read")
+        print(f"🔧 APPLY FORMULAS - just_uploaded: {just_uploaded}")
+    
         try:            
             with open(formulas_json_path) as f:
                 formulas_json = json.load(f)
@@ -98,15 +142,19 @@ class ExcelFormulaProcessor:
             specific_values = self._extract_specific_values(file_path_norm, models, fuels, expected_sheets)
             
             expanded_formulas = self._expand_single_formulas(
-                formulas_sheet_file, country, models, fuels, expected_sheets, specific_values
+                formulas_sheet_file, country, models, fuels, expected_sheets, specific_values, just_uploaded
             )
             
-            self._process_formulas_sheet_file(file_path_norm, expanded_formulas)
+            self._process_formulas_sheet_file(file_path_norm, expanded_formulas, just_uploaded)
                 
+            if just_uploaded:
+                self._manage_upload_flag(file_path, "clear")
+                print(f"🧹 Flag de upload limpiado para: {file_path}")
+                    
         except Exception as e:
             traceback.print_exc()
             raise RuntimeError(f"Error applying formulas: {str(e)}")
-
+    
     def _expand_main_keys_json(self, formulas_json, country, models, fuels, expected_sheets):    
         
         expanded_json = {}
@@ -140,76 +188,103 @@ class ExcelFormulaProcessor:
         
         return expanded_json
     
-    def _expand_single_formulas(self, formulas_sheet_file, country, models, fuels, expected_sheets, specific_values=None):
-        
+    def _expand_single_formulas(self, formulas_sheet_file, country, models, fuels, expected_sheets, specific_values=None, just_uploaded=False):
+    
         expanded_formulas = {}
         if specific_values is None:
             specific_values = {'model': None, 'fuel': None, 'sheet': None}
         
+        print(f"🔧 EXPANDIENDO FÓRMULAS - Archivo tiene {len(formulas_sheet_file)} secciones: {list(formulas_sheet_file.keys())}")
+        print(f"🔧 EXPANDIENDO FÓRMULAS - just_uploaded: {just_uploaded}")
+    
+        print(f"   Models disponibles: {models}")
+        print(f"   Specific model: {specific_values['model']}")
+        
         for sheet_name, formulas in formulas_sheet_file.items():
-            fuels_to_expand = []
+            print(f"📑 PROCESANDO SECCIÓN: '{sheet_name}'")
             
+            # Expandir nombre de hoja si es {fuel}
             if sheet_name == "{fuel}":
-                if specific_values['fuel']:
-                    fuels_to_expand = [specific_values['fuel']]
-                else:
-                    fuels_to_expand = fuels
+                print(f"   🔥 EXPANDIENDO {{fuel}} → {fuels}")
+                sheets_to_expand = fuels
+            elif sheet_name == "{sheet}":
+                sheets_to_expand = expected_sheets
             else:
-                expanded_formulas[sheet_name] = []
-                fuels_to_expand = [None]
+                sheets_to_expand = [sheet_name]
+                print(f"   ✅ HOJA ESPECÍFICA: {sheet_name}")
             
-            for fuel_val in fuels_to_expand:
-                if sheet_name == "{fuel}" and fuel_val:
-                    expanded_sheet_name = fuel_val
-                else:
-                    expanded_sheet_name = sheet_name
+            for expanded_sheet_name in sheets_to_expand:
+                print(f"   🎯 HOJA FINAL: '{expanded_sheet_name}'")
                 
-                expanded_formulas[expanded_sheet_name] = []
+                if expanded_sheet_name not in expanded_formulas:
+                    expanded_formulas[expanded_sheet_name] = []
                 
+                # Para cada fórmula, determinar si necesita expansión de model
                 for formula in formulas:
                     target = formula.get("target", "")
-                    source_labels = formula.get("sources", [])
+                    sources = formula.get("sources", [])
+
+                    uses_upload_file = any("upload-" in source for source in sources)
+                
+                    if uses_upload_file and not just_uploaded:
+                        print(f"   ⏭️  Saltando fórmula (no just_uploaded): {formula['target']}")
+                        continue
                     
-                    needs_country = any("{country}" in s for s in [target] + source_labels)
-                    needs_model = any("{model}" in s for s in [target] + source_labels)
-                    needs_fuel = any("{fuel}" in s for s in [target] + source_labels)
-                    needs_sheet = any("{sheet}" in s for s in [target] + source_labels)
+                    # Verificar si esta fórmula necesita expansión de model
+                    needs_model = any("{model}" in s for s in [target] + sources)
                     
-                    models_to_use = [specific_values['model']] if (needs_model and specific_values['model']) else (models if needs_model else [None])
+                    if needs_model:
+                        # Si necesita model y hay un valor específico, usar solo ese
+                        if specific_values['model']:
+                            models_to_use = [specific_values['model']]
+                        else:
+                            # Si no hay valor específico, expandir para todos los modelos
+                            models_to_use = models
+                    else:
+                        models_to_use = [None]
                     
-                    fuels_to_use = [fuel_val] if (needs_fuel and fuel_val) else ([specific_values['fuel']] if (needs_fuel and specific_values['fuel']) else (fuels if needs_fuel else [None]))
+                    print(f"   📝 Fórmula target: '{target}' -> necesita model: {needs_model}, models a usar: {models_to_use}")
                     
-                    sheets_to_use = [specific_values['sheet']] if (needs_sheet and specific_values['sheet']) else (expected_sheets if needs_sheet else [None])
-                    
-                    combinations = product(
-                        [country] if needs_country else [None],
-                        models_to_use if needs_model else [None],
-                        fuels_to_use if needs_fuel else [None],
-                        sheets_to_use if needs_sheet else [None]
-                    )
-                    
-                    for country_val, model_val, formula_fuel_val, sheet_val in combinations:
-                        final_fuel_val = fuel_val if fuel_val else formula_fuel_val
-                        
+                    # Expandir para cada modelo necesario
+                    for model_val in models_to_use:
                         new_formula = deepcopy(formula)
-                        if country_val: new_formula["target"] = new_formula["target"].replace("{country}", country_val)
-                        if model_val: new_formula["target"] = new_formula["target"].replace("{model}", model_val)
-                        if final_fuel_val: new_formula["target"] = new_formula["target"].replace("{fuel}", final_fuel_val)
-                        if sheet_val: new_formula["target"] = new_formula["target"].replace("{sheet}", sheet_val)
+                        target = new_formula.get("target", "")
+                        sources = new_formula.get("sources", [])
                         
-                        new_source_labels = []
-                        for label in new_formula["sources"]:
-                            if country_val: label = label.replace("{country}", country_val)
-                            if model_val: label = label.replace("{model}", model_val)
-                            if final_fuel_val: label = label.replace("{fuel}", final_fuel_val)
-                            if sheet_val: label = label.replace("{sheet}", sheet_val)
-                            new_source_labels.append(label)
-                        new_formula["sources"] = new_source_labels
+                        # Reemplazar placeholders en target
+                        if "{country}" in target:
+                            new_formula["target"] = target.replace("{country}", country)
+                        if "{model}" in target and model_val:
+                            new_formula["target"] = target.replace("{model}", model_val)
+                        if "{fuel}" in target:
+                            new_formula["target"] = target.replace("{fuel}", expanded_sheet_name)
+                        if "{sheet}" in target:
+                            new_formula["target"] = target.replace("{sheet}", expanded_sheet_name)
+                        
+                        # Reemplazar placeholders en sources
+                        new_sources = []
+                        for source in sources:
+                            if "{country}" in source:
+                                source = source.replace("{country}", country)
+                            if "{model}" in source and model_val:
+                                source = source.replace("{model}", model_val)
+                            if "{fuel}" in source:
+                                source = source.replace("{fuel}", expanded_sheet_name)
+                            if "{sheet}" in source:
+                                source = source.replace("{sheet}", expanded_sheet_name)
+                            new_sources.append(source)
+                        
+                        new_formula["sources"] = new_sources
                         
                         expanded_formulas[expanded_sheet_name].append(new_formula)
-                        
+                        print(f"   ✅ Fórmula expandida: {new_formula['target']}")
+        
+        print(f"📊 RESULTADO - Hojas expandidas: {list(expanded_formulas.keys())}")
+        for sheet_name, formulas in expanded_formulas.items():
+            print(f"   📑 {sheet_name}: {len(formulas)} fórmulas")
+        
         return expanded_formulas
-    
+
     def _extract_specific_values(self, file_path, models, fuels, expected_sheets):
         
         specific_values = {
@@ -235,32 +310,39 @@ class ExcelFormulaProcessor:
         
         return specific_values
 
-    def _process_formulas_sheet_file(self, file_path, formulas_sheet_file):
-        
+    def _process_formulas_sheet_file(self, file_path, formulas_sheet_file, just_uploaded=False):
+    
         self.clear_workbook_cache()
-        
+    
         wb = load_workbook(file_path)
         
         try:
             changes_made = False
             for sheet_name, formulas in formulas_sheet_file.items():
+                print(wb.sheetnames)
                 if sheet_name not in wb.sheetnames:
+                    print(f"⚠️ Hoja '{sheet_name}' no encontrada en el archivo")
                     continue
                 
                 ws = wb[sheet_name]
+                print(f"🔧 PROCESANDO HOJA: '{sheet_name}' con {len(formulas)} fórmulas")
                 
-                for formula_idx, formula in enumerate(formulas):
+                for formula in formulas:
                     try:
                         formula_changed = self._execute_single_formula(ws, formula)
                         if formula_changed:
                             changes_made = True
+                            print(f"✅ Cambios realizados en hoja '{sheet_name}'")
                     except Exception as e:
+                        print(f"❌ Error en fórmula de hoja '{sheet_name}': {str(e)}")
                         continue
             
             if changes_made:
                 wb.save(file_path)
-                
                 self._apply_number_formatting(file_path)
+                print("💾 Archivo guardado con cambios")
+            #else:
+                print("ℹ️ No hubo cambios para guardar")
             
         except Exception as e:
             traceback.print_exc()
@@ -268,56 +350,22 @@ class ExcelFormulaProcessor:
             if hasattr(wb, 'close'):
                 wb.close()
     
-    def _execute_single_formula(self, ws, formula):
-        
-        try:
-            target_label = formula["target"]
-            source_labels = formula["sources"]
-            formula_steps = formula.get("formula_steps", [])
-            
-            target_cells = self._find_cells_from_target_label(target_label, ws)
-            if not target_cells:
-                return False
-            
-            source_cells_list = []
-            for source_label in source_labels:
-                cell_refs = self._get_cell_refs_from_source_label(source_label, ws)
-                if not cell_refs:
-                    return False
-                source_cells_list.append(cell_refs)
-            
-            changes_made = False
-            for cell_index in range(len(target_cells)):
-                
-                current_values = []
-                for cell_refs in source_cells_list:
-                    if cell_index < len(cell_refs):
-                        value = self._get_cell_value_from_ref(cell_refs[cell_index], ws)
-                        current_values.append(value)
-                    else:
-                        current_values.append(0)
-                
-                final_value = self._execute_formula_for_cell(
-                    formula_steps, current_values, source_cells_list, cell_index, ws
-                )
-                
-                target_cell = target_cells[cell_index]
-                current_target_value = ws[target_cell].value
-                
-                if current_target_value != final_value:
-                    ws[target_cell] = final_value
-                    changes_made = True
-                    
-            return changes_made
-                    
-        except Exception as e:
-            traceback.print_exc()
-            return False
-
     def _get_cell_value_from_ref(self, cell_ref, default_ws):
-        
+    
         try:
-            if "::" in cell_ref and "!" in cell_ref:
+            # DETECTAR SI ES UNA REFERENCIA A CONFIG.JSON
+            if "config.json" in cell_ref:
+                # Formato: "config.json::{country}::TAX_RATES"
+                parts = cell_ref.split("::")
+                if len(parts) == 3:
+                    _, country, config_key = parts
+                    return self._get_config_value(country, config_key)
+                else:
+                    print(f"   ❌ Formato de referencia JSON incorrecto: {cell_ref}")
+                    return 0
+                
+            # PROCESAMIENTO NORMAL DE EXCEL
+            elif "::" in cell_ref and "!" in cell_ref:
                 file_part, rest = cell_ref.split("::")
                 sheet_part, coord = rest.split("!")
                 file_path = os.path.normpath(file_part)
@@ -329,38 +377,170 @@ class ExcelFormulaProcessor:
             
             return self._convert_to_numeric(value) if self._is_numeric_value(value) else 0
         except Exception as e:
+            print(f"   ❌ Error obteniendo valor de referencia: {e}")
             return 0
+    
+    def _execute_single_formula(self, ws, formula):
+    
+        try:
+            print(f"📄 EJECUTANDO FÓRMULA EN HOJA: '{ws.title}'")
+            print(f"   TARGET: '{formula['target']}'")
+            print(f"   SOURCES: {formula['sources']}")
+            print(f"   STEPS: {formula.get('formula_steps', [])}")
 
-    def _get_operand_value(self, operand, current_values, current_results):
-
-        if isinstance(operand, list):
-            if operand[0] == "index":
-                key = operand[1]
-                if isinstance(key, int):
-                    return current_values[key] if key < len(current_values) else 0
+            target_label = formula["target"]
+            source_labels = formula["sources"]
+            formula_steps = formula.get("formula_steps", [])
+            
+            target_cells = self._find_cells_from_target_label(target_label, ws)
+            if not target_cells:
+                print(f"   ❌ NO SE ENCONTRARON CELDAS TARGET")
+                return False
+            
+            print(f"   ✅ Celdas target encontradas: {len(target_cells)}")
+            
+            source_cells_list = []
+            for i, source_label in enumerate(source_labels):
+                print(f"   🔍 Obteniendo fuente {i}: '{source_label}'")
+                cell_refs = self._get_cell_refs_from_source_label(source_label, ws)
+                if not cell_refs:
+                    print(f"   ❌ No se encontraron referencias para fuente: '{source_label}'")
+                    return False
+                print(f"   ✅ Fuente {i} tiene {len(cell_refs)} referencias")
+                source_cells_list.append(cell_refs)
+            
+            changes_made = False
+            for cell_index in range(len(target_cells)):
+                print(f"   🔄 Procesando celda {cell_index + 1}/{len(target_cells)}")
+                
+                current_values = []
+                for i, cell_refs in enumerate(source_cells_list):
+                    if cell_index < len(cell_refs):
+                        value = self._get_cell_value_from_ref(cell_refs[cell_index], ws)
+                        current_values.append(value)
+                        print(f"      Fuente {i} valor: {value}")
+                    else:
+                        current_values.append(0)
+                        print(f"      Fuente {i} valor: 0 (fuera de rango)")
+                
+                final_value = self._execute_formula_for_cell(
+                    formula_steps, current_values, source_cells_list, cell_index, ws
+                )
+                
+                print(f"      Valor calculado: {final_value}")
+                
+                target_cell = target_cells[cell_index]
+                current_target_value = ws[target_cell].value
+                
+                if current_target_value != final_value:
+                    ws[target_cell] = final_value
+                    changes_made = True
+                    print(f"      ✅ ACTUALIZADO {target_cell}: {current_target_value} -> {final_value}")
+                #else:
+                    print(f"      ⏭️  Sin cambios en {target_cell}")
+                    
+            return changes_made
+                
+        except Exception as e:
+            print(f"   ❌ ERROR en fórmula: {str(e)}")
+            traceback.print_exc()
+            return False
+    
+    def _get_config_value(self, country, config_key):
+        try:
+            if not os.path.exists(CONFIG_FILE):
+                print(f"   ❌ Archivo config.json no encontrado en: {CONFIG_FILE}")
+                return 0
+            
+            with open(CONFIG_FILE, 'r') as f:
+                config = json.load(f)
+            
+            # Manejar claves anidadas como "COUNTRY_YEAR_RANGES:start"
+            if ":" in config_key:
+                main_key, sub_key = config_key.split(":", 1)
+                if main_key in config:
+                    country_data = config[main_key].get(country, {})
+                    value = country_data.get(sub_key)
+                    if value is not None:
+                        print(f"   ✅ Valor de config.json: {country} -> {main_key}.{sub_key} = {value}")
+                        return float(value)
+                    else:
+                        print(f"   ❌ {sub_key} no encontrado en {main_key} para país: {country}")
+                        return 0
                 else:
-                    return current_results.get(key, 0)
-            elif operand[0] in ["literal", "range"]:
-                return operand[1]
-        elif isinstance(operand, str):
-            return current_results.get(operand, 0)
-        elif isinstance(operand, (int, float)):
-            return operand
-        else:
+                    print(f"   ❌ Clave principal no encontrada: {main_key}")
+                    return 0
+            else:
+                # Manejo original para claves simples
+                if config_key in config:
+                    value = config.get(config_key, {}).get(country)
+                    if value is not None:
+                        print(f"   ✅ Valor de config.json: {country} -> {config_key} = {value}")
+                        return float(value)
+                    else:
+                        print(f"   ❌ {config_key} no encontrado para país: {country}")
+                        return 0
+                else:
+                    print(f"   ❌ Clave de config no encontrada: {config_key}")
+                    return 0
+                    
+        except Exception as e:
+            print(f"   ❌ Error leyendo config.json: {e}")
+            return 0
+    
+    def _get_operand_value(self, operand, current_values, current_results):
+        try:
+            if isinstance(operand, list):
+                if operand[0] == "index":
+                    key = operand[1]
+                    if isinstance(key, int):
+                        value = current_values[key] if key < len(current_values) else 0
+                    else:
+                        value = current_results.get(key, 0)
+                    # Convertir a número
+                    return float(value) if value is not None else 0
+                elif operand[0] in ["literal", "range"]:
+                    value = operand[1]
+                    # Convertir a número
+                    return float(value) if value is not None else 0
+            elif isinstance(operand, str):
+                value = current_results.get(operand, 0)
+                # Convertir a número
+                return float(value) if value is not None else 0
+            elif isinstance(operand, (int, float)):
+                return float(operand)
+            else:
+                return 0
+        except (ValueError, TypeError) as e:
+            print(f"      ❌ Error convirtiendo operando a número: {e} para {operand}")
             return 0
     
     def _get_cell_refs_from_source_label(self, source_label, default_ws):
+    
+        print(f"   🔍 BUSCANDO FUENTE: '{source_label}'")
+        
+        # DETECTAR SI ES UNA REFERENCIA A CONFIG.JSON
+        if "config.json" in source_label:
+            print(f"   ✅ Es una referencia a config.json")
+            # Para config.json, devolvemos una lista con una referencia especial
+            # que será manejada por _get_cell_value_from_ref
+            return [source_label]  # ← Devuelve la misma referencia como "celda"
         
         if "::" in source_label:
             parts = source_label.split("::")
             if len(parts) == 3:
                 file_part, sheet_part, label_part = parts
             else:
+                print(f"   ❌ Formato de fuente incorrecto: {source_label}")
                 return []
         else:
             file_part = None
             sheet_part = default_ws.title
             label_part = source_label
+        
+        print(f"      Archivo: {file_part}")
+        print(f"      Hoja: {sheet_part}") 
+        print(f"      Label: {label_part}")
         
         if file_part:
             file_path = os.path.normpath(file_part)
@@ -425,16 +605,20 @@ class ExcelFormulaProcessor:
             cell_refs.append(ref)
         
         return cell_refs
-
+    
     def _execute_formula_for_cell(self, formula_steps, current_values, source_cells_list, cell_index, default_ws):
-        
+    
         results = {}
-        
+        print(f"      🧮 Ejecutando fórmula para celda {cell_index}")
+        print(f"      Valores actuales: {current_values}")
+
         for step in formula_steps:
             op = step["op"]
             operands = step["operands"]
             result_key = step["result"]
-            
+
+            print(f"      Paso: {op} {operands} -> {result_key}")
+        
             if op == "offset":
                 result = self._execute_offset_operation(
                     operands, current_values, results, source_cells_list, cell_index, default_ws
@@ -444,36 +628,41 @@ class ExcelFormulaProcessor:
                     operands, current_values, results, source_cells_list, cell_index, default_ws, step
                 )
             elif op == "range":
-                result = cell_index + operands[0][1]
-                
+                # CORRECCIÓN: Usar _get_operand_value para obtener el valor numérico
+                range_value = self._get_operand_value(operands[0], current_values, results)
+                result = cell_index + range_value
+                    
             elif op == "value":
-                source_index = operands[0][1]
-                cell_index_to_get = operands[1][1] 
-                
-                if 0 <= source_index < len(source_cells_list):
-                    cell_refs = source_cells_list[source_index]
-                    if 0 <= cell_index_to_get < len(cell_refs):
-                        result = self._get_cell_value_from_ref(cell_refs[cell_index_to_get], default_ws)  
+                if len(operands) >= 2:
+                    # CORRECCIÓN: Si el operando es ["index", N], usar N directamente como índice
+                    if isinstance(operands[0], list) and operands[0][0] == "index":
+                        source_index = operands[0][1]  # Usar el valor literal del índice
+                    else:
+                        source_index = self._get_operand_value(operands[0], current_values, results)
+                    
+                    if isinstance(operands[1], list) and operands[1][0] == "literal":
+                        cell_index_to_get = operands[1][1]  # Usar el valor literal
+                    else:
+                        cell_index_to_get = self._get_operand_value(operands[1], current_values, results)
+                    
+                    # Convertir a enteros
+                    source_index = int(source_index)
+                    cell_index_to_get = int(cell_index_to_get)
+                    
+                    if 0 <= source_index < len(source_cells_list):
+                        cell_refs = source_cells_list[source_index]
+                        if 0 <= cell_index_to_get < len(cell_refs):
+                            result = self._get_cell_value_from_ref(cell_refs[cell_index_to_get], default_ws)  
+                        else:
+                            result = 0
                     else:
                         result = 0
-                else:
-                    result = 0
+                    
             else:
+                # Para otras operaciones, usar el método existente
                 ops_args = []
                 for operand in operands:
-                    if isinstance(operand, list):
-                        if operand[0] == "index":
-                            index = operand[1]
-                            if isinstance(index, int) and index < len(current_values):
-                                ops_args.append(current_values[index])
-                            elif index in results:
-                                ops_args.append(results[index])
-                            else:
-                                ops_args.append(0)
-                        elif operand[0] == "literal":
-                            ops_args.append(operand[1])
-                    else:
-                        ops_args.append(0)
+                    ops_args.append(self._get_operand_value(operand, current_values, results))
                 
                 if op in OPS_MAP:
                     result = OPS_MAP[op](*ops_args)
@@ -481,8 +670,11 @@ class ExcelFormulaProcessor:
                     result = 0
             
             results[result_key] = result
+            print(f"      Resultado intermedio {result_key}: {result}")
         
-        return results.get("final", 0)
+        final_result = results.get("final", 0)
+        print(f"      ✅ Resultado final: {final_result}")
+        return final_result
     
     def _execute_sum_range_operation(self, operands, current_values, current_results, source_cells_list, current_index, default_ws, step=None):
         
@@ -500,6 +692,14 @@ class ExcelFormulaProcessor:
         
         if 0 <= source_index < len(source_cells_list):
             cell_refs = source_cells_list[source_index]
+            
+            if width == "all":
+                total = 0
+                for ref in cell_refs:
+                    value = self._get_cell_value_from_ref(ref, default_ws)
+                    total += value
+                return total
+            
             total = 0
             
             if direction == "backward":
@@ -537,16 +737,21 @@ class ExcelFormulaProcessor:
             return 0
     
     def _execute_offset_operation(self, operands, current_values, current_results, source_cells_list, current_index, default_ws):
-        
+    
+        # PRIMERO obtener source_index
         if isinstance(operands[0], list) and operands[0][0] == "index":
             source_index = operands[0][1]
         else:
             source_index = self._get_operand_value(operands[0], current_values, current_results)
         
+        # LUEGO obtener offset  
         if isinstance(operands[1], list) and operands[1][0] == "literal":
             offset = operands[1][1]
         else:
             offset = self._get_operand_value(operands[1], current_values, current_results)
+        
+        # AHORA SÍ usar offset en el print
+        print(f"         OFFSET: source_index={source_index}, offset={offset}, current_index={current_index}")
         
         if 0 <= source_index < len(source_cells_list):
             cell_refs = source_cells_list[source_index]
@@ -563,8 +768,17 @@ class ExcelFormulaProcessor:
             return 0
     
     def _find_cells_from_target_label(self, target_label, worksheet):
+    
+        label_parts = target_label.split(":")
         
-        label_parts = target_label.split(":")        
+        print(f"🎯 BUSCANDO TARGET: '{target_label}'")
+        print(f"   Partes del label: {label_parts}")
+        print(f"   En hoja: '{worksheet.title}'")
+        
+        # PRINT ESPECIAL PARA EBIT
+        if "EBIT" in target_label.upper():
+            print(f"   🔍🔍🔍 BÚSQUEDA ESPECIAL PARA EBIT - Buscando coincidencia EXACTA")
+        
         target_row = None
         for row in range(1, worksheet.max_row + 1):
             type_value = str(worksheet.cell(row=row, column=1).value or "").strip()
@@ -572,12 +786,48 @@ class ExcelFormulaProcessor:
             expected_type = label_parts[0].strip()
             expected_sub = label_parts[1].strip() if len(label_parts) > 1 else ""
 
-            if expected_type.lower() in type_value.lower() and expected_sub.lower() in sub_value.lower():
+            print(f"   🔍 Fila {row}: C1='{type_value}', C2='{sub_value}'")
+
+            # PRINT ESPECIAL PARA EBIT EN CADA FILA
+            if "EBIT" in target_label.upper():
+                print(f"   🔍🔍🔍 COMPARANDO EBIT: '{expected_type}' vs '{type_value}' - ¿Coincidencia exacta? {expected_type.lower() == type_value.lower()}")
+
+            type_match = (type_value.lower() == expected_type.lower())
+            sub_match = (expected_sub == "") or (sub_value.lower() == expected_sub.lower())
+            
+            if type_match and sub_match:
                 target_row = row
+                # PRINT ESPECIAL PARA EBIT CUANDO ENCUENTRA
+                if "EBIT" in target_label.upper():
+                    print(f"   ✅✅✅ EBIT ENCONTRADO en fila {row} (COINCIDENCIA EXACTA)")
+                    print(f"      ✅ Buscaba EXACTAMENTE: '{expected_type}'")
+                    print(f"      ✅ Encontró EXACTAMENTE: '{type_value}'")
+                    if expected_sub:
+                        print(f"      ✅ Sub-búsqueda: '{expected_sub}' vs '{sub_value}'")
+                else:
+                    print(f"   ✅ ENCONTRADO en fila {row} (COINCIDENCIA EXACTA)")
+                    print(f"      Buscaba: '{expected_type}' vs Encontrado: '{type_value}'")
+                    if expected_sub:
+                        print(f"      Buscaba: '{expected_sub}' vs Encontrado: '{sub_value}'")
                 break
 
         if target_row is None:
+            # PRINT ESPECIAL PARA EBIT CUANDO NO ENCUENTRA
+            if "EBIT" in target_label.upper():
+                print(f"   ❌❌❌ EBIT NO ENCONTRADO: No se encontró coincidencia exacta para '{target_label}'")
+            else:
+                print(f"   ❌ NO ENCONTRADO: '{target_label}'")
             return []
+        
+        print(f"   ✅ Target encontrado en fila {target_row}")
+        
+        # ... el resto del código igual ...
+
+        if target_row is None:
+            print(f"   ❌ NO ENCONTRADO: '{target_label}'")
+            return []
+        
+        print(f"   ✅ Target encontrado en fila {target_row}")
         
         baseline_col = None
         header_row = 1
@@ -597,6 +847,7 @@ class ExcelFormulaProcessor:
                 baseline_col = None
         
         if baseline_col is None:
+            
             start_search_col = len(label_parts) + 1
             for col in range(start_search_col, worksheet.max_column + 1):
                 cell_value = worksheet.cell(row=target_row, column=col).value
@@ -622,4 +873,4 @@ class ExcelFormulaProcessor:
                 break
         
         return numeric_cells
-
+    

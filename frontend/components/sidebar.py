@@ -123,7 +123,21 @@ def show():
 
             if st.session_state.model != "BAU":
                 
-                with st.expander("Design Capital Structure", expanded=False):
+                """
+                st.markdown("##### Design Capital Structure")
+                for fuel in st.session_state.fuels_expanded:
+                    if st.button(f"{fuel} Financial Plan", key=f"design_{fuel}"):
+                        st.session_state.section = "technoeconomic_models"
+                        st.session_state.subsection = "design_capital"
+                        st.session_state.fuel = fuel
+                        st.rerun()
+
+                if st.session_state.section == "technoeconomic_models" and st.session_state.subsection == "design_capital" and not st.session_state.fuel:
+                    st.session_state.fuel = st.session_state.fuels_expanded[0]
+                """
+                
+                st.markdown("##### Design Capital Structure")
+                with st.expander("", expanded=False):
                     for fuel in st.session_state.fuels_expanded:
                         if st.button(f"{fuel} Financial Plan"):
                             st.session_state.section = "technoeconomic_models"

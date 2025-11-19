@@ -19,6 +19,10 @@ from fastapi import FastAPI, HTTPException, BackgroundTasks, UploadFile, File
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_FILE = os.path.join(BASE_DIR, "config.json")
 JSON_FORMULAS = "formulas_map.json"
+UPLOAD_DEPENDENT_FILES = [
+    "technoeconomic-inputs-{model}.xlsx",
+    "financial-statements-{model}.xlsx"
+]
 
 def load_config():
     with open(CONFIG_FILE, "r") as f:
@@ -523,16 +527,14 @@ def download_template_file(country, template, model, key_fuels):
             except:
                 pass
         raise HTTPException(status_code=500, detail=str(e))
- 
+
 @app.post("/upload-template")
 async def upload_template_file(country: str, model: str, file: UploadFile = File(...)):
     try:
-        expected_name = f"upload-BAU.xlsx" if model.lower() == "bau" else f"upload-{model}.xlsx"
+        expected_name = f"upload-{model}.xlsx"
         
         if file.filename != expected_name:
-            raise HTTPException(
-                status_code=400
-            )
+            raise HTTPException(status_code=400)
         
         country_dir = os.path.join(BASE_DIR, country)
         os.makedirs(country_dir, exist_ok=True)
@@ -542,13 +544,35 @@ async def upload_template_file(country: str, model: str, file: UploadFile = File
             content = await file.read()
             buffer.write(content)
         
-        return {"status": "success", "filename": file.filename}
+        config = load_config()        
+        files_to_flag = []
+        
+        for file_template in UPLOAD_DEPENDENT_FILES:
+            if "{model}" in file_template:
+                file_name = file_template.replace("{model}", model)
+                file_path = os.path.join(BASE_DIR, country, file_name)
+                if os.path.exists(file_path):
+                    files_to_flag.append(file_path)
+            
+            else:
+                file_path = os.path.join(BASE_DIR, country, file_template)
+                if os.path.exists(file_path):
+                    files_to_flag.append(file_path)
+        
+        for file_path in files_to_flag:
+            excel_processor._manage_upload_flag(file_path, "write", True)
+        
+        return {
+            "status": "success", 
+            "filename": file.filename,
+            "files_flagged": len(files_to_flag)
+        }
         
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
+
 @app.delete("/model")
 def delete_model(request: ModelRequest):
     config = load_config()
@@ -572,8 +596,10 @@ def delete_model(request: ModelRequest):
                 os.remove(upload_path)
 
         destination_upload_path = os.path.join(BASE_DIR, country, "upload-BAU.xlsx")
-        source_upload_path = os.path.join(BASE_DIR, "{templates}", "upload-BAU.xlsx")
-        shutil.copy2(source_upload_path, destination_upload_path)
+        source_upload_path = os.path.join(BASE_DIR, "{templates}", "upload-{model}.xlsx")
+        
+        formatted_source_path = source_upload_path.format(model="BAU")
+        shutil.copy2(formatted_source_path, destination_upload_path)
 
         config["MODELS"].pop(country, None)
         config["COUNTRY_YEAR_RANGES"].pop(country, None)

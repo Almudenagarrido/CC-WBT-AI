@@ -8,10 +8,7 @@ class ManageModels:
     def __init__(self, country):
         self.country = country
         self.key_fuels = "rest"
-        self.template_files = {
-            "BAU": "upload-BAU.xlsx",
-            "default": "upload-{model}.xlsx"
-        }
+        self.template_path = "upload-{model}.xlsx"
 
     def model_creator(self, models):
         st.markdown("#### ➕ Create New Techno-Economic Model")
@@ -189,13 +186,12 @@ class ManageModels:
                     )
             
             with col3:
-                template_path = self.template_files["BAU"] if model == "BAU" else self.template_files["default"]
-                template_content = u.download_template_file_from_backend(self.country, template_path, model, self.key_fuels)
+                template_content = u.download_template_file_from_backend(self.country, self.template_path, model, self.key_fuels)
                 if template_content:
                     st.download_button(
                         "📝",
                         data=template_content,
-                        file_name=template_path.format(model=model),
+                        file_name=self.template_path.format(model=model),
                         mime="application/vnd.ms-excel",
                         key=f"download_template_{model}",
                         help="Download template"
@@ -222,7 +218,7 @@ class ManageModels:
                 )
                 
                 if uploaded_file:
-                    expected_name = self.template_files["BAU"] if model == "BAU" else self.template_files["default"].format(model=model)
+                    expected_name = self.template_path["default"].format(model=model)
                     
                     if uploaded_file.name != expected_name:
                         st.error(f"Upload rejected. File must be named '{expected_name}' as the template downloaded for this model, got {uploaded_file.name}.")

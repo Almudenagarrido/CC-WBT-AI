@@ -19,7 +19,7 @@ class FinancialStatements:
         self.edited_df = None
         self.subtables = {}
         self.section_headers = ["P&L", "BS", "CFS", "PP&E - Capex", "WCC", "ES", "CS"]
-        self.subtable_heights = {"P&L": 1070, "BS": 870, "CFS": 580, "PP&E - Capex": 230, "WCC": 320, "ES": 200, "CS": 400}
+        self.subtable_heights = {"P&L": 1070, "BS": 870, "CFS": 580, "PP&E - Capex": 230, "WCC": 320, "ES": 200, "CS": 410}
         self.empty_rows = {
             "P&L": {"col": "", "partial": [], "full": []}
         }

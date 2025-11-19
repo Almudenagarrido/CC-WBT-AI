@@ -31,7 +31,7 @@ class ExcelEditor:
         self.df = df.copy().replace("-", np.nan).infer_objects(copy=False)
         self.df = self.df.dropna(how='all')
         self.df = self.df.dropna(how='all', axis=1)
-        self.height = height
+        self.height = min(height, 500)
         self.editable_columns = filtered_editable_columns
         self.empty_rows = empty_rows
         self._apply_empty_rows_on_load()
@@ -60,10 +60,18 @@ class ExcelEditor:
 
         df_filtered = df[~df.apply(lambda row: row.astype(str).str.contains(r"\{model\}", regex=True).any(), axis=1)]
 
+        for col in df_filtered.columns:
+            if pd.api.types.is_numeric_dtype(df_filtered[col]):
+                df_filtered[col] = df_filtered[col].round(2)
+
         gb = GridOptionsBuilder.from_dataframe(df_filtered)
         
         for col in df_filtered.columns:
-            gb.configure_column(col, editable=(col in self.editable_columns))
+            gb.configure_column(
+                col, editable=(col in self.editable_columns),
+                suppressMovable=True,
+                minWidth=60,
+                resizable=True)
         
         for col in df_filtered.columns:
             if ((col).isdigit() and len(col) == 4) or col == "Baseline":

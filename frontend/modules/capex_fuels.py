@@ -17,7 +17,7 @@ class CapexFuelMarket:
         self.template_route = os.path.join(country, "capex-fuels-{model}.xlsx")
         self.df = None
         self.edited_df = None
-        self.df_heights = {"LPG": 290}
+        self.df_heights = {"LPG": 310}
         self.subtables = {}
 
     def split_into_subtables(self):
