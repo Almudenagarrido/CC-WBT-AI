@@ -17,44 +17,57 @@ class CapexFuelMarket:
         self.template_route = os.path.join(country, "capex-fuels-{model}.xlsx")
         self.df = None
         self.edited_df = None
-        self.df_heights = {"Electricity": 290}
+        self.df_heights = {"LPG": 310}
         self.subtables = {}
 
     def split_into_subtables(self):
         df = self.df.reset_index(drop=True)
         self.subtables[self.fuel] = {}
 
+        if self.fuel == "Electricity":
+            self._process_electricity_structure(df)
+        else:
+            self.subtables[self.fuel][None] = df
+
+    def _process_electricity_structure(self, df):
+        
         first_col = df.iloc[:, 0].astype(str).str.strip().str.lower()
         header_rows = first_col[first_col == "type"].index.tolist()
         
         if header_rows and header_rows[0] > 0:
             first_block = df.iloc[:header_rows[0]].reset_index(drop=True)
-            key = first_block.columns.tolist()[1]
-            self.subtables[self.fuel][key] = first_block
+            
+            if len(first_block.columns) > 1:
+                key = first_block.columns.tolist()[1]
+                self.subtables[self.fuel][key] = first_block
 
         for i, start_idx in enumerate(header_rows):
             end_idx = header_rows[i + 1] if i + 1 < len(header_rows) else len(df)
             subdf = df.iloc[start_idx:end_idx].reset_index(drop=True)
 
-            header_row = subdf.iloc[0]
-            new_columns = []
-            for x in header_row:
-                if isinstance(x, float) and x.is_integer():
-                    new_columns.append(str(int(x)))
-                else:
-                    new_columns.append(str(x))
-            subdf.columns = new_columns
-            subdf = subdf.iloc[1:].reset_index(drop=True)
-            key = subdf.columns.tolist()[1]
-            self.subtables[self.fuel][key] = subdf
+            if len(subdf) > 0:
+                header_row = subdf.iloc[0]
+                new_columns = []
+                for x in header_row:
+                    if isinstance(x, float) and x.is_integer():
+                        new_columns.append(str(int(x)))
+                    else:
+                        new_columns.append(str(x))
+                subdf.columns = new_columns
+                subdf = subdf.iloc[1:].reset_index(drop=True)
+                
+                if len(subdf.columns) > 1:
+                    key = subdf.columns.tolist()[1]
+                    self.subtables[self.fuel][key] = subdf
 
     def show_excel_editor(self):
         st.subheader(f"{self.fuel} - CAPEX")
 
         for key, df in self.subtables[self.fuel].items():
-            st.markdown(f"##### {key}")
+            if key != None:
+                st.markdown(f"##### {key}")
 
-            height = self.df_heights.get(self.fuel, self.df_heights["Electricity"])
+            height = self.df_heights.get(self.fuel, self.df_heights["LPG"])
 
             self.excel_editor.load_data(df, height, [], {})
             self.edited_df = self.excel_editor.show()

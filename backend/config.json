@@ -1,10 +1,29 @@
 {
-    "COUNTRIES": [],
+    "COUNTRIES": [
+        "Rwanda",
+        "LPG testing"
+    ],
     "COUNTRY_YEAR_RANGES": {
         "template": {
             "start": 2020,
             "end": 2060
+        },
+        "Rwanda": {
+            "start": 2023,
+            "end": 2034
+        },
+        "LPG testing": {
+            "start": 2023,
+            "end": 2034
         }
+    },
+    "TAX_RATES": {
+        "Rwanda": 28,
+        "LPG testing": 28
+    },
+    "INFLATIONS": {
+        "Rwanda": 10,
+        "LPG testing": 5
     },
     "FUELS": {
         "template": {
@@ -19,8 +38,59 @@
             ],
             "rest": [
                 "Electricity",
+                "LPG"
+            ],
+            "expanded": [
+                "Electricity & E-Cooking",
+                "Electricity (Just access)",
+                "LPG"
+            ],
+            "more_expanded": [
+                "Electricity (Only E-Cooking)",
+                "Electricity & E-Cooking",
+                "Electricity (Just access)",
+                "LPG"
+            ]
+        },
+        "Rwanda": {
+            "normal": [
+                "Electricity",
+                "LPG"
+            ],
+            "carbon": [
+                "Electricity",
                 "LPG",
-                "Rest of subsidies or taxes"
+                "Carbon Credits"
+            ],
+            "rest": [
+                "Electricity",
+                "LPG"
+            ],
+            "expanded": [
+                "Electricity & E-Cooking",
+                "Electricity (Just access)",
+                "LPG"
+            ],
+            "more_expanded": [
+                "Electricity (Only E-Cooking)",
+                "Electricity & E-Cooking",
+                "Electricity (Just access)",
+                "LPG"
+            ]
+        },
+        "LPG testing": {
+            "normal": [
+                "Electricity",
+                "LPG"
+            ],
+            "carbon": [
+                "Electricity",
+                "LPG",
+                "Carbon Credits"
+            ],
+            "rest": [
+                "Electricity",
+                "LPG"
             ],
             "expanded": [
                 "Electricity & E-Cooking",
@@ -35,13 +105,28 @@
             ]
         }
     },
+    "CONSUMER_TYPES": {
+        "template": {
+            "model": []
+        }
+    },
     "ELECTRICITY_VARIANTS": [
         "Electricity",
         "Electricity & E-Cooking",
         "Electricity (Just access)",
         "Electricity (Only E-Cooking)"
     ],
-    "MODELS": {},
+    "MODELS": {
+        "Rwanda": [
+            "BAU",
+            "CleanStep"
+        ],
+        "LPG testing": [
+            "BAU",
+            "CleanStep",
+            "Aligned"
+        ]
+    },
     "SHARED_ROUTES": [
         "fuel-financial-inputs.xlsx",
         "carbon-credits-general.xlsx"
@@ -51,5 +136,10 @@
         "capex-fuels-{model}.xlsx",
         "design-capital-{model}.xlsx",
         "financial-statements-{model}.xlsx"
+    ],
+    "UPLOAD_DEPENDENT_FILES": [
+        "technoeconomic-inputs-{model}.xlsx",
+        "financial-statements-{model}.xlsx",
+        "carbon-credits-general.xlsx"
     ]
 }

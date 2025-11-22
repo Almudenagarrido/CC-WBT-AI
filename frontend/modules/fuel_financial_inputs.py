@@ -17,18 +17,17 @@ class FuelFinancialInformation:
         self.template_route = os.path.join(country, "fuel-financial-inputs-{template}.xlsx")
         self.df = None
         self.edited_df = None
-        self.df_heights = {"Electricity": 170, "LPG": 170, "Carbon": 170}
+        self.df_heights = {"Electricity": 140, "LPG": 140, "Carbon Credits": 170}
         self.editable_columns = ["Baseline"] + [str(year) for year in range(2021, 2061)]
         self.empty_rows = {
-            "Electricity": {"col": "", "partial": [], "full": []},
+            "LPG": {"col": "", "partial": [], "full": []},
             "Carbon Credits": {"col": "Inputs", "partial": ["Number of years that you could sell those carbon credits"], "full": []}
         }
 
     def show_excel_editor(self):
         st.subheader(f"{self.fuel} Financial Inputs")
-
-        height = self.df_heights.get(self.fuel, self.df_heights["Electricity"])
-        empty_rows = self.empty_rows.get(self.fuel, self.empty_rows["Electricity"])
+        height = self.df_heights.get(self.fuel, self.df_heights["LPG"])
+        empty_rows = self.empty_rows.get(self.fuel, self.empty_rows["LPG"])
 
         self.excel_editor.load_data(self.df, height, self.editable_columns, empty_rows)
         self.edited_df = self.excel_editor.show()
@@ -60,9 +59,8 @@ class FuelFinancialInformation:
                 st.rerun()
 
         if save_disabled:
-            st.warning("Please fix invalid cells before saving.")
             for input_name, col, value, error in invalid_cells:
-                st.error(f"Row '{input_name}' - Column '{col}': {error} (Current value: {value})")
+                st.warning(f"Row '{input_name}' - Column '{col}': {error} (Current value: {value})")
 
         if st.button("Reset"):
             reset = u.reset_sheet_in_backend(self.route, self.template_route, self.fuel)

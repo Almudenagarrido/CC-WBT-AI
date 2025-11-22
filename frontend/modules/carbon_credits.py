@@ -1,9 +1,7 @@
 import os
-import openpyxl
 import utils as u
 import pandas as pd
 import streamlit as st
-from openpyxl.utils.dataframe import dataframe_to_rows
 
 
 class CarbonCredits:

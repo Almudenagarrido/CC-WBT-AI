@@ -4,8 +4,6 @@ import pandas as pd
 from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 
 
-import streamlit as st
-
 warnings.filterwarnings(
     "ignore",
     category=FutureWarning,
@@ -27,12 +25,34 @@ class ExcelEditor:
         }
 
     def load_data(self, df, height, editable_columns, empty_rows):
+        
+        existing_columns = list(df.columns)
+        filtered_editable_columns = [col for col in editable_columns if col in existing_columns]
         self.df = df.copy().replace("-", np.nan).infer_objects(copy=False)
         self.df = self.df.dropna(how='all')
         self.df = self.df.dropna(how='all', axis=1)
-        self.height = height
-        self.editable_columns = editable_columns
+        self.height = min(height, 500)
+        self.editable_columns = filtered_editable_columns
         self.empty_rows = empty_rows
+        self._apply_empty_rows_on_load()
+    
+    def _apply_empty_rows_on_load(self):
+        if not self.empty_rows.get("col") or self.empty_rows["col"] not in self.df.columns:
+            return
+        
+        for row_key in self.empty_rows.get("partial", []):
+            matching_rows = self.df[self.df[self.empty_rows["col"]] == row_key].index
+            for idx in matching_rows:
+                for col in self.editable_columns:
+                    if col != "Baseline":
+                        self.df.loc[idx, col] = np.nan
+        
+        for row_key in self.empty_rows.get("full", []):
+            matching_rows = self.df[self.df[self.empty_rows["col"]] == row_key].index
+            for idx in matching_rows:
+                for col in self.editable_columns:
+                    if col != self.empty_rows["col"]:
+                        self.df.loc[idx, col] = np.nan
 
     def show(self):
 
@@ -40,10 +60,18 @@ class ExcelEditor:
 
         df_filtered = df[~df.apply(lambda row: row.astype(str).str.contains(r"\{model\}", regex=True).any(), axis=1)]
 
+        for col in df_filtered.columns:
+            if pd.api.types.is_numeric_dtype(df_filtered[col]):
+                df_filtered[col] = df_filtered[col].round(2)
+
         gb = GridOptionsBuilder.from_dataframe(df_filtered)
         
         for col in df_filtered.columns:
-            gb.configure_column(col, editable=(col in self.editable_columns))
+            gb.configure_column(
+                col, editable=(col in self.editable_columns),
+                suppressMovable=True,
+                minWidth=60,
+                resizable=True)
         
         for col in df_filtered.columns:
             if ((col).isdigit() and len(col) == 4) or col == "Baseline":
