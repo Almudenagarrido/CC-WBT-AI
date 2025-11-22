@@ -218,7 +218,7 @@ class ManageModels:
                 )
                 
                 if uploaded_file:
-                    expected_name = self.template_path["default"].format(model=model)
+                    expected_name = self.template_path.format(model=model)
                     
                     if uploaded_file.name != expected_name:
                         st.error(f"Upload rejected. File must be named '{expected_name}' as the template downloaded for this model, got {uploaded_file.name}.")

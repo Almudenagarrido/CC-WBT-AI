@@ -36,18 +36,6 @@
                 "{country}\\carbon-credits-general.xlsx::Carbon Credits::{model} vs. BAU",
                 "{country}\\fuel-financial-inputs.xlsx::Carbon Credits::CO2 certificate (%) - from the total CO2 avoided"
             ]
-        },
-        {
-            "formula_steps": [
-            { "op": "multiply_per", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
-            { "op": "multiply", "operands": [["index", 2], ["index", "temp1"]], "result": "final" }
-            ],
-            "target": "Potential income from Carbon Credits in the {model} Plan - right",
-            "sources": [
-                "{country}\\carbon-credits-general.xlsx::Carbon Credits::CO2 equivalent avoided in the {model}",
-                "{country}\\fuel-financial-inputs.xlsx::Carbon Credits::Liquidity",
-                "{country}\\fuel-financial-inputs.xlsx::Carbon Credits::Price per TON"
-            ]
         }
     ]
   },

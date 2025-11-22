@@ -1,6 +1,7 @@
 {
     "COUNTRIES": [
-        "Rwanda"
+        "Rwanda",
+        "LPG testing"
     ],
     "COUNTRY_YEAR_RANGES": {
         "template": {
@@ -10,13 +11,19 @@
         "Rwanda": {
             "start": 2023,
             "end": 2034
+        },
+        "LPG testing": {
+            "start": 2023,
+            "end": 2034
         }
     },
     "TAX_RATES": {
-        "Rwanda": 28
+        "Rwanda": 28,
+        "LPG testing": 28
     },
     "INFLATIONS": {
-        "Rwanda": 10
+        "Rwanda": 10,
+        "LPG testing": 5
     },
     "FUELS": {
         "template": {
@@ -70,6 +77,32 @@
                 "Electricity (Just access)",
                 "LPG"
             ]
+        },
+        "LPG testing": {
+            "normal": [
+                "Electricity",
+                "LPG"
+            ],
+            "carbon": [
+                "Electricity",
+                "LPG",
+                "Carbon Credits"
+            ],
+            "rest": [
+                "Electricity",
+                "LPG"
+            ],
+            "expanded": [
+                "Electricity & E-Cooking",
+                "Electricity (Just access)",
+                "LPG"
+            ],
+            "more_expanded": [
+                "Electricity (Only E-Cooking)",
+                "Electricity & E-Cooking",
+                "Electricity (Just access)",
+                "LPG"
+            ]
         }
     },
     "CONSUMER_TYPES": {
@@ -87,6 +120,11 @@
         "Rwanda": [
             "BAU",
             "CleanStep"
+        ],
+        "LPG testing": [
+            "BAU",
+            "CleanStep",
+            "Aligned"
         ]
     },
     "SHARED_ROUTES": [
@@ -98,5 +136,10 @@
         "capex-fuels-{model}.xlsx",
         "design-capital-{model}.xlsx",
         "financial-statements-{model}.xlsx"
+    ],
+    "UPLOAD_DEPENDENT_FILES": [
+        "technoeconomic-inputs-{model}.xlsx",
+        "financial-statements-{model}.xlsx",
+        "carbon-credits-general.xlsx"
     ]
 }

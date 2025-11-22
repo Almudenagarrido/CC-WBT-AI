@@ -6,10 +6,10 @@ import streamlit as st
 
 class FinancialStatements:
     
-    def __init__(self, excel_editor, country, suBalance Sheetection, model, fuel):
+    def __init__(self, excel_editor, country, subsection, model, fuel):
         self.excel_editor = excel_editor
         self.country = country
-        self.suBalance Sheetection = suBalance Sheetection
+        self.subsection = subsection
         self.model = model
         self.fuel = fuel
         self.key_fuels = "more_expanded"

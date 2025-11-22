@@ -19,10 +19,6 @@ from fastapi import FastAPI, HTTPException, BackgroundTasks, UploadFile, File
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_FILE = os.path.join(BASE_DIR, "config.json")
 JSON_FORMULAS = "formulas_map.json"
-UPLOAD_DEPENDENT_FILES = [
-    "technoeconomic-inputs-{model}.xlsx",
-    "financial-statements-{model}.xlsx"
-]
 
 def load_config():
     with open(CONFIG_FILE, "r") as f:
@@ -547,7 +543,7 @@ async def upload_template_file(country: str, model: str, file: UploadFile = File
         config = load_config()        
         files_to_flag = []
         
-        for file_template in UPLOAD_DEPENDENT_FILES:
+        for file_template in config["UPLOAD_DEPENDENT_FILES"]:
             if "{model}" in file_template:
                 file_name = file_template.replace("{model}", model)
                 file_path = os.path.join(BASE_DIR, country, file_name)

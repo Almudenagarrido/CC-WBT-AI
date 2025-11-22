@@ -730,7 +730,7 @@ class ExcelFormulaProcessor:
         return 0
     
     def _execute_sum_range_operation(self, operands, current_values, current_results, source_cells_list, current_index, default_ws, step=None):
-        
+    
         if isinstance(operands[0], list) and operands[0][0] == "index":
             source_index = operands[0][1]
         else:
@@ -742,26 +742,25 @@ class ExcelFormulaProcessor:
             width = self._get_operand_value(operands[1], current_values, current_results)
         
         direction = step.get("direction", "forward") if step else "forward"
-        
-        # NUEVO: Obtener condición si existe (ej: "<0", ">0", etc.)
         condition = step.get("condition") if step else None
         
         if 0 <= source_index < len(source_cells_list):
             cell_refs = source_cells_list[source_index]
             
             if width == "all":
+                # COMPORTAMIENTO ORIGINAL: Suma TODAS las celdas
                 total = 0
                 for ref in cell_refs:
                     value = self._get_cell_value_from_ref(ref, default_ws)
-                    # NUEVO: Aplicar condición si existe
                     if self._meets_condition(value, condition):
                         total += value
+                print(f"         SUM_RANGE ALL: sumando {len(cell_refs)} celdas = {total}")
                 return total
             
             total = 0
             
             if direction == "backward":
-                
+                # NUEVO: Si width es 0, suma desde inicio hasta actual
                 if width == 0:
                     start_index = 0
                     end_index = current_index + 1
@@ -769,37 +768,38 @@ class ExcelFormulaProcessor:
                     for i in range(start_index, end_index):
                         if i < len(cell_refs):
                             value = self._get_cell_value_from_ref(cell_refs[i], default_ws)
-                            # NUEVO: Aplicar condición
                             if self._meets_condition(value, condition):
                                 total += value
-
+                    print(f"         SUM_RANGE BACKWARD+0: sumando celdas 0 a {current_index} = {total}")
+                
                 else:
-                    
+                    # Comportamiento existente para backward con width > 0
                     start_index = max(0, current_index - width + 1)
                     end_index = current_index + 1
                     
                     for i in range(start_index, end_index):
                         if i < len(cell_refs):
                             value = self._get_cell_value_from_ref(cell_refs[i], default_ws)
-                            # NUEVO: Aplicar condición
                             if self._meets_condition(value, condition):
                                 total += value
-                                
+                    print(f"         SUM_RANGE BACKWARD+{width}: sumando celdas {start_index} a {current_index} = {total}")
+                                    
             else:
+                # Comportamiento forward
                 start_index = current_index
                 end_index = min(len(cell_refs), current_index + width)
                 
                 for i in range(start_index, end_index):
                     if i < len(cell_refs):
                         value = self._get_cell_value_from_ref(cell_refs[i], default_ws)
-                        # NUEVO: Aplicar condición
                         if self._meets_condition(value, condition):
                             total += value
+                print(f"         SUM_RANGE FORWARD+{width}: sumando celdas {start_index} a {end_index-1} = {total}")
                             
             return total
         else:
             return 0
-
+    
     def _meets_condition(self, value, condition):
         """
         Evalúa si un valor cumple con una condición dada
@@ -882,7 +882,7 @@ class ExcelFormulaProcessor:
             if "EBIT" in target_label.upper():
                 print(f"   🔍🔍🔍 COMPARANDO EBIT: '{expected_type}' vs '{type_value}' - ¿Coincidencia exacta? {expected_type.lower() == type_value.lower()}")
 
-            type_match = (type_value.lower() == expected_type.lower())
+            type_match = (expected_type.lower() in type_value.lower())
             sub_match = (expected_sub == "") or (sub_value.lower() == expected_sub.lower())
             
             if type_match and sub_match:
