@@ -58,7 +58,7 @@ class ExcelEditor:
 
         df = self.df.copy()
 
-        df_filtered = df[~df.apply(lambda row: row.astype(str).str.contains(r"\{model\}", regex=True).any(), axis=1)]
+        df_filtered = df[~df.apply(lambda row: row.astype(str).str.contains(r"\{model\}", regex=True).any(), axis=1)].copy()
 
         for col in df_filtered.columns:
             if pd.api.types.is_numeric_dtype(df_filtered[col]):
