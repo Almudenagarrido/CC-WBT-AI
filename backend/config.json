@@ -1,29 +1,29 @@
 {
     "COUNTRIES": [
-        "Rwanda",
-        "LPG testing"
+        "LPG testing",
+        "Rwanda"
     ],
     "COUNTRY_YEAR_RANGES": {
         "template": {
             "start": 2020,
             "end": 2060
         },
-        "Rwanda": {
+        "LPG testing": {
             "start": 2023,
             "end": 2034
         },
-        "LPG testing": {
+        "Rwanda": {
             "start": 2023,
             "end": 2034
         }
     },
     "TAX_RATES": {
-        "Rwanda": 28,
-        "LPG testing": 28
+        "LPG testing": 28,
+        "Rwanda": 28
     },
     "INFLATIONS": {
-        "Rwanda": 10,
-        "LPG testing": 5
+        "LPG testing": 5,
+        "Rwanda": 5
     },
     "FUELS": {
         "template": {
@@ -52,7 +52,7 @@
                 "LPG"
             ]
         },
-        "Rwanda": {
+        "LPG testing": {
             "normal": [
                 "Electricity",
                 "LPG"
@@ -78,7 +78,7 @@
                 "LPG"
             ]
         },
-        "LPG testing": {
+        "Rwanda": {
             "normal": [
                 "Electricity",
                 "LPG"
@@ -117,14 +117,15 @@
         "Electricity (Only E-Cooking)"
     ],
     "MODELS": {
-        "Rwanda": [
-            "BAU",
-            "CleanStep"
-        ],
         "LPG testing": [
             "BAU",
             "CleanStep",
-            "Aligned"
+            "Aligned",
+            "probar BASELINEEE"
+        ],
+        "Rwanda": [
+            "BAU",
+            "CleanStep"
         ]
     },
     "SHARED_ROUTES": [

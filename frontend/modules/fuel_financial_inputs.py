@@ -18,7 +18,7 @@ class FuelFinancialInformation:
         self.df = None
         self.edited_df = None
         self.df_heights = {"Electricity": 140, "LPG": 140, "Carbon Credits": 170}
-        self.editable_columns = ["Baseline"] + [str(year) for year in range(2021, 2061)]
+        self.editable_columns = [str(year) for year in range(2021, 2061)]
         self.empty_rows = {
             "LPG": {"col": "", "partial": [], "full": []},
             "Carbon Credits": {"col": "Inputs", "partial": ["Number of years that you could sell those carbon credits"], "full": []}

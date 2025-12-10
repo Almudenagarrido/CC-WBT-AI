@@ -1,3 +1,4 @@
+import re
 import warnings
 import numpy as np
 import pandas as pd
@@ -34,7 +35,35 @@ class ExcelEditor:
         self.height = min(height, 500)
         self.editable_columns = filtered_editable_columns
         self.empty_rows = empty_rows
+        self.year_columns = self.detect_years()
         self._apply_empty_rows_on_load()
+    
+    def detect_years(self):
+        year_columns_info = []
+        
+        for col_idx, col_name in enumerate(self.df.columns):
+            year = None
+            if isinstance(col_name, str) and col_name.isdigit() and len(col_name) == 4:
+                year = int(col_name)
+            
+            elif isinstance(col_name, (int, float)):
+                try:
+                    year = int(float(col_name))
+                except:
+                    pass
+            
+            elif isinstance(col_name, str):
+                matches = re.findall(r'\b\d{4}\b', col_name)
+                if matches:
+                    year = int(matches[0])
+            
+            if year and 1900 <= year <= 2100:
+                year_columns_info.append((col_idx, col_name, year))
+        
+        year_columns_info.sort(key=lambda x: x[2])                 
+        year_column_names = [col_name for _, col_name, _ in year_columns_info]
+        
+        return year_column_names
     
     def _apply_empty_rows_on_load(self):
         if not self.empty_rows.get("col") or self.empty_rows["col"] not in self.df.columns:
@@ -44,7 +73,7 @@ class ExcelEditor:
             matching_rows = self.df[self.df[self.empty_rows["col"]] == row_key].index
             for idx in matching_rows:
                 for col in self.editable_columns:
-                    if col != "Baseline":
+                    if col != self.year_columns[0]:
                         self.df.loc[idx, col] = np.nan
         
         for row_key in self.empty_rows.get("full", []):
@@ -74,7 +103,7 @@ class ExcelEditor:
                 resizable=True)
         
         for col in df_filtered.columns:
-            if ((col).isdigit() and len(col) == 4) or col == "Baseline":
+            if col in self.year_columns:
                 gb.configure_column(
                     col,
                     width=50,
@@ -100,21 +129,6 @@ class ExcelEditor:
         for col in self.editable_columns:
             if col in edited_df.columns:
                 df_filtered[col] = edited_df[col]
-
-        if self.empty_rows.get("col"):
-            for row_key in self.empty_rows.get("partial", []):
-                matching_rows = df_filtered[df_filtered[self.empty_rows["col"]] == row_key].index
-                for idx in matching_rows:
-                    for col in self.editable_columns:
-                        if col != "Baseline":
-                            df_filtered.loc[idx, col] = np.nan
-
-            for row_key in self.empty_rows.get("full", []):
-                matching_rows = df_filtered[df_filtered[self.empty_rows["col"]] == row_key].index
-                for idx in matching_rows:
-                    for col in self.editable_columns:
-                        if col != self.empty_rows["col"]:
-                            df_filtered.loc[idx, col] = np.nan
 
         self.df = df_filtered.copy()
         return df_filtered

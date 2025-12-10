@@ -17,8 +17,11 @@ class CapexFuelMarket:
         self.template_route = os.path.join(country, "capex-fuels-{model}.xlsx")
         self.df = None
         self.edited_df = None
-        self.df_heights = {"LPG": 310}
+        self.df_heights = {"LPG": 320}
         self.subtables = {}
+        self.empty_rows = {
+            "LPG":{"col": "Type", "partial": ["Total Depreciation"], "full": []}
+        }
 
     def split_into_subtables(self):
         df = self.df.reset_index(drop=True)
@@ -69,7 +72,8 @@ class CapexFuelMarket:
 
             height = self.df_heights.get(self.fuel, self.df_heights["LPG"])
 
-            self.excel_editor.load_data(df, height, [], {})
+            editable_cols = [col for col in df.columns if col not in ['Type', 'Units']]
+            self.excel_editor.load_data(df, height, editable_cols, self.empty_rows.get(self.fuel, {}))
             self.edited_df = self.excel_editor.show()
                 
     def __call__(self):

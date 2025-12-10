@@ -33,7 +33,7 @@ class DesignCapitalStructure:
             self.editable_columns = {
                 "Division - GRID": ["Amount"],
                 "Division - OFF-GRID": ["Amount"],
-                "Type": ["Baseline"] + [str(year) for year in range(2021, 2061)],
+                "Type": [str(year) for year in range(2021, 2061)],
                 "Financiation": [],
                 "Total - GRID": ["Amount"],
                 "Total - OFF-GRID": ["Amount"]
@@ -56,7 +56,7 @@ class DesignCapitalStructure:
             }
             self.editable_columns = {
                 "Division": ["Amount"],
-                "Type": ["Baseline"] + [str(year) for year in range(2021, 2061)],
+                "Type": [str(year) for year in range(2021, 2061)],
                 "Financiation": [],
                 "Total": ["Amount"]
             }

@@ -1,4 +1,267 @@
 
+
+{
+            "formula_steps": [
+            { "op": "multiply", "operands": [["index", 0], ["index", 1]], "result": "final" }
+            ],
+            "target": "Tariff Income - Energy & SHS",
+            "sources": ["{country}\\technoeconomic-inputs-{model}.xlsx::{fuel}::Tariff",
+            "{country}\\technoeconomic-inputs-{model}.xlsx::{fuel}::Demand"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "offset", "operands": [["index", 0], ["literal", 1]], "result": "temp1" },
+            { "op": "safe_divide_minus", "operands": [["index", 0], ["index", "temp1"], ["literal", 1]], "result": "temp2" },
+            { "op": "percentage", "operands": [["index", "temp2"]], "result": "final" }
+            ],
+            "target": "Tariff Income - Energy & SHS:% Growth",
+            "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::Tariff Income - Energy & SHS"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "multiply_per", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
+            { "op": "negative", "operands": [["index", "temp1"]], "result": "final" }
+            ],
+            "target": "Provisions for bad debt",
+            "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::Tariff Income - Energy & SHS",
+            "{country}\\fuel-financial-inputs.xlsx::{fuel}::Expected non-technical losses"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "offset", "operands": [["index", 0], ["literal", 1]], "result": "temp1" },
+            { "op": "safe_divide_minus", "operands": [["index", 0], ["index", "temp1"], ["literal", 1]], "result": "temp2" },
+            { "op": "percentage", "operands": [["index", "temp2"]], "result": "final" }
+            ],
+            "target": "Provisions for bad debt:% Growth",
+            "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::Provisions for bad debt"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "safe_divide", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
+            { "op": "negative", "operands": [["index", "temp1"]], "result": "temp2" },
+            { "op": "percentage", "operands": [["index", "temp2"]], "result": "final" }
+            ],
+            "target": "Provisions for bad debt:% Revenues",
+            "sources": [
+                "{country}\\financial-statements-{model}.xlsx::{sheet}::Provisions for bad debt",
+                "{country}\\financial-statements-{model}.xlsx::{fuel}::Tariff Income - Energy & SHS"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["index", 0]], "result": "final" }
+            ],
+            "target": "Upstream Cost of Energy",
+            "sources": ["{country}\\upload-{model}.xlsx::{fuel}::Upstream Cost of Energy"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "offset", "operands": [["index", 0], ["literal", 1]], "result": "temp1" },
+            { "op": "safe_divide_minus", "operands": [["index", 0], ["index", "temp1"], ["literal", 1]], "result": "temp2" },
+            { "op": "percentage", "operands": [["index", "temp2"]], "result": "final" }
+            ],
+            "target": "Upstream Cost of Energy:% Growth",
+            "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::Upstream Cost of Energy"
+            ]
+        },
+
+
+
+
+
+
+        ,
+        {
+            "formula_steps": [
+            { "op": "negative", "operands": [["index", 0]], "result": "final" }
+            ],
+            "target": "D&A",
+            "sources": ["{country}\\capex-fuels-{model}.xlsx::{fuel}::Total Annual Depreciation"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "multiply", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
+            { "op": "addition", "operands": [["index", "temp1"], ["index", 2]], "result": "temp2" },
+            { "op": "addition", "operands": [["index", "temp2"], ["index", 3]], "result": "temp3" },
+            { "op": "addition", "operands": [["index", "temp3"], ["index", 4]], "result": "final" }
+            ],
+            "target": "Annual Cost of Service",
+            "sources": ["{country}\\design-capital-{model}.xlsx::{sheet}::WACC",
+            "{country}\\capex-fuels-{model}.xlsx::{fuel}::RAB",
+            "{country}\\technoeconomic-inputs-{model}.xlsx::{fuel}::OPEX",
+            "{country}\\capex-fuels-{model}.xlsx::{fuel}::Total Annual Depreciation",
+            "{country}\\financial-statements-{model}.xlsx::{sheet}::Upstream Cost of Energy"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "offset", "operands": [["index", 0], ["literal", 1]], "result": "temp1" },
+            { "op": "safe_divide_minus", "operands": [["index", 0], ["index", "temp1"], ["literal", 1]], "result": "temp2" },
+            { "op": "percentage", "operands": [["index", "temp2"]], "result": "final" }
+            ],
+            "target": "Annual Cost of Service:% Growth",
+            "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::Annual Cost of Service"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "multiply", "operands": [["index", 1], ["index", 2]], "result": "temp1" },
+            { "op": "subtraction", "operands": [["index", 0], ["index", "temp1"]], "result": "final" }
+            ],
+            "target": "Long term subsidies",
+            "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::Annual Cost of Service",
+            "{country}\\technoeconomic-inputs-{model}.xlsx::{fuel}::Tariff",
+            "{country}\\technoeconomic-inputs-{model}.xlsx::{fuel}::Demand"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "offset", "operands": [["index", 0], ["literal", 1]], "result": "temp1" },
+            { "op": "safe_divide_minus", "operands": [["index", 0], ["index", "temp1"], ["literal", 1]], "result": "temp2" },
+            { "op": "percentage", "operands": [["index", "temp2"]], "result": "final" }
+            ],
+            "target": "Long term subsidies:% Growth",
+            "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::Long term subsidies"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "negative", "operands": [["index", 0]], "result": "final" }
+            ],
+            "target": "Grants",
+            "sources": ["{country}\\technoeconomic-inputs-{model}.xlsx::{fuel}::GRANTS:- Realisation"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "offset", "operands": [["index", 0], ["literal", 1]], "result": "temp1" },
+            { "op": "safe_divide_minus", "operands": [["index", 0], ["index", "temp1"], ["literal", 1]], "result": "temp2" },
+            { "op": "percentage", "operands": [["index", "temp2"]], "result": "final" }
+            ],
+            "target": "Grants:% Growth",
+            "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::Grants"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
+            { "op": "addition", "operands": [["index", "temp1"], ["index", 2]], "result": "final" }
+            ],
+            "target": "Total Revenues",
+            "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::Tariff Income - Energy & SHS",
+            "{country}\\financial-statements-{model}.xlsx::{sheet}::Grants",
+            "{country}\\financial-statements-{model}.xlsx::{sheet}::Long term subsidies"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "offset", "operands": [["index", 0], ["literal", 1]], "result": "temp1" },
+            { "op": "safe_divide_minus", "operands": [["index", 0], ["index", "temp1"], ["literal", 1]], "result": "temp2" },
+            { "op": "percentage", "operands": [["index", "temp2"]], "result": "final" }
+            ],
+            "target": "Total Revenues:% Growth",
+            "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::Total Revenues"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "safe_divide", "operands": [["index", 1], ["index", 0]], "result": "temp1" },
+            { "op": "negative", "operands": [["index", "temp1"]], "result": "temp2" },
+            { "op": "percentage", "operands": [["index", "temp2"]], "result": "final" }
+            ],
+            "target": "Grants:% Revenues",
+            "sources": [
+                "{country}\\{country}\\financial-statements-{model}.xlsx::{sheet}::Total Revenues",
+                "{country}\\financial-statements-{model}.xlsx::{sheet}::Grants"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "safe_divide", "operands": [["index", 1], ["index", 0]], "result": "temp1" },
+            { "op": "negative", "operands": [["index", "temp1"]], "result": "final" }
+            ],
+            "target": "Long term subsidies:% Revenues",
+            "sources": [
+                "{country}\\financial-statements-{model}.xlsx::{sheet}::Total Revenues",
+                "{country}\\financial-statements-{model}.xlsx::{sheet}::Long term subsidies"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "safe_divide", "operands": [["index", 1], ["index", 0]], "result": "final" }
+            ],
+            "target": "Upstream Cost of Energy:% Revenues",
+            "sources": [
+                "{country}\\financial-statements-{model}.xlsx::{sheet}::Total Revenues",
+                "{country}\\financial-statements-{model}.xlsx::{sheet}::Upstream Cost of Energy"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "safe_divide", "operands": [["index", 1], ["index", 0]], "result": "final" }
+            ],
+            "target": "Annual Cost of Service:% Revenues",
+            "sources": [
+                "{country}\\financial-statements-{model}.xlsx::{sheet}::Total Revenues",
+                "{country}\\financial-statements-{model}.xlsx::{sheet}::Annual Cost of Service"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "safe_divide", "operands": [["index", 1], ["index", 0]], "result": "temp1" },
+            { "op": "negative", "operands": [["index", "temp1"]], "result": "final" }
+            ],
+            "target": "OPEX:% Revenues",
+            "sources": [
+                "{country}\\financial-statements-{model}.xlsx::{fuel}::Total Revenues",
+                "{country}\\financial-statements-{model}.xlsx::{sheet}::OPEX"
+            ]
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         
         {
             "formula_steps": [

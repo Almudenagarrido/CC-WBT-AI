@@ -1,4 +1,5 @@
 import os
+import re
 import uuid
 import stat
 import copy
@@ -423,42 +424,48 @@ def download_model_files(country: str, model: str, background_tasks: BackgroundT
         raise HTTPException(status_code=500, detail=str(e))
 
 def get_year_columns(sheet):
+    
+    year_columns = {}
+
     for row in range(1, sheet.max_row + 1):
         for col in range(1, sheet.max_column + 1):
+
             val = sheet.cell(row=row, column=col).value
-            if isinstance(val, str) and val.strip().lower() == "baseline":
-                year_columns = {}
-                year_columns[col] = "baseline"
-                for c in range(col + 1, sheet.max_column + 1):
-                    cell_val = sheet.cell(row=row, column=c).value
-                    try:
-                        year = int(cell_val)
-                        year_columns[c] = year
-                    except (TypeError, ValueError):
-                        continue
-                return row, year_columns
-    return None, {}
+            if val is None:
+                continue
+
+            year_int = None
+            if isinstance(val, int):
+                year_int = val
+            elif isinstance(val, str):
+                v = val.strip()
+                if v.isdigit():
+                    year_int = int(v)
+                else:
+                    continue
+
+            if year_int is not None and 1900 <= year_int <= 2100:
+                year_columns[col] = year_int
+
+        if year_columns:
+            return year_columns
+
+    return {}
 
 def drop_out_of_range_years_from_workbook(wb, sheet_name, start_year, end_year):
-    ws = wb[sheet_name]
-    row_idx, year_columns = get_year_columns(ws)
 
-    if not year_columns or row_idx is None:
+    ws = wb[sheet_name]
+    year_columns = get_year_columns(ws)
+
+    if not year_columns:
         return
 
     cols_to_delete = []
-    baseline_year = start_year
-    
+
     for col_idx, year in year_columns.items():
-        if year == "baseline":
-            continue
-        else:
-            if not isinstance(year, int):
-                continue
-            if year < start_year or year > end_year:
-                cols_to_delete.append(col_idx)
-            elif year == baseline_year:
-                cols_to_delete.append(col_idx)
+
+        if year < start_year or year > end_year:
+            cols_to_delete.append(col_idx)
 
     for col in sorted(cols_to_delete, reverse=True):
         ws.delete_cols(col)
