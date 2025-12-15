@@ -5,6 +5,7 @@ from copy import deepcopy
 from itertools import product
 from functools import lru_cache
 from openpyxl import load_workbook
+from openpyxl.utils.cell import coordinate_from_string, column_index_from_string, get_column_letter
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -20,6 +21,7 @@ OPS_MAP = {
     "gt": lambda x, y: x > y,
     "gt_eq": lambda x, y: x >= y,
     "lt": lambda x, y: x < y,
+    "lt_eq": lambda x, y: x <= y,
     "equal": lambda x, y: x == y,
     "if": lambda condition, true_val, false_val: true_val if condition else false_val,
     "copy": lambda x: x,
@@ -36,6 +38,7 @@ class ExcelFormulaProcessor:
     
     def __init__(self):
         self.previously_calculated = {}
+        self.amount_targets = ["How much to be financed", "Equity", "Grants", "Debt", "WACC"]
     
     @lru_cache(maxsize=10)
     def _get_workbook(self, file_path, read_only=False, data_only=False):
@@ -319,7 +322,7 @@ class ExcelFormulaProcessor:
                 ws = wb[sheet_name]                
                 for formula in formulas:
                     try:
-                        formula_changed = self._execute_single_formula(ws, formula, year_range)
+                        formula_changed = self._execute_single_formula(ws, formula, year_range, file_path)
                         if formula_changed:
                             changes_made = True
                     except Exception as e:
@@ -335,31 +338,31 @@ class ExcelFormulaProcessor:
             if hasattr(wb, 'close'):
                 wb.close()
     
-    def _execute_single_formula(self, ws, formula, year_range):
+    def _execute_single_formula(self, ws, formula, year_range, file_path):
         
         try:
             target_label = formula["target"]
             source_labels = formula["sources"]
             formula_steps = formula.get("formula_steps", [])
             
-            target_cells = self._find_cells_from_target_label(target_label, ws, year_range)
+            target_cells = self._find_cells_from_target_label(target_label, ws, year_range, file_path)
             if not target_cells:
                 return False
 
             source_cells_list = []
-            for i, source_label in enumerate(source_labels):
-                
+            for source_label in source_labels:
                 cell_refs = self._get_cell_refs_from_source_label(source_label, ws, year_range)
                 if not cell_refs:
                     return False
                 source_cells_list.append(cell_refs)
             
-            calculated_values = []
+            if target_label not in self.previously_calculated:
+                self.previously_calculated[target_label] = [None] * len(target_cells)
+            
             changes_made = False
-
             for cell_index in range(len(target_cells)):
                 current_values = []
-                for i, cell_refs in enumerate(source_cells_list):
+                for cell_refs in source_cells_list:
                     if cell_refs and len(cell_refs) > 0:
                         if isinstance(cell_refs[0], str) and cell_refs[0].startswith("CACHED::"):
                             label = cell_refs[0].split("::")[-1]
@@ -384,21 +387,21 @@ class ExcelFormulaProcessor:
                     formula_steps, current_values, source_cells_list, cell_index, ws
                 )
                 
-                calculated_values.append(final_value)
+                self.previously_calculated[target_label][cell_index] = final_value
                 target_cell = target_cells[cell_index]
                 current_target_value = ws[target_cell].value
                 
                 if current_target_value != final_value:
                     ws[target_cell] = final_value
                     changes_made = True
+                    if isinstance(final_value, str):
+                        ws[target_cell].number_format = '@'
 
-            self.previously_calculated[target_label] = calculated_values
-            
             return changes_made
 
         except Exception as e:
             traceback.print_exc()
-            return False
+            return False  
     
     def _get_cell_value_from_ref(self, cell_ref, default_ws):
 
@@ -562,7 +565,7 @@ class ExcelFormulaProcessor:
         
         return cell_refs
     
-    def _find_cells_from_target_label(self, target_label, worksheet, year_range):
+    def _find_cells_from_target_label(self, target_label, worksheet, year_range, file_path):
         
         label_parts = target_label.split(":")
         target_row = None
@@ -577,8 +580,8 @@ class ExcelFormulaProcessor:
             expected_type = label_parts[0].strip()
             expected_sub = label_parts[1].strip() if len(label_parts) > 1 else ""
             
-            type_match = (expected_type.lower() in type_value.lower())
-            sub_match = (expected_sub == "") or (sub_value.lower() == expected_sub.lower())
+            type_match = (expected_type == type_value)
+            sub_match = (expected_sub == "") or (expected_sub == sub_value)
             
             if type_match and sub_match:
                 target_row = row
@@ -593,6 +596,16 @@ class ExcelFormulaProcessor:
             row_vals.append(f"{cell.coordinate}='{cell.value}'")
         
         start_col = self._find_year_column(worksheet, year_range)
+
+        is_amount_target = False
+        if "design" in file_path:
+            for amount_target in self.amount_targets:
+                if amount_target == target_label:
+                    is_amount_target = True
+                    break
+        
+        if is_amount_target:
+            return [f"C{target_row}"]
         
         if start_col is None:
             start_search_col = len(label_parts) + 1
@@ -609,15 +622,7 @@ class ExcelFormulaProcessor:
         for col in range(start_col, worksheet.max_column + 1):
             cell = worksheet.cell(row=target_row, column=col)
             cell_value = cell.value
-            
-            if cell_value is None:
-                break
-                
-            is_numeric = self._is_numeric_value(cell_value)
-            if is_numeric:
-                numeric_cells.append(cell.coordinate)
-            else:
-                break
+            numeric_cells.append(cell.coordinate)
         
         return numeric_cells
     
@@ -664,8 +669,11 @@ class ExcelFormulaProcessor:
             op = step["op"]
             operands = step["operands"]
             result_key = step["result"]
+
+            if op == "get_cell":
+                result = self._execute_get_cell_operation(operands, source_cells_list, default_ws)
             
-            if op == "offset":
+            elif op == "offset":
                 result = self._execute_offset_operation(
                     operands, current_values, results, source_cells_list, cell_index, default_ws
                 )
@@ -684,7 +692,7 @@ class ExcelFormulaProcessor:
             
             elif op == "index_match":
                 result = self._execute_index_match_operation(
-                    operands, current_values, results, source_cells_list, default_ws
+                    operands, current_values, results, source_cells_list
                 )
             
             else:
@@ -701,7 +709,7 @@ class ExcelFormulaProcessor:
         
         final_result = results.get("final", 0)
         return final_result
-
+     
     def _meets_condition(self, value, condition):
         
         if condition is None:
@@ -739,6 +747,9 @@ class ExcelFormulaProcessor:
                 elif operand[0] in ["literal", "range"]:
                     value = operand[1]
                     return float(value) if value is not None else 0
+                elif operand[0] == "str":
+                    value = operand[1]
+                    return str(value) if value is not None else ""
             elif isinstance(operand, str):
                 value = current_results.get(operand, 0)
                 return float(value) if value is not None else 0
@@ -749,95 +760,76 @@ class ExcelFormulaProcessor:
         except (ValueError, TypeError) as e:
             return 0
     
-    def _execute_value_operation(self, operands, current_values, current_results, source_cells_list, default_ws):
+    def _execute_get_cell_operation(self, operands, source_cells_list, default_ws):
 
-        if len(operands) >= 2:
+        if operands[0][0] == "index" and operands[1][0] == "literal":
+            source_index = int(operands[0][1])
+            literal_index = int(operands[1][1])
+        else:
+            return 0
 
-            if isinstance(operands[0], list) and operands[0][0] == "index":
-                source_index = operands[0][1]
+        refs = source_cells_list[source_index]
+        first_ref = refs[0]
+
+        if isinstance(first_ref, str) and first_ref.startswith("CACHED::"):
+            label = first_ref.split("::")[-1]
+            if label in self.previously_calculated:
+                return self.previously_calculated[label][0]
+
+        if "!" in first_ref:
+            sheet_part, cell_ref = first_ref.split("!", 1)
+
+        col_letter, row_num = coordinate_from_string(cell_ref)
+        start_col = column_index_from_string(col_letter)
+        
+        result = []
+        for c in range(1, start_col):
+            result.append(f"{sheet_part}!{get_column_letter(c)}{row_num}")
+
+        result.extend(refs)
+        cell_ref = result[literal_index]
+        cell_value = self._get_cell_value_from_ref(cell_ref, default_ws)
+
+        return cell_value
+
+    def _execute_offset_operation(self, operands, current_values, current_results, source_cells_list, current_index, default_ws):
+
+        if isinstance(operands[0], list) and operands[0][0] == "index":
+            source_index = operands[0][1]
+        else:
+            source_index = self._get_operand_value(operands[0], current_values, current_results)
+
+        if isinstance(operands[1], list) and operands[1][0] == "literal":
+            offset = operands[1][1]
+        else:
+            offset = self._get_operand_value(operands[1], current_values, current_results)
+
+        source_index = int(source_index)
+        offset = int(offset)
+
+        if not (0 <= source_index < len(source_cells_list)):
+            return 0
+
+        cell_refs = source_cells_list[source_index]
+        target_index = current_index - offset
+
+        if target_index < 0:
+            return 0
+
+        if cell_refs[0].startswith("CACHED::"):
+            label = cell_refs[0].split("::")[-1]
+
+            if label in self.previously_calculated:
+                cached_values = self.previously_calculated[label]
+                return cached_values[target_index] if target_index < len(cached_values) else 0
             else:
-                source_index = self._get_operand_value(operands[0], current_values, current_results)
-
-            if isinstance(operands[1], list) and operands[1][0] == "literal":
-                cell_index_to_get = operands[1][1]
-            else:
-                cell_index_to_get = self._get_operand_value(operands[1], current_values, current_results)
-
-            source_index = int(source_index)
-            cell_index_to_get = int(cell_index_to_get)
-
-            if not (0 <= source_index < len(source_cells_list)):
                 return 0
 
-            cell_refs = source_cells_list[source_index]
-            
-            if cell_refs[0].startswith("CACHED::"):
-                label = cell_refs[0].split("::")[-1]
-                return self.previously_calculated[label][cell_index_to_get] if cell_index_to_get < len(self.previously_calculated[label]) else 0
-                    
-            if 0 <= cell_index_to_get < len(cell_refs):
-                return self._get_cell_value_from_ref(cell_refs[cell_index_to_get], default_ws)
+        if target_index < len(cell_refs):
+            return self._get_cell_value_from_ref(cell_refs[target_index], default_ws)
 
         return 0
     
-    def _execute_index_match_operation(self, operands, current_values, current_results, source_cells_list, default_ws):
-
-        if len(operands) < 2:
-            return 0
-
-        if isinstance(operands[0], list) and operands[0][0] == "index":
-            top_source_index = operands[0][1]
-        else:
-            top_source_index = self._get_operand_value(operands[0], current_values, current_results)
-
-        if isinstance(operands[1], list) and operands[1][0] == "index":
-            bottom_source_index = operands[1][1]
-        else:
-            bottom_source_index = self._get_operand_value(operands[1], current_values, current_results)
-
-        top_source_index = int(top_source_index)
-        bottom_source_index = int(bottom_source_index)
-
-        if not (0 <= top_source_index < len(source_cells_list)):
-            return 0
-        if not (0 <= bottom_source_index < len(source_cells_list)):
-            return 0
-
-        top_refs = source_cells_list[top_source_index]
-        bottom_refs = source_cells_list[bottom_source_index]
-
-        if not top_refs or not bottom_refs:
-            return 0
-
-        def get_value_from_refs(refs, idx):
-            if not refs:
-                return 0
-
-            if isinstance(refs[0], str) and refs[0].startswith("CACHED::"):
-                label = refs[0].split("::")[-1]
-                if idx < len(self.previously_calculated.get(label, [])):
-                    return self.previously_calculated[label][idx]
-                return 0
-
-            if 0 <= idx < len(refs):
-                return self._get_cell_value_from_ref(refs[idx], default_ws)
-
-            return 0
-
-        max_len = min(len(bottom_refs), len(top_refs))
-        found_index = -1
-
-        for i in range(max_len):
-            value = get_value_from_refs(bottom_refs, i)
-            if value != 0:
-                found_index = i
-                break
-
-        if found_index < 0:
-            return 0
-
-        return get_value_from_refs(top_refs, found_index)
-
     def _execute_sum_range_operation(self, operands, current_values, current_results, source_cells_list, current_index, default_ws, step=None):
         
         if isinstance(operands[0], list) and operands[0][0] == "index":
@@ -908,41 +900,54 @@ class ExcelFormulaProcessor:
                     total += value
 
         return total
-    
-    def _execute_offset_operation(self, operands, current_values, current_results, source_cells_list, current_index, default_ws):
 
+    def _execute_value_operation(self, operands, current_values, current_results, source_cells_list, default_ws):
+
+        if len(operands) >= 2:
+
+            if isinstance(operands[0], list) and operands[0][0] == "index":
+                source_index = operands[0][1]
+            else:
+                source_index = self._get_operand_value(operands[0], current_values, current_results)
+
+            if isinstance(operands[1], list) and operands[1][0] == "literal":
+                cell_index_to_get = operands[1][1]
+            else:
+                cell_index_to_get = self._get_operand_value(operands[1], current_values, current_results)
+
+            source_index = int(source_index)
+            cell_index_to_get = int(cell_index_to_get)
+
+            if not (0 <= source_index < len(source_cells_list)):
+                return 0
+
+            cell_refs = source_cells_list[source_index]
+            
+            if cell_refs[0].startswith("CACHED::"):
+                label = cell_refs[0].split("::")[-1]
+                return self.previously_calculated[label][cell_index_to_get] if cell_index_to_get < len(self.previously_calculated[label]) else 0
+                    
+            if 0 <= cell_index_to_get < len(cell_refs):
+                return self._get_cell_value_from_ref(cell_refs[cell_index_to_get], default_ws)
+
+        return 0
+    
+    def _execute_index_match_operation(self, operands, current_values, current_results,
+     source_cells_list):
+        
         if isinstance(operands[0], list) and operands[0][0] == "index":
             source_index = operands[0][1]
         else:
             source_index = self._get_operand_value(operands[0], current_values, current_results)
 
-        if isinstance(operands[1], list) and operands[1][0] == "literal":
-            offset = operands[1][1]
-        else:
-            offset = self._get_operand_value(operands[1], current_values, current_results)
-
-        source_index = int(source_index)
-        offset = int(offset)
-
-        if not (0 <= source_index < len(source_cells_list)):
-            return 0
-
         cell_refs = source_cells_list[source_index]
-        target_index = current_index - offset
-
-        if target_index < 0:
-            return 0
-
         if cell_refs[0].startswith("CACHED::"):
             label = cell_refs[0].split("::")[-1]
-
             if label in self.previously_calculated:
                 cached_values = self.previously_calculated[label]
-                return cached_values[target_index] if target_index < len(cached_values) else 0
-            else:
-                return 0
-
-        if target_index < len(cell_refs):
-            return self._get_cell_value_from_ref(cell_refs[target_index], default_ws)
+                for i, value in enumerate(cached_values):
+                    if value != 0:
+                        return i
 
         return 0
+    

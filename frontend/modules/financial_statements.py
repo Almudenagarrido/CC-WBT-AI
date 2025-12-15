@@ -19,11 +19,17 @@ class FinancialStatements:
         self.edited_df = None
         self.subtables = {}
         self.section_headers = ["Profit & Loss", "Balance Sheet", "Cash Flow Statement", "Property, Plant & Equipement (PP&E) - Capex", "Working Capital Calculations", "Equity Schedule", "Capital Structure"]
-        self.subtable_heights = {"Profit & Loss": 1070, "Balance Sheet": 870, "Cash Flow Statement": 580, "Property, Plant & Equipement (PP&E) - Capex": 230, "Working Capital Calculations": 320, "Equity Schedule": 200, "Capital Structure": 410}
+        self.subtable_heights = {"Profit & Loss": 1070, "Balance Sheet": 870, "Cash Flow Statement": 580, "Property, Plant & Equipement (PP&E) - Capex": 230, "Working Capital Calculations": 290, "Equity Schedule": 200, "Capital Structure": 410}
         self.empty_rows = {
-            "Profit & Loss": {"col": "", "partial": [], "full": []}
+            "Profit & Loss": {"col": "", "partial": [], "full": []},
+            "Balance Sheet": {"col": "", "partial": [], "full": []},
+            "Cash Flow Statement": {"col": "Cash Flow Statement", "partial": ["Grants/Sub-debt financing", "+/- Capital increase/reduction"], "full": []},
+            "Property, Plant & Equipment (PP&E) - Capex": {"col": "", "partial": [], "full": []},
+            "Working Capital Calculations": {"col": "", "partial": [], "full": []},
+            "Equity Schedule": {"col": "Equity Schedule", "partial": ["+/- Capital Increase/Reduction"], "full": []},
+            "Capital Structure": {"partial": [{"col1": "Capital Structure", "value1": "GRANTS", "col2": "Type", "value2": "+ Increase"}, {"col1": "Capital Structure", "value1": "DEBT", "col2": "Type", "value2": "Interest rate LT"}], "full": []}    
         }
-    
+            
     def split_into_subtables(self):
         df = self.df.reset_index(drop=True)
         self.subtables[self.fuel] = {}

@@ -24,6 +24,7 @@ class ExcelEditor:
             "years": self.validate_positive_integer,
             "$ / ton": self.validate_positive_value,
         }
+        self.expected_years = [str(year) for year in range(2021, 2061)]
 
     def load_data(self, df, height, editable_columns, empty_rows):
         
@@ -66,21 +67,47 @@ class ExcelEditor:
         return year_column_names
     
     def _apply_empty_rows_on_load(self):
-        if not self.empty_rows.get("col") or self.empty_rows["col"] not in self.df.columns:
+        if not self.empty_rows:
             return
         
-        for row_key in self.empty_rows.get("partial", []):
-            matching_rows = self.df[self.df[self.empty_rows["col"]] == row_key].index
-            for idx in matching_rows:
-                for col in self.editable_columns:
-                    if col != self.year_columns[0]:
-                        self.df.loc[idx, col] = np.nan
+        existing_year_cols = [col for col in self.year_columns if col in self.df.columns]
+        if not existing_year_cols:
+            return
         
-        for row_key in self.empty_rows.get("full", []):
-            matching_rows = self.df[self.df[self.empty_rows["col"]] == row_key].index
+        if "col" in self.empty_rows and self.empty_rows["col"]:
+            target_col = self.empty_rows["col"]
+            if target_col in self.df.columns:
+                for row_key in self.empty_rows.get("partial", []):
+                    if isinstance(row_key, str):
+                        matching_rows = self.df[self.df[target_col] == row_key].index
+                        for idx in matching_rows:
+                            for col in existing_year_cols:
+                                if col != existing_year_cols[0]:
+                                    self.df.loc[idx, col] = np.nan
+                
+                for row_key in self.empty_rows.get("full", []):
+                    if isinstance(row_key, str):
+                        matching_rows = self.df[self.df[target_col] == row_key].index
+                        for idx in matching_rows:
+                            for col in existing_year_cols:
+                                if col != target_col:
+                                    self.df.loc[idx, col] = np.nan
+        
+        for rule in self.empty_rows.get("partial", []):
+            if not isinstance(rule, dict):
+                continue
+            
+            col1 = rule.get("col1")
+            value1 = rule.get("value1")
+            col2 = rule.get("col2")
+            value2 = rule.get("value2")
+            
+            mask = (self.df[col1] == value1) & (self.df[col2] == value2)
+            matching_rows = self.df[mask].index
+            
             for idx in matching_rows:
-                for col in self.editable_columns:
-                    if col != self.empty_rows["col"]:
+                for col in existing_year_cols:
+                    if col != existing_year_cols[0]:
                         self.df.loc[idx, col] = np.nan
 
     def show(self):

@@ -20,20 +20,23 @@ class DesignCapitalStructure:
         self.df = None
         self.edited_df = None
         self.subtables = {}
-        if self.fuel and "e-cooking" in self.fuel.lower():
-            self.section_headers = ["Division - GRID", "Division - OFF-GRID", "Type", "Financiation", "Total - GRID", "Total - OFF-GRID",]
+        self.important_cols = ["Division", "Units", "Amount", "FFSS - Outputs", "FFSS - Inputs", "Type", "Financiation", "Total", "Category"]
+        if self.fuel and "electricity" in self.fuel.lower():
+            self.section_headers = ["Division - GRID", "Division - OFF-GRID", "FFSS - Outputs", "FFSS - Inputs", "Financiation", "Total - GRID", "Total - OFF-GRID",]
             self.subtable_heights = {
-                "Division - GRID": 270,
-                "Division - OFF-GRID": 270,
-                "Type": 140,
+                "Division - GRID": 260,
+                "Division - OFF-GRID": 260,
+                "FFSS - Outputs": 120,
+                "FFSS - Inputs": 90,
                 "Financiation": 70,
-                "Total - GRID": 130,
-                "Total - OFF-GRID": 130,
+                "Total - GRID": 155,
+                "Total - OFF-GRID": 155,
             }
             self.editable_columns = {
                 "Division - GRID": ["Amount"],
                 "Division - OFF-GRID": ["Amount"],
-                "Type": [str(year) for year in range(2021, 2061)],
+                "FFSS - Outputs": [],
+                "FFSS - Inputs": [str(year) for year in range(2021, 2061)],
                 "Financiation": [],
                 "Total - GRID": ["Amount"],
                 "Total - OFF-GRID": ["Amount"]
@@ -41,54 +44,55 @@ class DesignCapitalStructure:
             self.empty_rows = {
                 "Division - GRID": {"col": "Division - GRID", "partial": [], "full": ["3. Debt - GRID"]},
                 "Division - OFF-GRID": {"col": "Division - OFF-GRID", "partial": [], "full": ["3. Debt - OFF-GRID"]},
-                "Type": {"col": "Type", "partial": [], "full": ["Annual debt needs"]},
+                "FFSS - Ouputs": {"col": "", "partial": [], "full": []},
+                "FFSS - Inputs": {"col": "", "partial": [], "full": []},
                 "Financiation": {"col": "", "partial": [], "full": []},
                 "Total - GRID": {"col": "", "partial": [], "full": []},
                 "Total - OFF-GRID": {"col": "", "partial": [], "full": []}
             }
         else:
-            self.section_headers = ["Division", "Type", "Financiation", "Total"]
+            self.section_headers = ["Division", "FFSS - Outputs", "FFSS - Inputs", "Financiation", "Total"]
             self.subtable_heights = {
-                "Division": 270,
-                "Type": 140,
+                "Division": 260,
+                "FFSS - Outputs": 120,
+                "FFSS - Inputs": 90,
                 "Financiation": 70,
-                "Total": 130
+                "Total": 155
             }
             self.editable_columns = {
                 "Division": ["Amount"],
-                "Type": [str(year) for year in range(2021, 2061)],
+                "FFSS - Outputs": [],
+                "FFSS - Inputs": [str(year) for year in range(2021, 2061)],
                 "Financiation": [],
                 "Total": ["Amount"]
             }
             self.empty_rows = {
                 "Division": {"col": "Division", "partial": [], "full": ["3. Debt"]},
-                "Type": {"col": "Type", "partial": [], "full": ["Annual debt needs"]},
+                "FFSS - Outputs": {"col": "", "partial": [], "full": []},
+                "FFSS - Inputs": {"col": "", "partial": [], "full": []},
                 "Financiation": {"col": "", "partial": [], "full": []},
                 "Total": {"col": "", "partial": [], "full": []}
             }
 
     def split_into_subtables(self):
-        
+    
         df = self.df.reset_index(drop=True)
         self.subtables[self.fuel] = {}
         
+        first_section = self.section_headers[0]
         first_col = df.iloc[:, 0].astype(str).str.strip().str.lower()
         
-        first_header = self.section_headers[0] if self.section_headers else "Division"
-        other_sections = [h for h in self.section_headers if h != first_header]
-        
-        for header in other_sections:
-            matches = first_col[first_col == header.lower()]
-            if not matches.empty:
-                break
-        
         sections = {}
-        sections[first_header] = 0
-        
-        for header in other_sections:
+        sections[first_section] = 0 
+        for header in self.section_headers[1:]:
             matches = first_col[first_col == header.lower()]
             if not matches.empty:
                 sections[header] = matches.index[0]
+            else:
+                for idx, val in enumerate(first_col):
+                    if header.lower() in val or val in header.lower():
+                        sections[header] = idx
+                        break
         
         sorted_sections = sorted(sections.items(), key=lambda x: x[1])
         
@@ -97,11 +101,10 @@ class DesignCapitalStructure:
             end_idx = sorted_sections[i+1][1] - 1 if i + 1 < len(sorted_sections) else len(df)
             subdf = df.iloc[start_idx:end_idx+1].copy()
             
-            if not subdf.empty and str(subdf.iloc[0, 0]).strip().lower() == section.lower():
-
+            if section != first_section and not subdf.empty and str(subdf.iloc[0, 0]).strip().lower() == section.lower():
                 new_columns = []
                 for col in subdf.iloc[0]:
-                    if pd.isna(col) or str(col).strip() in ['', 'None', 'NaN']:
+                    if pd.isna(col) or str(col).strip() in ['', '-', 'None', 'NaN']:
                         new_columns.append('')
                     else:
                         new_columns.append(str(col))
@@ -109,45 +112,72 @@ class DesignCapitalStructure:
                 subdf = subdf.iloc[1:]
             
             subdf = subdf.dropna(axis=1, how='all')
-            subdf = subdf.dropna(how='all')
+            cols_to_remove = []
+            for col in subdf.columns:
+                all_dash_or_empty = True
+                for val in subdf[col]:
+                    if not (pd.isna(val) or str(val).strip() in ['', '-']):
+                        all_dash_or_empty = False
+                        break
+                
+                is_important = any(important in str(col) for important in self.important_cols)
+                if all_dash_or_empty and not is_important:
+                    cols_to_remove.append(col)
             
+            if cols_to_remove:
+                subdf = subdf.drop(columns=cols_to_remove)
+            
+            subdf = subdf.dropna(how='all')
             if not subdf.empty:
                 subdf = subdf.reset_index(drop=True)
                 self.subtables[self.fuel][section] = subdf
 
     def combine_subtables(self):
+    
         combined_df = self.df.copy()
+        first_section = self.section_headers[0]
         
         for section in self.section_headers:
             if section in self.subtables[self.fuel]:
                 edited_data = self.subtables[self.fuel][section]
                 
-                mask = combined_df.iloc[:, 0].astype(str).str.strip().str.lower() == section.lower()
-                if not mask.any():
-                    continue
+                if section == first_section:
+                    start_idx = 0
                     
-                start_idx = mask.idxmax()
-                combined_df.iloc[start_idx] = self.df.iloc[start_idx]
-                
-                if not edited_data.empty:
-                    rows_to_fill = min(len(edited_data), len(combined_df) - start_idx - 1)
-                    cols_to_fill = min(len(edited_data.columns), len(combined_df.columns))
+                    if not edited_data.empty:
+                        for i in range(min(len(edited_data), len(combined_df))):
+                            for j in range(min(len(edited_data.columns), len(combined_df.columns))):
+                                val = edited_data.iloc[i, j]
+                                if not pd.isna(val) and str(val).strip() not in ['', '-']:
+                                    combined_df.iloc[i, j] = val
+                else:
+                    mask = combined_df.iloc[:, 0].astype(str).str.strip().str.lower() == section.lower()
+                    if not mask.any():
+                        for idx, val in enumerate(combined_df.iloc[:, 0].astype(str).str.strip().str.lower()):
+                            if section.lower() in val:
+                                start_idx = idx
+                                break
+                        else:
+                            continue
+                    else:
+                        start_idx = mask.idxmax()
                     
-                    for i in range(rows_to_fill):
-                        for j in range(cols_to_fill):
-                            val = edited_data.iloc[i, j]
-                            if pd.isna(val) or val == '-':
-                                combined_df.iloc[start_idx+1+i, j] = np.nan
-                            else:
-                                combined_df.iloc[start_idx+1+i, j] = val
+                    if start_idx < len(combined_df):
+                        combined_df.iloc[start_idx] = self.df.iloc[start_idx]
+                    
+                    if not edited_data.empty:
+                        for i in range(min(len(edited_data), len(combined_df) - start_idx - 1)):
+                            for j in range(min(len(edited_data.columns), len(combined_df.columns))):
+                                val = edited_data.iloc[i, j]
+                                if not pd.isna(val) and str(val).strip() not in ['', '-']:
+                                    combined_df.iloc[start_idx+1+i, j] = val
         
         return combined_df
 
     def show_input_tables(self):
         st.subheader(f"Capital Structure for {self.fuel} - Input Tables")
         
-        input_sections = [section for section in self.section_headers 
-                         if any(keyword in section for keyword in ["Division", "Type"])]
+        input_sections = [section for section in self.section_headers if any(keyword in section for keyword in ["Division", "FFSS - Outputs", "FFSS - Inputs"])]
         
         for section in input_sections:
             self.show_section_editor(section)
@@ -155,6 +185,7 @@ class DesignCapitalStructure:
         self.edited_df = self.combine_subtables()
 
     def show_section_editor(self, section):
+        
         if section in self.subtables[self.fuel] and not self.subtables[self.fuel][section].empty:
             df = self.subtables[self.fuel][section]
             height = self.subtable_heights.get(section, self.subtable_heights[self.section_headers[0]])
@@ -164,25 +195,32 @@ class DesignCapitalStructure:
             self.excel_editor.load_data(df, height, editable_cols, empty_rows)
             edited_df = self.excel_editor.show()
             self.subtables[self.fuel][section] = edited_df
-
+    
     def show_action_buttons(self):
         invalid_cells = self.validate_input_sections()
         save_disabled = bool(invalid_cells)
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("Save", disabled=save_disabled, key="save_input"):
-                self.save_data()
-        with col2:
-            if st.button("Reset", key="reset_input"):
-                self.reset_data()
-        
-        if save_disabled:
-            self.show_validation_errors(invalid_cells)
 
+        if st.button("Save", disabled=save_disabled):
+            saved = u.save_sheet_in_backend(self.edited_df, self.route, self.fuel)
+            if saved:
+                st.success(f"Changes in '{self.fuel}' Design Capital saved successfully.")
+                time.sleep(2)
+                st.rerun()
+
+        if save_disabled:
+            for section, input_name, col, value, error in invalid_cells:
+                st.warning(f"Section '{section}' - Row '{input_name}' - Column '{col}': {error} (Current value: {value})")
+
+        # Botón Reset (igual que TechnoEconomicInputs)
+        if st.button("Reset"):
+            reset = u.reset_sheet_in_backend(self.route, self.template_route, self.fuel)
+            if reset:
+                st.success(f"'{self.fuel}' Design Capital reset to template successfully.")
+                time.sleep(2)
+                st.rerun()
+    
     def validate_input_sections(self):
-        input_sections = [section for section in self.section_headers 
-                         if any(keyword in section for keyword in ["Division", "Type"])]
+        input_sections = [section for section in self.section_headers if any(keyword in section for keyword in ["Division", "FFSS - Inputs"])]
         
         invalid_cells = []
         for section in input_sections:
@@ -201,20 +239,6 @@ class DesignCapitalStructure:
         for section, input_name, col, value, error in invalid_cells:
             st.warning(f"Section '{section}' - Row '{input_name}' - Column '{col}': {error} (Current value: {value})")
 
-    def save_data(self):
-        saved = u.save_sheet_in_backend(self.edited_df, self.route, self.fuel)
-        if saved:
-            st.success(f"Changes in '{self.fuel}' Design Capital saved successfully.")
-            time.sleep(2)
-            st.rerun()
-
-    def reset_data(self):
-        reset = u.reset_sheet_in_backend(self.route, self.template_route, self.fuel)
-        if reset:
-            st.success(f"'{self.fuel}' Design Capital reset to template successfully.")
-            time.sleep(2)
-            st.rerun()
-
     def show_calculation_section(self):
         st.markdown("---")
         
@@ -230,8 +254,12 @@ class DesignCapitalStructure:
     def show_calculated_section(self, section):
         if section in self.subtables[self.fuel] and not self.subtables[self.fuel][section].empty:
             df = self.subtables[self.fuel][section]
-            st.write(f"**{section}** (Calculated)")
-            st.dataframe(df, use_container_width=True)
+            height = self.subtable_heights.get(section, self.subtable_heights[self.section_headers[0]])
+            editable_cols = self.editable_columns.get(section, self.editable_columns[self.section_headers[0]])
+            empty_rows = self.empty_rows.get(section, self.empty_rows[self.section_headers[0]])
+            
+            self.excel_editor.load_data(df, height, editable_cols, empty_rows)
+            _ = self.excel_editor.show()
 
     def __call__(self):
         sheet = u.get_sheet_from_backend(
@@ -241,10 +269,10 @@ class DesignCapitalStructure:
             self.fuel,
             self.key_fuels
         )
-        print("------------------------------------------------------------------------------------------------------------", sheet)
-        self.df = pd.DataFrame(sheet)
-        self.split_into_subtables()
         
-        self.show_input_tables()
+        self.df = pd.DataFrame(sheet)
+        
+        self.split_into_subtables()        
+        self.show_input_tables()        
         self.show_action_buttons()
         self.show_calculation_section()

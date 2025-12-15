@@ -42,13 +42,13 @@
             ],
             "expanded": [
                 "Electricity & E-Cooking",
-                "Electricity (Just access)",
+                "Electricity (Low access)",
                 "LPG"
             ],
             "more_expanded": [
                 "Electricity (Only E-Cooking)",
                 "Electricity & E-Cooking",
-                "Electricity (Just access)",
+                "Electricity (Low access)",
                 "LPG"
             ]
         },
@@ -68,13 +68,13 @@
             ],
             "expanded": [
                 "Electricity & E-Cooking",
-                "Electricity (Just access)",
+                "Electricity (Low access)",
                 "LPG"
             ],
             "more_expanded": [
                 "Electricity (Only E-Cooking)",
                 "Electricity & E-Cooking",
-                "Electricity (Just access)",
+                "Electricity (Low access)",
                 "LPG"
             ]
         },
@@ -94,13 +94,13 @@
             ],
             "expanded": [
                 "Electricity & E-Cooking",
-                "Electricity (Just access)",
+                "Electricity (Low access)",
                 "LPG"
             ],
             "more_expanded": [
                 "Electricity (Only E-Cooking)",
                 "Electricity & E-Cooking",
-                "Electricity (Just access)",
+                "Electricity (Low access)",
                 "LPG"
             ]
         }
@@ -113,7 +113,7 @@
     "ELECTRICITY_VARIANTS": [
         "Electricity",
         "Electricity & E-Cooking",
-        "Electricity (Just access)",
+        "Electricity (Low access)",
         "Electricity (Only E-Cooking)"
     ],
     "MODELS": {

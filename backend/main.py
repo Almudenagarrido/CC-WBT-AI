@@ -224,9 +224,9 @@ def add_fuel(request: FuelRequest):
                 continue
 
             if key == "expanded":
-                values = ["Electricity & E-Cooking", "Electricity (Just access)"]
+                values = ["Electricity & E-Cooking", "Electricity (Low access)"]
             elif key == "more_expanded":
-                values = ["Electricity (Only E-Cooking)", "Electricity & E-Cooking", "Electricity (Just access)"]
+                values = ["Electricity (Only E-Cooking)", "Electricity & E-Cooking", "Electricity (Low access)"]
             else:
                 values = ["Electricity"]
         else:
