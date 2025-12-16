@@ -1,4 +1,5 @@
 import os
+import re
 import uuid
 import stat
 import copy
@@ -83,16 +84,52 @@ def remove_readonly(func, path, excinfo):
 
 @app.get("/download-country")
 def download_country_files(country: str, background_tasks: BackgroundTasks):
+    config = load_config()
     temp_dir = tempfile.mkdtemp()
+
     try:
-        folder_path = os.path.join(BASE_DIR, country)        
+        folder_path = os.path.join(BASE_DIR, country)
         internal_folder = os.path.join(temp_dir, country)
         os.makedirs(internal_folder, exist_ok=True)
 
+        fuels = config["FUELS"].get(country, {}).get("normal", [])
+        models = config["MODELS"].get(country, [])
+
+        expected_sheets = sum(
+            [
+                sheets
+                for key, sheets in config["FUELS"].get(country, {}).items()
+                if isinstance(sheets, list)
+            ],
+            []
+        )
+
         files_to_include = [
             f for f in os.listdir(folder_path)
-            if os.path.isfile(os.path.join(folder_path, f)) and "{model}" not in f and "{template}" not in f
+            if os.path.isfile(os.path.join(folder_path, f))
+            and "{model}" not in f
+            and "{template}" not in f
         ]
+
+        full_paths = [os.path.join(folder_path, f) for f in files_to_include]
+
+        for full_path in full_paths:
+            if full_path.lower().endswith(".xlsx"):
+                try:
+                    excel_processor.clear_workbook_cache()
+                    excel_processor.apply_formulas(
+                        file_path=full_path.replace(BASE_DIR + "/", ""),
+                        formulas_json_path=JSON_FORMULAS,
+                        country=country,
+                        models=models,
+                        fuels=fuels,
+                        expected_sheets=expected_sheets
+                    )
+                except Exception as e:
+                    raise HTTPException(
+                        status_code=500,
+                        detail=f"Error updating formulas in {os.path.basename(full_path)}: {str(e)}"
+                    )
 
         for filename in files_to_include:
             src = os.path.join(folder_path, filename)
@@ -187,9 +224,9 @@ def add_fuel(request: FuelRequest):
                 continue
 
             if key == "expanded":
-                values = ["Electricity & E-Cooking", "Electricity (Just access)"]
+                values = ["Electricity & E-Cooking", "Electricity (Low access)"]
             elif key == "more_expanded":
-                values = ["Electricity (Only E-Cooking)", "Electricity & E-Cooking", "Electricity (Just access)"]
+                values = ["Electricity (Only E-Cooking)", "Electricity & E-Cooking", "Electricity (Low access)"]
             else:
                 values = ["Electricity"]
         else:
@@ -253,6 +290,40 @@ def get_models(country):
     
     return {"models": config["MODELS"][country]}
 
+def create_all_model_files(country: str, model: str, config: dict):
+
+    folder_path = os.path.join(BASE_DIR, country)
+    os.makedirs(folder_path, exist_ok=True)
+    
+    for route in config["ROUTES"]:
+        src_path = os.path.join(BASE_DIR, country, route.format(model="{model}"))
+        dst_path = os.path.join(BASE_DIR, country, route.format(model=model))
+        
+        if not os.path.exists(dst_path):
+            if os.path.exists(src_path):
+                shutil.copy(src_path, dst_path)
+            else:
+                existing_files = [f for f in os.listdir(folder_path) if f.endswith('.xlsx') and os.path.isfile(os.path.join(folder_path, f))]
+                
+                if existing_files:
+                    base_file = os.path.join(folder_path, existing_files[0])
+                    shutil.copy(base_file, dst_path)
+                else:
+                    wb = openpyxl.Workbook()
+                    wb.save(dst_path)
+
+    for shared_route in config["SHARED_ROUTES"]:
+        full_path = os.path.join(folder_path, shared_route)
+        
+        if not os.path.exists(full_path):
+            template_path = os.path.join(BASE_DIR, "templates", shared_route)
+            
+            if os.path.exists(template_path):
+                shutil.copy(template_path, full_path)
+            else:
+                wb = openpyxl.Workbook()
+                wb.save(full_path)
+
 @app.post("/model")
 async def create_model(country: str, model: str, start_year: int, end_year: int):
     config = load_config()
@@ -266,6 +337,8 @@ async def create_model(country: str, model: str, start_year: int, end_year: int)
                 "end": end_year
             }
             config["MODELS"][country] = ["BAU"]
+        
+        create_all_model_files(country, "BAU", config)
     
     else:
         expected_range = config["COUNTRY_YEAR_RANGES"][country]
@@ -279,14 +352,7 @@ async def create_model(country: str, model: str, start_year: int, end_year: int)
                 )
             )
         
-        for route in config["ROUTES"]:
-            src_path = os.path.join(BASE_DIR, country, route)
-            dst_path = os.path.join(BASE_DIR, country, route.format(model=model))
-
-            if os.path.exists(src_path):
-                shutil.copy(src_path, dst_path)
-            else:
-                raise HTTPException(status_code=404, detail=f"Template file not found: {src_path}")
+        create_all_model_files(country, model, config)
                 
         config["MODELS"][country].append(model)
 
@@ -294,7 +360,7 @@ async def create_model(country: str, model: str, start_year: int, end_year: int)
     return {"message": f"Model '{model}' created successfully for country '{country}'."}
 
 @app.get("/download-model")
-def download_model_files(country:str, model: str, background_tasks: BackgroundTasks):
+def download_model_files(country: str, model: str, background_tasks: BackgroundTasks):
     config = load_config()
     temp_dir = tempfile.mkdtemp()
 
@@ -302,18 +368,40 @@ def download_model_files(country:str, model: str, background_tasks: BackgroundTa
         folder_path = os.path.join(BASE_DIR, country)
         files_to_copy = []
 
+        fuels = config["FUELS"].get(country, {}).get("normal", [])
+        models = config["MODELS"].get(country, [])
+        expected_sheets = sum(
+            [sheets for key, sheets in config["FUELS"].get(country, {}).items() if isinstance(sheets, list)],
+            []
+        )
+
         if model.lower() != "bau":
             for route in config["ROUTES"]:
                 filename = route.format(model=model)
                 full_path = os.path.join(folder_path, filename)
                 if not os.path.exists(full_path):
                     shutil.rmtree(temp_dir)
+                    raise HTTPException(status_code=404, detail=f"{filename} not found")
                 files_to_copy.append(full_path)
 
         for shared_route in config["SHARED_ROUTES"]:
             full_path = os.path.join(folder_path, shared_route)
             if os.path.exists(full_path):
                 files_to_copy.append(full_path)
+
+        for excel_path in files_to_copy:
+            try:
+                excel_processor.clear_workbook_cache()
+                excel_processor.apply_formulas(
+                    file_path=excel_path.replace(BASE_DIR + "/", ""),
+                    formulas_json_path=JSON_FORMULAS,
+                    country=country,
+                    models=models,
+                    fuels=fuels,
+                    expected_sheets=expected_sheets
+                )
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=f"Error updating formulas in {excel_path}: {str(e)}")
 
         for path in files_to_copy:
             shutil.copy(path, os.path.join(temp_dir, os.path.basename(path)))
@@ -323,7 +411,7 @@ def download_model_files(country:str, model: str, background_tasks: BackgroundTa
 
         background_tasks.add_task(os.remove, zip_path)
         shutil.rmtree(temp_dir)
-        
+
         return FileResponse(
             zip_path,
             media_type="application/zip",
@@ -336,42 +424,48 @@ def download_model_files(country:str, model: str, background_tasks: BackgroundTa
         raise HTTPException(status_code=500, detail=str(e))
 
 def get_year_columns(sheet):
+    
+    year_columns = {}
+
     for row in range(1, sheet.max_row + 1):
         for col in range(1, sheet.max_column + 1):
+
             val = sheet.cell(row=row, column=col).value
-            if isinstance(val, str) and val.strip().lower() == "baseline":
-                year_columns = {}
-                year_columns[col] = "baseline"
-                for c in range(col + 1, sheet.max_column + 1):
-                    cell_val = sheet.cell(row=row, column=c).value
-                    try:
-                        year = int(cell_val)
-                        year_columns[c] = year
-                    except (TypeError, ValueError):
-                        continue
-                return row, year_columns
-    return None, {}
+            if val is None:
+                continue
+
+            year_int = None
+            if isinstance(val, int):
+                year_int = val
+            elif isinstance(val, str):
+                v = val.strip()
+                if v.isdigit():
+                    year_int = int(v)
+                else:
+                    continue
+
+            if year_int is not None and 1900 <= year_int <= 2100:
+                year_columns[col] = year_int
+
+        if year_columns:
+            return year_columns
+
+    return {}
 
 def drop_out_of_range_years_from_workbook(wb, sheet_name, start_year, end_year):
-    ws = wb[sheet_name]
-    row_idx, year_columns = get_year_columns(ws)
 
-    if not year_columns or row_idx is None:
+    ws = wb[sheet_name]
+    year_columns = get_year_columns(ws)
+
+    if not year_columns:
         return
 
     cols_to_delete = []
-    baseline_year = start_year
-    
+
     for col_idx, year in year_columns.items():
-        if year == "baseline":
-            continue
-        else:
-            if not isinstance(year, int):
-                continue
-            if year < start_year or year > end_year:
-                cols_to_delete.append(col_idx)
-            elif year == baseline_year:
-                cols_to_delete.append(col_idx)
+
+        if year < start_year or year > end_year:
+            cols_to_delete.append(col_idx)
 
     for col in sorted(cols_to_delete, reverse=True):
         ws.delete_cols(col)

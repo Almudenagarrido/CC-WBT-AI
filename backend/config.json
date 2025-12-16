@@ -1,7 +1,6 @@
 {
     "COUNTRIES": [
-        "Rwanda",
-        "LPG testing"
+        "Rwanda"
     ],
     "COUNTRY_YEAR_RANGES": {
         "template": {
@@ -11,19 +10,13 @@
         "Rwanda": {
             "start": 2023,
             "end": 2034
-        },
-        "LPG testing": {
-            "start": 2023,
-            "end": 2034
         }
     },
     "TAX_RATES": {
-        "Rwanda": 28,
-        "LPG testing": 28
+        "Rwanda": 28
     },
     "INFLATIONS": {
-        "Rwanda": 10,
-        "LPG testing": 5
+        "Rwanda": 5
     },
     "FUELS": {
         "template": {
@@ -42,13 +35,13 @@
             ],
             "expanded": [
                 "Electricity & E-Cooking",
-                "Electricity (Just access)",
+                "Electricity (Low access)",
                 "LPG"
             ],
             "more_expanded": [
                 "Electricity (Only E-Cooking)",
                 "Electricity & E-Cooking",
-                "Electricity (Just access)",
+                "Electricity (Low access)",
                 "LPG"
             ]
         },
@@ -68,39 +61,13 @@
             ],
             "expanded": [
                 "Electricity & E-Cooking",
-                "Electricity (Just access)",
+                "Electricity (Low access)",
                 "LPG"
             ],
             "more_expanded": [
                 "Electricity (Only E-Cooking)",
                 "Electricity & E-Cooking",
-                "Electricity (Just access)",
-                "LPG"
-            ]
-        },
-        "LPG testing": {
-            "normal": [
-                "Electricity",
-                "LPG"
-            ],
-            "carbon": [
-                "Electricity",
-                "LPG",
-                "Carbon Credits"
-            ],
-            "rest": [
-                "Electricity",
-                "LPG"
-            ],
-            "expanded": [
-                "Electricity & E-Cooking",
-                "Electricity (Just access)",
-                "LPG"
-            ],
-            "more_expanded": [
-                "Electricity (Only E-Cooking)",
-                "Electricity & E-Cooking",
-                "Electricity (Just access)",
+                "Electricity (Low access)",
                 "LPG"
             ]
         }
@@ -113,18 +80,13 @@
     "ELECTRICITY_VARIANTS": [
         "Electricity",
         "Electricity & E-Cooking",
-        "Electricity (Just access)",
+        "Electricity (Low access)",
         "Electricity (Only E-Cooking)"
     ],
     "MODELS": {
         "Rwanda": [
             "BAU",
             "CleanStep"
-        ],
-        "LPG testing": [
-            "BAU",
-            "CleanStep",
-            "Aligned"
         ]
     },
     "SHARED_ROUTES": [
