@@ -24,8 +24,8 @@ class DesignCapitalStructure:
         if self.fuel and "electricity" in self.fuel.lower():
             self.section_headers = ["Division - GRID", "Division - OFF-GRID", "FFSS - Outputs", "FFSS - Inputs", "Financiation", "Total - GRID", "Total - OFF-GRID",]
             self.subtable_heights = {
-                "Division - GRID": 260,
-                "Division - OFF-GRID": 260,
+                "Division - GRID": 240,
+                "Division - OFF-GRID": 240,
                 "FFSS - Outputs": 120,
                 "FFSS - Inputs": 90,
                 "Financiation": 70,
@@ -53,7 +53,7 @@ class DesignCapitalStructure:
         else:
             self.section_headers = ["Division", "FFSS - Outputs", "FFSS - Inputs", "Financiation", "Total"]
             self.subtable_heights = {
-                "Division": 260,
+                "Division": 240,
                 "FFSS - Outputs": 120,
                 "FFSS - Inputs": 90,
                 "Financiation": 70,

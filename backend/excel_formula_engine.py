@@ -38,7 +38,7 @@ class ExcelFormulaProcessor:
     
     def __init__(self):
         self.previously_calculated = {}
-        self.amount_targets = ["How much to be financed", "Equity", "Grants", "Debt", "WACC"]
+        self.amount_targets = ["How much to be financed", "Equity", "Equity - GRID", "Equity - OFF-GRID", "Grants", "Grants - GRID", "Grants - OFF-GRID","Debt", "Debt - GRID", "Debt - OFF-GRID", "WACC", "WACC - GRID", "WACC - OFF-GRID"]
     
     @lru_cache(maxsize=10)
     def _get_workbook(self, file_path, read_only=False, data_only=False):
@@ -75,20 +75,14 @@ class ExcelFormulaProcessor:
         return 0
     
     def _apply_number_formatting(self, ws, year_range):
-        """
-        Formatea los valores numéricos de las columnas correspondientes a años,
-        ignorando las filas de encabezado de años y cualquier celda que no sea número.
-        Añade prints de depuración para seguimiento.
-        """
+
         start_col = None
-        print("DEBUG: Buscando columna inicial de años...")
         
-        # Detectar primera columna de años consecutivos
         for row in ws.iter_rows(min_row=1, max_row=ws.max_row):
             for cell in row:
                 if isinstance(cell.value, int) and year_range['start'] <= cell.value <= year_range['end']:
                     consecutive = True
-                    for offset in range(1, 5):  # comprobar hasta 5 años consecutivos
+                    for offset in range(1, 5):
                         next_col_idx = cell.column + offset - 1
                         if next_col_idx >= ws.max_column:
                             break
@@ -99,31 +93,25 @@ class ExcelFormulaProcessor:
                             break
                     if consecutive:
                         start_col = cell.column
-                        print(f"DEBUG: Columna inicial de años detectada en columna {start_col} (celda {cell.coordinate})")
                         break
             if start_col:
                 break
 
         if not start_col:
-            print("WARNING: No se encontraron columnas de años válidas")
             return
 
-        # Identificar filas de encabezado de años
         year_header_rows = set()
         for row in ws.iter_rows(min_row=1, max_row=ws.max_row):
             cell_value = row[start_col - 1].value
             if isinstance(cell_value, int) and year_range['start'] <= cell_value <= year_range['end']:
                 year_header_rows.add(row[0].row)
-        print(f"DEBUG: Filas de encabezado de años identificadas: {year_header_rows}")
-
-        # Formatear SOLO valores numéricos en las columnas de años
+        
         for row in ws.iter_rows(min_row=1, max_row=ws.max_row):
             if row[0].row in year_header_rows:
-                continue  # ignorar fila de encabezado de años
+                continue
             for col_idx in range(start_col, ws.max_column + 1):
                 cell = ws.cell(row=row[0].row, column=col_idx)
                 if isinstance(cell.value, (int, float)):
-                    print(f"DEBUG: Formateando celda {cell.coordinate} con valor {cell.value}")
                     cell.number_format = "0.0000"
     
     def _manage_upload_flag(self, file_path, action="read", value=None):
@@ -218,7 +206,7 @@ class ExcelFormulaProcessor:
         return expanded_json
     
     def _expand_single_formulas(self, formulas_sheet_file, country, models, fuels, expected_sheets, specific_values=None, just_uploaded=False):
-    
+        
         expanded_formulas = {}
         if specific_values is None:
             specific_values = {'model': None, 'fuel': None, 'sheet': None}
@@ -259,10 +247,18 @@ class ExcelFormulaProcessor:
                         
                         if "{country}" in target:
                             new_formula["target"] = target.replace("{country}", country)
+                        
                         if "{model}" in target and model_val:
                             new_formula["target"] = target.replace("{model}", model_val)
+
+                        fuel_to_use = expanded_sheet_name
+                        for fuel in fuels:
+                            if fuel in expanded_sheet_name:
+                                fuel_to_use = fuel
+                         
                         if "{fuel}" in target:
-                            new_formula["target"] = target.replace("{fuel}", expanded_sheet_name)
+                            new_formula["target"] = target.replace("{fuel}", fuel_to_use)
+                        
                         if "{sheet}" in target:
                             new_formula["target"] = target.replace("{sheet}", expanded_sheet_name)
                         
@@ -273,16 +269,17 @@ class ExcelFormulaProcessor:
                             if "{model}" in source and model_val:
                                 source = source.replace("{model}", model_val)
                             if "{fuel}" in source:
-                                source = source.replace("{fuel}", expanded_sheet_name)
+                                source = source.replace("{fuel}", fuel_to_use)
                             if "{sheet}" in source:
                                 source = source.replace("{sheet}", expanded_sheet_name)
+                                
                             new_sources.append(source)
-                        
+
                         new_formula["sources"] = new_sources
                         expanded_formulas[expanded_sheet_name].append(new_formula)
         
         return expanded_formulas
-
+    
     def _extract_specific_values(self, file_path, models, fuels, expected_sheets):
         
         specific_values = {
@@ -307,7 +304,7 @@ class ExcelFormulaProcessor:
                 break
         
         return specific_values
-
+    
     def _process_formulas_sheet_file(self, file_path, formulas_sheet_file, year_range):
 
         self.clear_workbook_cache()
@@ -316,6 +313,7 @@ class ExcelFormulaProcessor:
         try:
             changes_made = False
             for sheet_name, formulas in formulas_sheet_file.items():
+                
                 if sheet_name not in wb.sheetnames:
                     continue
                 
@@ -530,9 +528,14 @@ class ExcelFormulaProcessor:
                 cell_str = str(cell_value).strip() if cell_value is not None else ""
                 expected_str = expected_value.strip()
                 
-                if expected_str not in cell_str:
-                    match = False
-                    break
+                if "vs. BAU" not in expected_str:
+                    if expected_str != cell_str:
+                        match = False
+                        break
+                else:
+                    if expected_str not in cell_str:
+                        match = False
+                        break
             
             if match:
                 target_row = row
@@ -623,7 +626,13 @@ class ExcelFormulaProcessor:
             cell = worksheet.cell(row=target_row, column=col)
             cell_value = cell.value
             numeric_cells.append(cell.coordinate)
-        
+
+        if year_range:
+            expected_years = year_range['end'] - year_range['start'] + 1
+            
+            if len(numeric_cells) > expected_years:                
+                numeric_cells = numeric_cells[:expected_years]
+                
         return numeric_cells
     
     def _get_config_value(self, country, config_key):
@@ -709,7 +718,7 @@ class ExcelFormulaProcessor:
         
         final_result = results.get("final", 0)
         return final_result
-     
+    
     def _meets_condition(self, value, condition):
         
         if condition is None:
