@@ -5,11 +5,9 @@ class SummaryFinancing:
     
     def __init__(self, country):
         self.country = country
-        # Usa el directorio actual donde está el script
         self.charts_folder = "chanchullo"
         
     def _get_available_charts(self):
-        """Get all chart images from the charts folder"""
         try:
             # Debug: mostrar el path actual
             current_dir = os.getcwd()
