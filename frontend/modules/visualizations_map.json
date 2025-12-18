@@ -1,5 +1,5 @@
 {
-    "Sources of Financing for the Electricity Sector": {
+    "Sources of Financing for the {fuel} Sector": {
         "chart_type": "bar",
         "sources": {
             "Tariff Income": {
@@ -7,7 +7,7 @@
                 { "op": "copy", "operands": [["index", 0]], "result": "final" }
                 ],
                 "sources": [
-                "{country}\\financial-statements-{model}.xlsx::Summary Financing::Tariff Income"
+                "{country}\\technoeconomic-inputs-{model}.xlsx::{fuel}::Tariff"
                 ]
             },
             "Viability Gap funding": {

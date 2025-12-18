@@ -206,12 +206,13 @@ class ExcelFormulaProcessor:
         return expanded_json
     
     def _expand_single_formulas(self, formulas_sheet_file, country, models, fuels, expected_sheets, specific_values=None, just_uploaded=False):
-        
+
         expanded_formulas = {}
         if specific_values is None:
             specific_values = {'model': None, 'fuel': None, 'sheet': None}
         
         for sheet_name, formulas in formulas_sheet_file.items():
+            
             if sheet_name == "{fuel}":
                 sheets_to_expand = fuels
             elif sheet_name == "{sheet}":

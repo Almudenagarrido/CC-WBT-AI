@@ -1,128 +1,163 @@
 import os
+import json
 import streamlit as st
+from itertools import product
+
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FRONTEND_DIR = os.path.dirname(BASE_DIR)
+PROJECT_ROOT = os.path.dirname(FRONTEND_DIR)
+BACKEND_DIR = os.path.join(PROJECT_ROOT, "backend")
+CONFIG_FILE = os.path.join(BACKEND_DIR, "config.json")
+VISUALIZATIONS_JSON = os.path.join(BASE_DIR, "visualizations_map.json")
+
 
 class SummaryFinancing:
     
     def __init__(self, country):
         self.country = country
-        self.charts_folder = "chanchullo"
-        
-    def _get_available_charts(self):
-        try:
-            # Debug: mostrar el path actual
-            current_dir = os.getcwd()
-            st.write(f"**Current directory:** {current_dir}")
-            st.write(f"**Looking in folder:** {self.charts_folder}")
-            
-            # Ver si la carpeta existe
-            folder_exists = os.path.exists(self.charts_folder)
-            st.write(f"**Folder exists:** {folder_exists}")
-            
-            if not folder_exists:
-                os.makedirs(self.charts_folder, exist_ok=True)
-                st.write(f"Created folder: {self.charts_folder}")
-                return []
-            
-            # Listar contenido de la carpeta
-            folder_contents = os.listdir(self.charts_folder)
-            st.write(f"**Folder contents ({len(folder_contents)} items):**")
-            for item in folder_contents:
-                st.write(f"  - {item}")
-            
-            # Get all image files
-            image_extensions = ('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.svg')
-            charts = []
-            
-            for file in folder_contents:
-                file_path = os.path.join(self.charts_folder, file)
-                is_file = os.path.isfile(file_path)
-                st.write(f"  Checking '{file}': is_file={is_file}, extension={os.path.splitext(file)[1].lower()}")
-                
-                if is_file and file.lower().endswith(image_extensions):
-                    charts.append(file)
-            
-            st.write(f"**Found {len(charts)} chart files:** {charts}")
-            return sorted(charts)
-            
-        except Exception as e:
-            st.error(f"Error accessing charts folder: {str(e)}")
-            import traceback
-            st.code(traceback.format_exc())
-            return []
+        self.charts_folder = "chanchullo2"
+        self.formulas_json_path = VISUALIZATIONS_JSON
+        self.config = self._load_config()
     
-    def __call__(self):
-        # Title
-        st.subheader("📊 Summary Financing Charts")
+    def _load_config(self):
         
-        # Get available charts
-        available_charts = self._get_available_charts()
+        with open(CONFIG_FILE, "r", encoding='utf-8') as f:
+            return json.load(f)
+    
+    def _show_graphs_basic_design(self):
         
-        if not available_charts:
-            st.info(f"No charts found in '{self.charts_folder}'. Add some images to display them here.")
-            
-            # Opción para subir imágenes manualmente
-            st.markdown("---")
-            st.write("### 📤 Upload a chart image")
-            uploaded_file = st.file_uploader(
-                "Upload a chart image (PNG, JPG, etc.):",
-                type=['png', 'jpg', 'jpeg', 'gif', 'bmp', 'svg'],
-                key="chart_uploader"
-            )
-            
-            if uploaded_file is not None:
-                # Guardar la imagen en la carpeta
-                file_path = os.path.join(self.charts_folder, uploaded_file.name)
-                with open(file_path, "wb") as f:
-                    f.write(uploaded_file.getvalue())
-                st.success(f"Chart '{uploaded_file.name}' saved successfully!")
-                st.rerun()
-                
+        st.subheader("📊 Summary Financing Charts (Basic Design)")
+        
+        if not os.path.exists(self.charts_folder):
             return
         
-        # Display each chart
-        for chart_file in available_charts:
-            chart_path = os.path.join(self.charts_folder, chart_file)
+        images = []
+        for file in os.listdir(self.charts_folder):
+            if file.lower().endswith('.png'):
+                images.append(file)
+        
+        if not images:
+            return
+        
+        preferred_order = [
+            "Sources_Financing_Electricity",
+            "Revenues_Electricity", 
+            "Capex_Electricity",
+            "Sources_Financing_LPG",
+            "Revenues_LPG",
+            "Capex_LPG"
+        ]
+        
+        def get_sort_key(filename):
+            name_without_ext = os.path.splitext(filename)[0]
+            for i, pattern in enumerate(preferred_order):
+                if pattern in name_without_ext:
+                    return i
+            return 999
+        
+        sorted_images = sorted(images, key=get_sort_key)
+        
+        for img in sorted_images:
+            path = os.path.join(self.charts_folder, img)
             
-            try:
-                # Verificar que el archivo existe
-                if not os.path.exists(chart_path):
-                    st.error(f"File not found: {chart_path}")
-                    continue
-                    
-                # Display chart title (filename without extension)
-                chart_name = os.path.splitext(chart_file)[0]
-                st.write(f"### {chart_name.replace('_', ' ').title()}")
+            chart_name = os.path.splitext(img)[0]
+            chart_name_display = chart_name.replace('_', ' ')
+            
+            st.write(f"**{chart_name_display}**")
+            st.image(path, use_container_width=True)
+            
+            with open(path, "rb") as img_file:
+                img_bytes = img_file.read()
                 
-                # Display the image
-                st.image(
-                    chart_path,
-                    caption=f"Chart: {chart_name}",
-                    use_container_width=True
+                st.download_button(
+                    label="⬇️ Download",
+                    data=img_bytes,
+                    file_name=img,
+                    mime="image/png"
                 )
-                
-                # Optional download button
-                with open(chart_path, "rb") as img_file:
-                    img_bytes = img_file.read()
+            
+            st.markdown("---")
+    
+    def _expand_visualizations_json(self, visualizations_json):
+        
+        expanded_graphs = {}
+        
+        models = self.config.get("MODELS", {}).get(self.country, [])
+        fuels = self.config.get("FUELS", {}).get(self.country, {}).get("normal", [])
+        
+        for graph_raw_name, graph_data in visualizations_json.items():
+            
+            needs_country = "{country}" in graph_raw_name
+            needs_fuel = "{fuel}" in graph_raw_name
+            
+            if needs_country and needs_fuel:
+                for fuel in fuels:
+                    expanded_name = graph_raw_name.replace("{country}", self.country)
+                    expanded_name = expanded_name.replace("{fuel}", fuel)
+                    expanded_graphs[expanded_name] = graph_data
+            elif needs_country:
+                expanded_name = graph_raw_name.replace("{country}", self.country)
+                expanded_graphs[expanded_name] = graph_data
+            else:
+                expanded_graphs[graph_raw_name] = graph_data
+        
+        return expanded_graphs
+    
+    def _calculate_values(self):
+
+        try:
+            with open(self.formulas_json_path, "r", encoding='utf-8') as f:
+                visualizations_json = json.load(f)
+            
+            expanded_graphs = self._expand_visualizations_json(visualizations_json)
+            
+            st.write(f"**Expanded Graphs for {self.country}:**")
+            for graph_name, graph_data in expanded_graphs.items():
+                with st.expander(f"📈 {graph_name}"):
+                    st.write(f"Chart Type: {graph_data.get('chart_type', 'N/A')}")
                     
-                    st.download_button(
-                        label="📥 Download this chart",
-                        data=img_bytes,
-                        file_name=chart_file,
-                        mime="image/png",
-                        key=f"download_{chart_file}"
-                    )
-                
-                # Opción para eliminar
-                col1, col2 = st.columns([0.9, 0.1])
-                with col2:
-                    if st.button("🗑️", key=f"delete_{chart_file}"):
-                        os.remove(chart_path)
-                        st.success(f"Deleted {chart_file}")
-                        st.rerun()
-                
-                st.markdown("---")
-                
-            except Exception as e:
-                st.error(f"Could not load chart '{chart_file}': {str(e)}")
-                import traceback
-                st.code(traceback.format_exc())
+                    sources = graph_data.get("sources", {})
+                    st.write(f"Number of sources: {len(sources)}")
+                    
+                    for source_name, source_data in sources.items():
+                        st.write(f"- {source_name}:")
+                        st.write(f"  Formula steps: {len(source_data.get('formula_steps', []))}")
+                        st.write(f"  Source files: {source_data.get('sources', [])}")
+            
+            return expanded_graphs
+            
+        except FileNotFoundError:
+            return {}
+        except json.JSONDecodeError as e:
+            return {}
+    
+    def __call__(self):
+        
+        tab1, tab2 = st.tabs(["🎨 View Design", "⚙️ Calculate Values"])
+        
+        with tab1:
+            
+            self._show_graphs_basic_design()
+        
+        with tab2:
+            
+            st.write("### 🔧 Calculate Chart Values")
+            st.info("This section will process the JSON and calculate values from Excel files.")
+            
+            if st.button("🚀 Process Visualizations JSON"):
+                with st.spinner("Processing JSON and expanding formulas..."):
+                    expanded_data = self._calculate_values()
+                    
+                    if expanded_data:
+                        st.success(f"✅ Successfully processed {len(expanded_data)} graph definitions")
+                        
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            st.metric("Graphs Found", len(expanded_data))
+                        with col2:
+                            total_sources = sum(
+                                len(graph.get("sources", {})) 
+                                for graph in expanded_data.values()
+                            )
+                            st.metric("Total Sources", total_sources)
