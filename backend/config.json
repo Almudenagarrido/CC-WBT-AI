@@ -86,7 +86,8 @@
     "MODELS": {
         "Rwanda": [
             "BAU",
-            "CleanStep"
+            "CleanStep",
+            "Aligned"
         ]
     },
     "SHARED_ROUTES": [

@@ -1,0 +1,130 @@
+{
+    "Sources of Financing for the Electricity Sector": {
+        "chart_type": "bar",
+        "sources": {
+            "Tariff Income": {
+                "formula_steps": [
+                { "op": "copy", "operands": [["index", 0]], "result": "final" }
+                ],
+                "sources": [
+                "{country}\\financial-statements-{model}.xlsx::Summary Financing::Tariff Income"
+                ]
+            },
+            "Viability Gap funding": {
+            "formula_steps": [
+                { "op": "copy", "operands": [["index", 0]], "result": "final" }
+            ],
+            "sources": [
+                "{country}\\financial-statements-{model}.xlsx::Summary Financing::Viability Gap funding"
+            ]
+            },
+            "Grants from DFIs": {
+            "formula_steps": [
+                { "op": "copy", "operands": [["index", 0]], "result": "final" }
+            ],
+            "sources": [
+                "{country}\\financial-statements-{model}.xlsx::Summary Financing::Grants from DFIs"
+            ]
+            },
+            "Concessional Loans": {
+            "formula_steps": [
+                { "op": "copy", "operands": [["index", 0]], "result": "final" }
+            ],
+            "sources": [
+                "{country}\\financial-statements-{model}.xlsx::Summary Financing::Concessional Loans"
+            ]
+            },
+            "Own equity": {
+            "formula_steps": [
+                { "op": "copy", "operands": [["index", 0]], "result": "final" }
+            ],
+            "sources": [
+                "{country}\\financial-statements-{model}.xlsx::Summary Financing::Own equity"
+            ]
+            },
+            "OPEX": {
+            "formula_steps": [
+                { "op": "negative", "operands": [["index", 0]], "result": "final" }
+            ],
+            "sources": [
+                "{country}\\financial-statements-{model}.xlsx::Summary Financing::OPEX"
+            ]
+            },
+            "CAPEX": {
+            "formula_steps": [
+                { "op": "negative", "operands": [["index", 0]], "result": "final" }
+            ],
+            "sources": [
+                "{country}\\financial-statements-{model}.xlsx::Summary Financing::CAPEX"
+            ]
+            },
+            "Financial Expense": {
+            "formula_steps": [
+                { "op": "negative", "operands": [["index", 0]], "result": "final" }
+            ],
+            "sources": [
+                "{country}\\financial-statements-{model}.xlsx::Summary Financing::Financial Expense"
+            ]
+            },
+            "Debt Repayment": {
+            "formula_steps": [
+                { "op": "negative", "operands": [["index", 0]], "result": "final" }
+            ],
+            "sources": [
+                "{country}\\financial-statements-{model}.xlsx::Summary Financing::Debt Repayment"
+            ]
+            },
+            "Dividends": {
+            "formula_steps": [
+                { "op": "negative", "operands": [["index", 0]], "result": "final" }
+            ],
+            "sources": [
+                "{country}\\financial-statements-{model}.xlsx::Summary Financing::Dividends"
+            ]
+            },
+            "Cash End of Period '34": {
+            "formula_steps": [
+                { "op": "negative", "operands": [["index", 0]], "result": "final" }
+            ],
+            "sources": [
+                "{country}\\financial-statements-{model}.xlsx::Summary Financing::Cash End of Period '34"
+            ]
+            },
+            "Total Sources": {
+            "formula_steps": [
+                { "op": "addition", "operands": [["index", 0], ["index", 1], ["index", 2], ["index", 3], ["index", 4]], "result": "final" }
+            ],
+            "sources": [
+                "{country}\\financial-statements-{model}.xlsx::Summary Financing::Tariff Income",
+                "{country}\\financial-statements-{model}.xlsx::Summary Financing::Viability Gap funding",
+                "{country}\\financial-statements-{model}.xlsx::Summary Financing::Grants from DFIs",
+                "{country}\\financial-statements-{model}.xlsx::Summary Financing::Concessional Loans",
+                "{country}\\financial-statements-{model}.xlsx::Summary Financing::Own equity"
+            ]
+            },
+            "Total Uses": {
+            "formula_steps": [
+                { "op": "addition", "operands": [["index", 0], ["index", 1], ["index", 2], ["index", 3], ["index", 4], ["index", 5]], "result": "final" }
+            ],
+            "sources": [
+                "{country}\\financial-statements-{model}.xlsx::Summary Financing::OPEX",
+                "{country}\\financial-statements-{model}.xlsx::Summary Financing::CAPEX",
+                "{country}\\financial-statements-{model}.xlsx::Summary Financing::Financial Expense",
+                "{country}\\financial-statements-{model}.xlsx::Summary Financing::Debt Repayment",
+                "{country}\\financial-statements-{model}.xlsx::Summary Financing::Dividends",
+                "{country}\\financial-statements-{model}.xlsx::Summary Financing::Cash End of Period '34"
+            ]
+            },
+            "Financing Gap": {
+            "formula_steps": [
+                { "op": "subtraction", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
+                { "op": "abs", "operands": [["index", "temp1"]], "result": "final" }
+            ],
+            "sources": [
+                "{country}\\financial-statements-{model}.xlsx::Summary Financing::Total Sources",
+                "{country}\\financial-statements-{model}.xlsx::Summary Financing::Total Uses"
+            ]
+            }
+    }
+  }
+}

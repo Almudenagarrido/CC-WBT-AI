@@ -109,6 +109,7 @@ def download_country_files(country: str, background_tasks: BackgroundTasks):
             if os.path.isfile(os.path.join(folder_path, f))
             and "{model}" not in f
             and "{template}" not in f
+            and "upload_flag" not in f.lower()
         ]
 
         full_paths = [os.path.join(folder_path, f) for f in files_to_include]

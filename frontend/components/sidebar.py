@@ -152,5 +152,11 @@ def show():
                     st.session_state.section = "technoeconomic_models"
                     st.session_state.subsection = "summary_financing"
                     st.rerun()
+        else:
+            st.markdown("##### Outputs")
+            if st.button("Summary Financing"):
+                st.session_state.section = "technoeconomic_models"
+                st.session_state.subsection = "summary_financing"
+                st.rerun()
 
     return st.session_state.section, st.session_state.subsection, st.session_state.model, st.session_state.fuel
