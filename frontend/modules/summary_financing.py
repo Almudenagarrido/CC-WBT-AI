@@ -1,8 +1,11 @@
 import os
 import json
+import streamlit as st
 from itertools import product
 from copy import deepcopy
 from openpyxl import load_workbook
+import plotly.graph_objects as go
+import plotly.subplots as sp
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FRONTEND_DIR = os.path.dirname(BASE_DIR)
@@ -44,6 +47,7 @@ class SummaryFinancing:
         self.year_range = self._get_year_range()
         self.previously_calculated = {}
         self._workbook_cache = {}
+        self.filters = {"Sources of Financing": ["BAU"]}
     
     def _load_config(self):
         with open(CONFIG_FILE, "r", encoding='utf-8') as f:
@@ -94,36 +98,66 @@ class SummaryFinancing:
         expanded_graphs = {}
         models = self.config.get("MODELS", {}).get(self.country, [])
         fuels = self.config.get("FUELS", {}).get(self.country, {}).get("normal", [])
+        sheets = self.config.get("FUELS", {}).get(self.country, {}).get("expanded", [])
+        more_sheets = self.config.get("FUELS", {}).get(self.country, {}).get("more_expanded", [])
         
         for graph_raw_name, graph_data in visualizations_json.items():
             has_country = "{country}" in graph_raw_name
             has_model = "{model}" in graph_raw_name
             has_fuel = "{fuel}" in graph_raw_name
+            has_sheet = "{sheet}" in graph_raw_name
+            has_more_sheet = "{more_sheet}" in graph_raw_name
             
-            if not (has_country or has_model or has_fuel):
+            if not (has_country or has_model or has_fuel or has_sheet or has_more_sheet):
                 expanded_graphs[graph_raw_name] = deepcopy(graph_data)
                 continue
             
-            country_values = [self.country] if has_country else [""]
+            country_values = [self.country]
             model_values = models if has_model else [""]
             fuel_values = fuels if has_fuel else [""]
+            sheet_values = sheets if has_sheet else [""]
+            more_sheet_values = more_sheets if has_more_sheet else [""]
             
-            for country_val, model_val, fuel_val in product(country_values, model_values, fuel_values):
+            for country_val, model_val, fuel_val, sheet_val, more_sheet_val in product(country_values, model_values, fuel_values, sheet_values, more_sheet_values):
                 expanded_name = graph_raw_name
                 
+                if not fuel_val:
+                    fuel_val = "Electricity"
+                if has_sheet and fuel_val not in sheet_val:
+                    continue
+                if has_more_sheet and fuel_val not in more_sheet_val:
+                    continue
+
                 if has_country:
                     expanded_name = expanded_name.replace("{country}", country_val)
                 if has_model:
                     expanded_name = expanded_name.replace("{model}", model_val)
                 if has_fuel:
                     expanded_name = expanded_name.replace("{fuel}", fuel_val)
+                if has_sheet:
+                    expanded_name = expanded_name.replace("{sheet}", sheet_val)
+                if has_more_sheet:
+                    expanded_name = expanded_name.replace("{more_sheet}", more_sheet_val)
                 
                 if expanded_name != graph_raw_name:
+                    
+                    if expanded_name in expanded_graphs:
+                        
+                        existing_graph = expanded_graphs[expanded_name]
+                        new_sources = graph_data.get("financing_sources", {})
+                        
+                        for source_name, source_info in new_sources.items():
+                            existing_graph["financing_sources"][source_name] = deepcopy(source_info)
+                        
+                        continue
+                    
                     expanded_graph_data = deepcopy(graph_data)
                     expansion_info = {
                         'country': country_val,
                         'model': model_val,
-                        'fuel': fuel_val
+                        'fuel': fuel_val,
+                        'sheet': sheet_val,
+                        'more_sheet': more_sheet_val
                     }
                     expanded_graph_data['_expansion_info'] = expansion_info
                     expanded_graphs[expanded_name] = expanded_graph_data
@@ -132,48 +166,63 @@ class SummaryFinancing:
 
     def _expand_sources_paths(self, expanded_graphs):
         for _, graph_data in expanded_graphs.items():
-            if "sources" not in graph_data:
+            
+            if "financing_sources" not in graph_data:
                 continue
             
-            sources = graph_data["sources"]
+            financing_sources = graph_data["financing_sources"]
             expansion_info = graph_data.get('_expansion_info', {})
             country_val = expansion_info.get('country', self.country)
             model_val = expansion_info.get('model', '')
             fuel_val = expansion_info.get('fuel', '')
+            sheet_val = expansion_info.get('sheet', '')
+            more_sheet_val = expansion_info.get('more_sheet', '')
             
-            for _, source_info in sources.items():
-                if "sources" not in source_info:
+            for _, finance_source_info in financing_sources.items():
+
+                if "data_sources" not in finance_source_info:
                     continue
                 
-                original_paths = source_info["sources"]
+                data_sources_paths = finance_source_info["data_sources"]
                 expanded_paths = []
                 
-                for source_path in original_paths:
-                    expanded_path = source_path
+                for data_source_path in data_sources_paths:
+                    expanded_path = data_source_path
+
                     if "{country}" in expanded_path:
                         expanded_path = expanded_path.replace("{country}", country_val)
                     if "{model}" in expanded_path:
                         expanded_path = expanded_path.replace("{model}", model_val)
                     if "{fuel}" in expanded_path:
                         expanded_path = expanded_path.replace("{fuel}", fuel_val)
+                    if "{sheet}" in expanded_path:
+                        expanded_path = expanded_path.replace("{sheet}", sheet_val)
+                    if "{more_sheet}" in expanded_path:
+                        expanded_path = expanded_path.replace("{more_sheet}", more_sheet_val)
                     
-                    if "\\" in expanded_path:
-                        parts = expanded_path.split("\\", 1)
-                        if len(parts) == 2:
-                            country_dir, rest_path = parts
-                            full_path = os.path.join(BACKEND_DIR, country_dir, rest_path)
+                    parts = expanded_path.split("::", 1)
+                    file_path_part = parts[0]
+                    metadata_part = parts[1]
+                    
+                    if "\\" in file_path_part:
+                        parts_file = file_path_part.split("\\", 1)
+                        if len(parts_file) == 2:
+                            country_dir, rest_file_path = parts_file
+                            full_file_path = os.path.join(BACKEND_DIR, country_dir, rest_file_path)
                         else:
-                            full_path = os.path.join(BACKEND_DIR, country_val, expanded_path.lstrip("\\"))
+                            full_file_path = os.path.join(BACKEND_DIR, country_val, file_path_part.lstrip("\\"))
                     else:
-                        full_path = os.path.join(BACKEND_DIR, country_val, expanded_path)
+                        full_file_path = os.path.join(BACKEND_DIR, country_val, file_path_part)
                     
-                    full_path = os.path.normpath(full_path)
+                    full_file_path = os.path.normpath(full_file_path)
+                    full_path = f"{full_file_path}::{metadata_part}"
+                    
                     expanded_paths.append(full_path)
                 
-                source_info["sources"] = expanded_paths
-        
+                finance_source_info["data_sources"] = expanded_paths
+                
         return expanded_graphs
-    
+        
     def _find_year_column(self, ws, year_range):
         try:
             start_year = year_range.get('start', 0)
@@ -334,6 +383,7 @@ class SummaryFinancing:
             return 0
     
     def _execute_formula_steps(self, formula_steps, current_values, source_cells_list, cell_index):
+        
         if not formula_steps:
             return current_values[0] if current_values else 0
         
@@ -353,56 +403,18 @@ class SummaryFinancing:
                 result = OPS_MAP[op](*ops_args)
                 results[result_key] = result
                 
-            elif op == "offset":
-                source_index = self._get_operand_value(operands[0], current_values, results)
-                offset = self._get_operand_value(operands[1], current_values, results)
+            elif op == "index_copy":
                 
-                source_index = int(source_index)
-                offset = int(offset)
+                position_operand = operands[1]
                 
-                if not (0 <= source_index < len(source_cells_list)):
-                    results[result_key] = 0
-                    continue
-                
-                cell_refs = source_cells_list[source_index]
-                target_index = cell_index - offset
-                
-                if target_index < 0 or target_index >= len(cell_refs):
-                    results[result_key] = 0
-                    continue
-                
-                if isinstance(cell_refs[0], str) and cell_refs[0].startswith("CACHED::"):
-                    label = cell_refs[0].split("::")[-1]
-                    if label in self.previously_calculated:
-                        cached_values = self.previously_calculated[label]
-                        results[result_key] = cached_values[target_index] if target_index < len(cached_values) else 0
-                    else:
-                        results[result_key] = 0
+                position = position_operand[1]
+                value = self._get_cell_value_from_ref(source_cells_list[0][position])
+
+                if cell_index == (len(source_cells_list[0]) + position):
+                    results[result_key] = value
                 else:
-                    results[result_key] = self._get_cell_value_from_ref(cell_refs[target_index])
-                    
-            elif op == "value":
-                source_index = self._get_operand_value(operands[0], current_values, results)
-                cell_index_to_get = self._get_operand_value(operands[1], current_values, results)
-                
-                source_index = int(source_index)
-                cell_index_to_get = int(cell_index_to_get)
-                
-                if not (0 <= source_index < len(source_cells_list)):
                     results[result_key] = 0
-                    continue
-                
-                cell_refs = source_cells_list[source_index]
-                
-                if cell_index_to_get < 0 or cell_index_to_get >= len(cell_refs):
-                    results[result_key] = 0
-                    continue
-                
-                results[result_key] = self._get_cell_value_from_ref(cell_refs[cell_index_to_get])
-                
-            elif op == "sum_range":
-                results[result_key] = 0
-                
+                                    
             else:
                 ops_args = []
                 for operand in operands:
@@ -419,19 +431,22 @@ class SummaryFinancing:
                     results[result_key] = 0
         
         return results.get("final", 0)
-    
-    def _process_source_data(self, source_info):
-        formula_steps = source_info.get("formula_steps", [])
-        source_paths = source_info.get("sources", [])
         
-        if not source_paths:
-            return None
+    def _process_source_data(self, source_info):
+
+        formula_steps = source_info.get("formula_steps", [])
+        data_sources_paths = source_info.get("data_sources", [])
+
+        if not data_sources_paths:
+            return [0 for _ in range(self.year_range["start"], self.year_range["end"] + 1)]
         
         source_cells_list = []
-        for source_path in source_paths:
+        for source_path in data_sources_paths:
+
             cell_refs = self._get_cell_refs_from_source_label(source_path, self.year_range)
+            
             if not cell_refs:
-                return None
+                return [0 for _ in range(self.year_range["start"], self.year_range["end"] + 1)]
             
             source_cells_list.append(cell_refs)
         
@@ -446,7 +461,7 @@ class SummaryFinancing:
                     current_values.append(value)
                 else:
                     current_values.append(0)
-            
+
             final_value = self._execute_formula_steps(
                 formula_steps, 
                 current_values, 
@@ -457,15 +472,17 @@ class SummaryFinancing:
             calculated_values.append(final_value)
         
         return calculated_values
-    
+        
     def _calculate_graph_values(self, graph_data):
         source_values = {}
         
-        if "sources" in graph_data:
-            sources = graph_data["sources"]
-            
-            for source_name, source_info in sources.items():
+        if "financing_sources" in graph_data:
+            financing_sources = graph_data["financing_sources"]
+
+            for source_name, source_info in financing_sources.items():
+                
                 values = self._process_source_data(source_info)
+                
                 if values:
                     source_values[source_name] = values
         
@@ -478,15 +495,20 @@ class SummaryFinancing:
         
         expanded_graphs = self._expand_visualizations_json(visualizations_json)
         final_graphs = self._expand_sources_paths(expanded_graphs)
-        
-        resultados = {}
+        final_graph_values = {}
         
         for graph_name, graph_data in final_graphs.items():
-            source_values = self._calculate_graph_values(graph_data)
-            
-            resultados[graph_name] = {
+
+            data_source_values = self._calculate_graph_values(graph_data)
+
+            sum_values = True if graph_data.get("sum_values") == "True" else False
+            if sum_values:
+                for key, values in data_source_values.items():
+                    data_source_values[key] = sum(values)
+
+            final_graph_values[graph_name] = {
                 "chart_type": graph_data.get("chart_type"),
-                "source_values": source_values,
+                "source_values": data_source_values,
                 "years": list(range(self.year_range['start'], self.year_range['end'] + 1))
             }
         
@@ -495,8 +517,58 @@ class SummaryFinancing:
                 wb.close()
         self._workbook_cache.clear()
         
-        return resultados
+        return final_graph_values
+    
+    def _render_simple_bar_graph(self, graph_name, source_values):
+        
+        fig = go.Figure()
+        
+        for source_name, values in source_values.items():
+            
+            fig.add_trace(go.Bar(
+                name=source_name,
+                x=[source_name],
+                y=[values],
+                text=[f"{values:,.2f}"],
+                textposition='auto',
+            ))
+        
+        fig.update_layout(
+            xaxis_title=graph_name,
+            yaxis_title="Total Value",
+            barmode='group',
+            showlegend=False,
+            template="plotly_white"
+        )
+        
+        st.plotly_chart(fig, use_container_width=True)
+
+    def _should_skip_graph(self, graph_name):
+
+        for pattern, exclude_list in self.filters.items():
+            if pattern in graph_name:
+                
+                for exclude_pattern in exclude_list:
+                    if exclude_pattern in graph_name:
+                        return True
+        return False
     
     def __call__(self):
+        
+        st.write("### Summary Financing Dashboard")
+        graph_values = self._calculate_values()
+        
+        for graph_name, graph_data in graph_values.items():
 
-        data_values = self._calculate_values()
+            if self._should_skip_graph(graph_name):
+                continue
+
+            st.write(f"#### {graph_name}")
+            
+            source_values = graph_data["source_values"]
+            chart_type = graph_data.get("chart_type", "bar")
+            
+            if chart_type == "bar":
+                self._render_simple_bar_graph(graph_name, source_values)
+            
+            st.divider()
