@@ -658,9 +658,6 @@ class SummaryFinancing:
         
         st.write("### Summary Financing Dashboard")
         graph_values = self._calculate_values()
-
-        print("-----------------")
-        print(graph_values)
         
         for graph_name, graph_data in graph_values.items():
 
@@ -679,5 +676,3 @@ class SummaryFinancing:
                 self._render_yearly_bar_graph(graph_name, source_values, year_range)
             
             st.divider()
-
-
