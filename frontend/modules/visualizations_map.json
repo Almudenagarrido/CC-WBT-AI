@@ -1,0 +1,236 @@
+{
+    "Sources of Financing for the {fuel} ({more_sheet}) Sector in the {model} Plan": {
+        "chart_type": "single_value_bar",
+        "sum_values": "True",
+        "financing_sources": {
+            "Tariff Income": {
+                "formula_steps": [
+                { "op": "copy", "operands": [["index", 0]], "result": "final" }
+                ],
+                "data_sources": [
+                "{country}\\technoeconomic-inputs-{model}.xlsx::{fuel}::Tariff"
+                ]
+            },
+            "Viability Gap Funding": {
+                "formula_steps": [
+                { "op": "copy", "operands": [["index", 0]], "result": "final" }
+                ],
+                "data_sources": [
+                "{country}\\financial-statements-{model}.xlsx::{more_sheet}::Long term subsidies"
+                ]
+            },
+            "Grants from DFIs": {
+                "formula_steps": [
+                { "op": "copy", "operands": [["index", 0]], "result": "final" }
+                ],
+                "data_sources": [
+                "{country}\\financial-statements-{model}.xlsx::{more_sheet}::GRANTS:+ Increase"
+                ]
+            },
+            "Concessional Loans": {
+                "formula_steps": [
+                { "op": "copy", "operands": [["index", 0]], "result": "final" }
+                ],
+                "data_sources": [
+                "{country}\\financial-statements-{model}.xlsx::{more_sheet}::DEBT:+ Increase"
+                ]
+            },
+            "Own Equity": {
+                "formula_steps": [
+                { "op": "copy", "operands": [["index", 0]], "result": "final" }
+                ],
+                "data_sources": [
+                "{country}\\financial-statements-{model}.xlsx::{more_sheet}::+/- Capital Increase/Reduction"
+                ]
+            },
+            "OPEX": {
+                "formula_steps": [
+                { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
+                { "op": "addition", "operands": [["index", 2], ["index", 3]], "result": "temp2" },
+                { "op": "addition", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "final" }
+                ],
+                "data_sources": [
+                "{country}\\financial-statements-{model}.xlsx::{more_sheet}::Upstream Cost of Energy",
+                "{country}\\financial-statements-{model}.xlsx::{more_sheet}::OPEX",
+                "{country}\\financial-statements-{model}.xlsx::{more_sheet}::Provisions for bad debt",
+                "{country}\\financial-statements-{model}.xlsx::{more_sheet}::- (+/-) Change in WC"
+                ]
+            },
+            "CAPEX": {
+                "formula_steps": [
+                { "op": "copy", "operands": [["index", 0]], "result": "final" }
+                ],
+                "data_sources": [
+                "{country}\\financial-statements-{model}.xlsx::{more_sheet}::CAPEX"
+                ]
+            },
+            "Financial Expense": {
+                "formula_steps": [
+                { "op": "negative", "operands": [["index", 0]], "result": "final" }
+                ],
+                "data_sources": [
+                "{country}\\financial-statements-{model}.xlsx::{more_sheet}::DEBT:LT financial expense"
+                ]
+            },
+            "Debt Repayment": {
+                "formula_steps": [
+                { "op": "copy", "operands": [["index", 0]], "result": "final" }
+                ],
+                "data_sources": [
+                "{country}\\financial-statements-{model}.xlsx::{more_sheet}::DEBT:- Repayment"
+                ]
+            },
+            "Dividends": {
+                "formula_steps": [
+                { "op": "negative", "operands": [["index", 0]], "result": "final" }
+                ],
+                "data_sources": [
+                "{country}\\financial-statements-{model}.xlsx::{more_sheet}::DEBT:- Repayment"
+                ]
+            },
+            "Cash EoP": {
+                "formula_steps": [
+                { "op": "index_copy", "operands": [["index", 0], ["position", -1]], "result": "final" }
+                ],
+                "data_sources": [
+                "{country}\\financial-statements-{model}.xlsx::{more_sheet}::Cash EoP"
+                ]
+            }
+        }
+    },
+    "Sources of Financing for the Electricity ({more_sheet}) Sector in the {model} Plan": {
+        "chart_type": "single_value_bar",
+        "sum_values": "True",
+        "{fuel}": "Electricity",
+        "financing_sources": {
+            "Tariff Income": {
+                "formula_steps": [
+                { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "final" }
+                ],
+                "data_sources": [
+                "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity::GRID:Tariff",
+                "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity::OFF-GRID:Tariff"
+                ]
+            }
+        }
+    },
+    "Revenues for the {more_sheet} Sector": {
+        "chart_type": "yearly_group_bar",
+        "sum_values": "False",
+        "financing_sources": {
+            "Revenues - {model} Plan": {
+                "formula_steps": [
+                { "op": "copy", "operands": [["index", 0]], "result": "final" }
+                ],
+                "data_sources": [
+                "{country}\\financial-statements-{model}.xlsx::{more_sheet}::Tariff Income - Energy & SHS"
+                ]
+            },
+            "EBITDA - {model} Plan": {
+                "formula_steps": [
+                { "op": "copy", "operands": [["index", 0]], "result": "final" }
+                ],
+                "data_sources": [
+                "{country}\\financial-statements-{model}.xlsx::{more_sheet}::EBITDA (exGrants)"
+                ]
+            }
+        }
+    },
+    "Accumulated Capital Structure for the {more_sheet} Sector": {
+        "chart_type": "yearly_group_bar",
+        "sum_values": "False",
+        "financing_sources": {
+            "Grants to CAPEX - {model} Plan": {
+                "formula_steps": [
+                { "op": "copy", "operands": [["index", 0]], "result": "final" }
+                ],
+                "data_sources": [
+                "{country}\\financial-statements-{model}.xlsx::{more_sheet}::GRANTS:EoP"
+                ]
+            },
+            "New Debt - {model} Plan": {
+                "formula_steps": [
+                { "op": "copy", "operands": [["index", 0]], "result": "final" }
+                ],
+                "data_sources": [
+                "{country}\\financial-statements-{model}.xlsx::{more_sheet}::DEBT:EoP"
+                ]
+            },
+            "Equity - {model} Plan": {
+                "formula_steps": [
+                { "op": "copy", "operands": [["index", 0]], "result": "final" }
+                ],
+                "data_sources": [
+                "{country}\\financial-statements-{model}.xlsx::{more_sheet}::Equity - EoP"
+                ]
+            }
+        }
+    },
+    "CAPEX Investments for the {more_sheet} Sector": {
+        "chart_type": "yearly_group_bar",
+        "sum_values": "False",
+        "financing_sources": {
+            "CAPEX - {model} Plan": {
+                "formula_steps": [
+                { "op": "copy", "operands": [["index", 0]], "result": "final" }
+                ],
+                "data_sources": [
+                "{country}\\financial-statements-{model}.xlsx::{more_sheet}::CAPEX"
+                ]
+            }
+        }
+    },
+    "CO2 emission [CO2Eq MT/y]": {
+        "chart_type": "yearly_group_bar",
+        "sum_values": "False",
+        "financing_sources": {
+            "CO2 emission - {model} Plan": {
+                "formula_steps": [
+                { "op": "copy", "operands": [["index", 0]], "result": "final" }
+                ],
+                "data_sources": [
+                "{country}\\carbon-credits-general.xlsx::Carbon Credits::CO2 emited - {model} scenario"
+                ]
+            },
+            "Potential Income from Carbon Credits in the{model} Plan - right": {
+                "formula_steps": [
+                { "op": "copy", "operands": [["index", 0]], "result": "final" }
+                ],
+                "data_sources": [
+                "{country}\\carbon-credits-general.xlsx::Carbon Credits::Potential income from Carbon Credits in the {model} Plan - right"
+                ]
+            }
+        }
+    },
+    "Changes in the Capital Structure for the Electricity (Only E-Cooking) share for the {model} Plan": {
+        "chart_type": "yearly_group_bar",
+        "sum_values": "False",
+        "{more_sheet}": "Electricity (Only E-Cooking)",
+        "financing_sources": {
+            "Grants to CAPEX": {
+                "formula_steps": [
+                { "op": "copy", "operands": [["index", 0]], "result": "final" }
+                ],
+                "data_sources": [
+                "{country}\\financial-statements-{model}.xlsx::Electricity (Only E-Cooking)::GRANTS:+ Increase"
+                ]
+            },
+            "New Debt": {
+                "formula_steps": [
+                { "op": "copy", "operands": [["index", 0]], "result": "final" }
+                ],
+                "data_sources": [
+                "{country}\\financial-statements-{model}.xlsx::Electricity (Only E-Cooking)::DEBT:+ Increase"
+                ]
+            },
+            "Equity": {
+                "formula_steps": [
+                { "op": "copy", "operands": [["index", 0]], "result": "final" }
+                ],
+                "data_sources": [
+                "{country}\\financial-statements-{model}.xlsx::Electricity (Only E-Cooking)::+/- Capital Increase/Reduction"
+                ]
+            }
+        }
+    }
+}

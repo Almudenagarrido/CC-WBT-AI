@@ -23,7 +23,7 @@ class TechnoEconomicModels:
             "capex_fuels": CapexFuelMarket(excel_editor, country, subsection, model, fuel),
             "design_capital": DesignCapitalStructure(excel_editor, country, subsection, model, fuel),
             "financial_statements": FinancialStatements(excel_editor, country, subsection, model, fuel),
-            "summary_financing": SummaryFinancing()
+            "summary_financing": SummaryFinancing(country)
         }
 
     def __call__(self):
