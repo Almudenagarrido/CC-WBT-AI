@@ -1,6 +1,6 @@
 {
     "Sources of Financing for the {fuel} ({more_sheet}) Sector in the {model} Plan": {
-        "chart_type": "bar",
+        "chart_type": "single_value_bar",
         "sum_values": "True",
         "financing_sources": {
             "Tariff Income": {
@@ -99,8 +99,9 @@
         }
     },
     "Sources of Financing for the Electricity ({more_sheet}) Sector in the {model} Plan": {
-        "chart_type": "bar",
+        "chart_type": "single_value_bar",
         "sum_values": "True",
+        "{fuel}": "Electricity",
         "financing_sources": {
             "Tariff Income": {
                 "formula_steps": [
@@ -111,6 +112,125 @@
                 "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity::OFF-GRID:Tariff"
                 ]
             }
+        }
+    },
+    "Revenues for the {more_sheet} Sector": {
+        "chart_type": "yearly_group_bar",
+        "sum_values": "False",
+        "financing_sources": {
+            "Revenues - {model} Plan": {
+                "formula_steps": [
+                { "op": "copy", "operands": [["index", 0]], "result": "final" }
+                ],
+                "data_sources": [
+                "{country}\\financial-statements-{model}.xlsx::{more_sheet}::Tariff Income - Energy & SHS"
+                ]
+            },
+            "EBITDA - {model} Plan": {
+                "formula_steps": [
+                { "op": "copy", "operands": [["index", 0]], "result": "final" }
+                ],
+                "data_sources": [
+                "{country}\\financial-statements-{model}.xlsx::{more_sheet}::EBITDA (exGrants)"
+                ]
+            }
+        }
+    },
+    "Accumulated Capital Structure for the {more_sheet} Sector": {
+        "chart_type": "yearly_group_bar",
+        "sum_values": "False",
+        "financing_sources": {
+            "Grants to CAPEX - {model} Plan": {
+                "formula_steps": [
+                { "op": "copy", "operands": [["index", 0]], "result": "final" }
+                ],
+                "data_sources": [
+                "{country}\\financial-statements-{model}.xlsx::{more_sheet}::GRANTS:EoP"
+                ]
+            },
+            "New Debt - {model} Plan": {
+                "formula_steps": [
+                { "op": "copy", "operands": [["index", 0]], "result": "final" }
+                ],
+                "data_sources": [
+                "{country}\\financial-statements-{model}.xlsx::{more_sheet}::DEBT:EoP"
+                ]
+            },
+            "Equity - {model} Plan": {
+                "formula_steps": [
+                { "op": "copy", "operands": [["index", 0]], "result": "final" }
+                ],
+                "data_sources": [
+                "{country}\\financial-statements-{model}.xlsx::{more_sheet}::Equity - EoP"
+                ]
+            }
+        }
+    },
+    "CAPEX Investments for the {more_sheet} Sector": {
+        "chart_type": "yearly_group_bar",
+        "sum_values": "False",
+        "financing_sources": {
+            "CAPEX - {model} Plan": {
+                "formula_steps": [
+                { "op": "copy", "operands": [["index", 0]], "result": "final" }
+                ],
+                "data_sources": [
+                "{country}\\financial-statements-{model}.xlsx::{more_sheet}::CAPEX"
+                ]
+            }
+        }
+    },
+    "CO2 emission [CO2Eq MT/y]": {
+        "chart_type": "yearly_group_bar",
+        "sum_values": "False",
+        "financing_sources": {
+            "CO2 emission - {model} Plan": {
+                "formula_steps": [
+                { "op": "copy", "operands": [["index", 0]], "result": "final" }
+                ],
+                "data_sources": [
+                "{country}\\carbon-credits-general.xlsx::Carbon Credits::CO2 emited - {model} scenario"
+                ]
+            },
+            "Potential Income from Carbon Credits in the{model} Plan - right": {
+                "formula_steps": [
+                { "op": "copy", "operands": [["index", 0]], "result": "final" }
+                ],
+                "data_sources": [
+                "{country}\\carbon-credits-general.xlsx::Carbon Credits::Potential income from Carbon Credits in the {model} Plan - right"
+                ]
+            }
+        }
+    },
+    "Changes in the Capital Structure for the Electricity (Only E-Cooking) share for the {model} Plan": {
+        "chart_type": "yearly_group_bar",
+        "sum_values": "False",
+        "{more_sheet}": "Electricity (Only E-Cooking)",
+        "financing_sources": {
+            "Grants to CAPEX": {
+                "formula_steps": [
+                { "op": "copy", "operands": [["index", 0]], "result": "final" }
+                ],
+                "data_sources": [
+                "{country}\\financial-statements-{model}.xlsx::Electricity (Only E-Cooking)::GRANTS:+ Increase"
+                ]
+            },
+            "New Debt": {
+                "formula_steps": [
+                { "op": "copy", "operands": [["index", 0]], "result": "final" }
+                ],
+                "data_sources": [
+                "{country}\\financial-statements-{model}.xlsx::Electricity (Only E-Cooking)::DEBT:+ Increase"
+                ]
+            },
+            "Equity": {
+                "formula_steps": [
+                { "op": "copy", "operands": [["index", 0]], "result": "final" }
+                ],
+                "data_sources": [
+                "{country}\\financial-statements-{model}.xlsx::Electricity (Only E-Cooking)::+/- Capital Increase/Reduction"
+                ]
+            }
+        }
     }
-  }
 }

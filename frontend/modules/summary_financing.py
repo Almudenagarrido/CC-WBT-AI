@@ -47,7 +47,10 @@ class SummaryFinancing:
         self.year_range = self._get_year_range()
         self.previously_calculated = {}
         self._workbook_cache = {}
-        self.filters = {"Sources of Financing": ["BAU"]}
+        self.graph_filters = {"Sources of Financing": ["BAU"], "Changes in the Capital Structure": ["BAU"]}
+        self.value_filters = {"Revenues -": ["BAU"], "EBITDA -": ["BAU"], "Grants to CAPEX -": ["BAU"], "New Debt -": ["BAU"], "Equity -": ["BAU"], "CAPEX -": ["BAU"], "Potential Income from Carbon Credits": ["BAU"]}
+        self.line_values = ["Equity -", "Potential Income from Carbon Credits"]
+    
     
     def _load_config(self):
         with open(CONFIG_FILE, "r", encoding='utf-8') as f:
@@ -95,6 +98,7 @@ class SummaryFinancing:
         return 0
     
     def _expand_visualizations_json(self, visualizations_json):
+        
         expanded_graphs = {}
         models = self.config.get("MODELS", {}).get(self.country, [])
         fuels = self.config.get("FUELS", {}).get(self.country, {}).get("normal", [])
@@ -102,6 +106,7 @@ class SummaryFinancing:
         more_sheets = self.config.get("FUELS", {}).get(self.country, {}).get("more_expanded", [])
         
         for graph_raw_name, graph_data in visualizations_json.items():
+
             has_country = "{country}" in graph_raw_name
             has_model = "{model}" in graph_raw_name
             has_fuel = "{fuel}" in graph_raw_name
@@ -118,10 +123,15 @@ class SummaryFinancing:
             sheet_values = sheets if has_sheet else [""]
             more_sheet_values = more_sheets if has_more_sheet else [""]
             
+            """if "{fuel}" in graph_data:
+                fuel_values = graph_data["{fuel}"]
+            if "{more_sheet}" in graph_data:
+                more_sheet_values = graph_data["{more_sheet}"]"""
+
             for country_val, model_val, fuel_val, sheet_val, more_sheet_val in product(country_values, model_values, fuel_values, sheet_values, more_sheet_values):
                 expanded_name = graph_raw_name
                 
-                if not fuel_val:
+                if not fuel_val and "Sources of Financing" in expanded_name:
                     fuel_val = "Electricity"
                 if has_sheet and fuel_val not in sheet_val:
                     continue
@@ -165,6 +175,9 @@ class SummaryFinancing:
         return expanded_graphs
 
     def _expand_sources_paths(self, expanded_graphs):
+        
+        models = self.config.get("MODELS", {}).get(self.country, [])
+        
         for _, graph_data in expanded_graphs.items():
             
             if "financing_sources" not in graph_data:
@@ -178,51 +191,79 @@ class SummaryFinancing:
             sheet_val = expansion_info.get('sheet', '')
             more_sheet_val = expansion_info.get('more_sheet', '')
             
-            for _, finance_source_info in financing_sources.items():
-
-                if "data_sources" not in finance_source_info:
-                    continue
+            model_values = [model_val] if model_val else models
+            
+            all_expanded_sources = {}
+            
+            for current_model_val in model_values:
                 
-                data_sources_paths = finance_source_info["data_sources"]
-                expanded_paths = []
-                
-                for data_source_path in data_sources_paths:
-                    expanded_path = data_source_path
+                for financing_source, finance_source_info in financing_sources.items():
+                    
+                    expanded_source_name = financing_source
+                    if "{model}" in expanded_source_name:
+                        expanded_source_name = expanded_source_name.replace("{model}", current_model_val)
+                    
+                    if "{country}" in expanded_source_name:
+                        expanded_source_name = expanded_source_name.replace("{country}", country_val)
+                    if "{fuel}" in expanded_source_name:
+                        expanded_source_name = expanded_source_name.replace("{fuel}", fuel_val)
+                    if "{sheet}" in expanded_source_name:
+                        expanded_source_name = expanded_source_name.replace("{sheet}", sheet_val)
+                    if "{more_sheet}" in expanded_source_name:
+                        expanded_source_name = expanded_source_name.replace("{more_sheet}", more_sheet_val)
+                    
+                    if expanded_source_name in all_expanded_sources:
+                        continue
+                    
+                    if "data_sources" not in finance_source_info:
+                        all_expanded_sources[expanded_source_name] = finance_source_info
+                        continue
+                    
+                    data_sources_paths = finance_source_info["data_sources"]
+                    expanded_paths = []
+                    
+                    for data_source_path in data_sources_paths:
+                        expanded_path = data_source_path
 
-                    if "{country}" in expanded_path:
-                        expanded_path = expanded_path.replace("{country}", country_val)
-                    if "{model}" in expanded_path:
-                        expanded_path = expanded_path.replace("{model}", model_val)
-                    if "{fuel}" in expanded_path:
-                        expanded_path = expanded_path.replace("{fuel}", fuel_val)
-                    if "{sheet}" in expanded_path:
-                        expanded_path = expanded_path.replace("{sheet}", sheet_val)
-                    if "{more_sheet}" in expanded_path:
-                        expanded_path = expanded_path.replace("{more_sheet}", more_sheet_val)
-                    
-                    parts = expanded_path.split("::", 1)
-                    file_path_part = parts[0]
-                    metadata_part = parts[1]
-                    
-                    if "\\" in file_path_part:
-                        parts_file = file_path_part.split("\\", 1)
-                        if len(parts_file) == 2:
-                            country_dir, rest_file_path = parts_file
-                            full_file_path = os.path.join(BACKEND_DIR, country_dir, rest_file_path)
+                        if "{country}" in expanded_path:
+                            expanded_path = expanded_path.replace("{country}", country_val)
+                        if "{model}" in expanded_path:
+                            expanded_path = expanded_path.replace("{model}", current_model_val)
+                        if "{fuel}" in expanded_path:
+                            expanded_path = expanded_path.replace("{fuel}", fuel_val)
+                        if "{sheet}" in expanded_path:
+                            expanded_path = expanded_path.replace("{sheet}", sheet_val)
+                        if "{more_sheet}" in expanded_path:
+                            expanded_path = expanded_path.replace("{more_sheet}", more_sheet_val)
+                        
+                        parts = expanded_path.split("::", 1)
+                        file_path_part = parts[0]
+                        metadata_part = parts[1]
+                        
+                        if "\\" in file_path_part:
+                            parts_file = file_path_part.split("\\", 1)
+                            if len(parts_file) == 2:
+                                country_dir, rest_file_path = parts_file
+                                full_file_path = os.path.join(BACKEND_DIR, country_dir, rest_file_path)
+                            else:
+                                full_file_path = os.path.join(BACKEND_DIR, country_val, file_path_part.lstrip("\\"))
                         else:
-                            full_file_path = os.path.join(BACKEND_DIR, country_val, file_path_part.lstrip("\\"))
-                    else:
-                        full_file_path = os.path.join(BACKEND_DIR, country_val, file_path_part)
+                            full_file_path = os.path.join(BACKEND_DIR, country_val, file_path_part)
+                        
+                        full_file_path = os.path.normpath(full_file_path)
+                        full_path = f"{full_file_path}::{metadata_part}"
+                        
+                        expanded_paths.append(full_path)
                     
-                    full_file_path = os.path.normpath(full_file_path)
-                    full_path = f"{full_file_path}::{metadata_part}"
+                    finance_source_info_copy = dict(finance_source_info)
+                    finance_source_info_copy["data_sources"] = expanded_paths
                     
-                    expanded_paths.append(full_path)
-                
-                finance_source_info["data_sources"] = expanded_paths
-                
+                    all_expanded_sources[expanded_source_name] = finance_source_info_copy
+            
+            graph_data["financing_sources"] = all_expanded_sources
+                    
         return expanded_graphs
-        
+
     def _find_year_column(self, ws, year_range):
         try:
             start_year = year_range.get('start', 0)
@@ -519,7 +560,7 @@ class SummaryFinancing:
         
         return final_graph_values
     
-    def _render_simple_bar_graph(self, graph_name, source_values):
+    def _render_single_value_bar_graph(self, graph_name, source_values):
         
         fig = go.Figure()
         
@@ -541,11 +582,61 @@ class SummaryFinancing:
             template="plotly_white"
         )
         
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, key=f"single_bar_{graph_name}")
 
+    def _render_yearly_bar_graph(self, graph_name, source_values, years):
+
+        fig = go.Figure()
+        
+        for source_name, values in source_values.items():
+
+            if self._should_skip_value(source_name):
+                continue
+
+            if isinstance(values, list) and len(values) == len(years):
+                is_line = any(line_pattern in source_name for line_pattern in self.line_values)
+                
+                if is_line:
+                    fig.add_trace(go.Scatter(
+                        name=source_name,
+                        x=[str(year) for year in years],
+                        y=values,
+                        mode='lines+markers',
+                        line=dict(width=3),
+                        marker=dict(size=8),
+                        text=[f"{v:,.2f}" for v in values],
+                        hoverinfo='text+name+x'
+                    ))
+                else:
+                    fig.add_trace(go.Bar(
+                        name=source_name,
+                        x=[str(year) for year in years],
+                        y=values,
+                        text=[f"{v:,.2f}" for v in values],
+                        textposition='auto',
+                    ))
+        
+        fig.update_layout(
+            xaxis_title="Years",
+            yaxis_title="Total Value",
+            barmode='group',
+            showlegend=True,
+            template="plotly_white",
+            legend=dict(
+                title="Sources",
+                orientation="h",
+                yanchor="bottom",
+                y=1.02,
+                xanchor="right",
+                x=1
+            )
+        )
+        
+        st.plotly_chart(fig, use_container_width=True, key=f"yearly_bar_{graph_name}")
+    
     def _should_skip_graph(self, graph_name):
 
-        for pattern, exclude_list in self.filters.items():
+        for pattern, exclude_list in self.graph_filters.items():
             if pattern in graph_name:
                 
                 for exclude_pattern in exclude_list:
@@ -553,10 +644,23 @@ class SummaryFinancing:
                         return True
         return False
     
+    def _should_skip_value(self, source_name):
+
+        for pattern, exclude_list in self.value_filters.items():
+            if pattern in source_name:
+                
+                for exclude_pattern in exclude_list:
+                    if exclude_pattern in source_name:
+                        return True
+        return False
+    
     def __call__(self):
         
         st.write("### Summary Financing Dashboard")
         graph_values = self._calculate_values()
+
+        print("-----------------")
+        print(graph_values)
         
         for graph_name, graph_data in graph_values.items():
 
@@ -567,8 +671,13 @@ class SummaryFinancing:
             
             source_values = graph_data["source_values"]
             chart_type = graph_data.get("chart_type", "bar")
+            year_range = graph_data.get("years", range(2020, 2061))
             
-            if chart_type == "bar":
-                self._render_simple_bar_graph(graph_name, source_values)
+            if chart_type == "single_value_bar":
+                self._render_single_value_bar_graph(graph_name, source_values)
+            elif chart_type == "yearly_group_bar":
+                self._render_yearly_bar_graph(graph_name, source_values, year_range)
             
             st.divider()
+
+
