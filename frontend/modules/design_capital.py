@@ -42,9 +42,9 @@ class DesignCapitalStructure:
                 "Total - OFF-GRID": ["Amount"]
             }
             self.empty_rows = {
-                "Division - GRID": {"col": "Division - GRID", "partial": [], "full": ["3. Debt - GRID"]},
-                "Division - OFF-GRID": {"col": "Division - OFF-GRID", "partial": [], "full": ["3. Debt - OFF-GRID"]},
-                "FFSS - Ouputs": {"col": "", "partial": [], "full": []},
+                "Division - GRID": {"col": "Division - GRID", "partial": [], "full": ["3. Debt - GRID"], "target_columns": ["Amount"]},
+                "Division - OFF-GRID": {"col": "Division - OFF-GRID", "partial": [], "full": ["3. Debt - OFF-GRID"], "target_columns": ["Amount"]},
+                "FFSS - Outputs": {"col": "", "partial": [], "full": []},
                 "FFSS - Inputs": {"col": "", "partial": [], "full": []},
                 "Financiation": {"col": "", "partial": [], "full": []},
                 "Total - GRID": {"col": "", "partial": [], "full": []},
@@ -67,7 +67,7 @@ class DesignCapitalStructure:
                 "Total": ["Amount"]
             }
             self.empty_rows = {
-                "Division": {"col": "Division", "partial": [], "full": ["3. Debt"]},
+                "Division": {"col": "Division", "partial": [], "full": ["3. Debt"], "target_columns": ["Amount"]},
                 "FFSS - Outputs": {"col": "", "partial": [], "full": []},
                 "FFSS - Inputs": {"col": "", "partial": [], "full": []},
                 "Financiation": {"col": "", "partial": [], "full": []},

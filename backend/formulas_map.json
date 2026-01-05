@@ -1107,7 +1107,7 @@
     ],
     "{sheet}":  
     [
-        {
+      {
             "formula_steps": [
             { "op": "multiply", "operands": [["index", 0], ["index", 1]], "result": "final" }
             ],
@@ -2159,7 +2159,7 @@
             "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::Total Assets",
             "{country}\\financial-statements-{model}.xlsx::{sheet}::Total Liabilities"
             ]
-        }
+        }  
     ]
   }
 }

@@ -70,8 +70,12 @@ class ExcelEditor:
         if not self.empty_rows:
             return
         
-        existing_year_cols = [col for col in self.year_columns if col in self.df.columns]
-        if not existing_year_cols:
+        if "target_columns" in self.empty_rows and self.empty_rows["target_columns"]:
+            columns_to_empty = self.empty_rows["target_columns"]
+        else:
+            columns_to_empty = [col for col in self.year_columns if col in self.df.columns]
+        
+        if not columns_to_empty:
             return
         
         if "col" in self.empty_rows and self.empty_rows["col"]:
@@ -81,15 +85,15 @@ class ExcelEditor:
                     if isinstance(row_key, str):
                         matching_rows = self.df[self.df[target_col] == row_key].index
                         for idx in matching_rows:
-                            for col in existing_year_cols:
-                                if col != existing_year_cols[0]:
+                            for col in columns_to_empty:
+                                if col != columns_to_empty[0]:
                                     self.df.loc[idx, col] = np.nan
                 
                 for row_key in self.empty_rows.get("full", []):
                     if isinstance(row_key, str):
                         matching_rows = self.df[self.df[target_col] == row_key].index
                         for idx in matching_rows:
-                            for col in existing_year_cols:
+                            for col in columns_to_empty:
                                 if col != target_col:
                                     self.df.loc[idx, col] = np.nan
         
@@ -106,8 +110,8 @@ class ExcelEditor:
             matching_rows = self.df[mask].index
             
             for idx in matching_rows:
-                for col in existing_year_cols:
-                    if col != existing_year_cols[0]:
+                for col in columns_to_empty:
+                    if col != columns_to_empty[0]:
                         self.df.loc[idx, col] = np.nan
 
     def show(self):
