@@ -146,7 +146,6 @@ class ExcelFormulaProcessor:
 
     def apply_formulas(self, file_path, formulas_json_path, country, models, fuels, expected_sheets):
 
-        self.previously_calculated = {}
         just_uploaded = self._manage_upload_flag(file_path, "read")
         
         try:            
@@ -307,13 +306,15 @@ class ExcelFormulaProcessor:
         return specific_values
     
     def _process_formulas_sheet_file(self, file_path, formulas_sheet_file, year_range):
-
+        
         self.clear_workbook_cache()
         wb = load_workbook(file_path)
         
         try:
             changes_made = False
             for sheet_name, formulas in formulas_sheet_file.items():
+
+                self.previously_calculated = {}
                 
                 if sheet_name not in wb.sheetnames:
                     continue
@@ -584,7 +585,12 @@ class ExcelFormulaProcessor:
             expected_type = label_parts[0].strip()
             expected_sub = label_parts[1].strip() if len(label_parts) > 1 else ""
             
-            type_match = (expected_type == type_value)
+            is_vs_bau_label = "vs. BAU" in target_label
+            if not is_vs_bau_label:
+                type_match = (expected_type == type_value)
+            else:
+                type_match = (expected_type in type_value)
+            
             sub_match = (expected_sub == "") or (expected_sub == sub_value)
             
             if type_match and sub_match:

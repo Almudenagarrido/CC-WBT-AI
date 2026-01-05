@@ -48,27 +48,32 @@
         "Rwanda": {
             "normal": [
                 "Electricity",
-                "LPG"
+                "LPG",
+                "Ethanol"
             ],
             "carbon": [
                 "Electricity",
                 "LPG",
-                "Carbon Credits"
+                "Carbon Credits",
+                "Ethanol"
             ],
             "rest": [
                 "Electricity",
-                "LPG"
+                "LPG",
+                "Ethanol"
             ],
             "expanded": [
                 "Electricity & E-Cooking",
                 "Electricity (Low access)",
-                "LPG"
+                "LPG",
+                "Ethanol"
             ],
             "more_expanded": [
                 "Electricity (Only E-Cooking)",
                 "Electricity & E-Cooking",
                 "Electricity (Low access)",
-                "LPG"
+                "LPG",
+                "Ethanol"
             ]
         }
     },
