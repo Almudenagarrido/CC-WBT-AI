@@ -2,10 +2,9 @@ import os
 import json
 import streamlit as st
 from itertools import product
+import plotly.graph_objects as go
 from copy import deepcopy
 from openpyxl import load_workbook
-import plotly.graph_objects as go
-import plotly.subplots as sp
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FRONTEND_DIR = os.path.dirname(BASE_DIR)
@@ -17,24 +16,7 @@ VISUALIZATIONS_JSON = os.path.join(BASE_DIR, "visualizations_map.json")
 OPS_MAP = {
     "copy": lambda x: x,
     "addition": lambda x, y: x + y,
-    "subtraction": lambda x, y: x - y,
-    "multiply": lambda x, y: x * y,
-    "multiply_per": lambda x, y: (x * y) / 100,
-    "divide": lambda x, y: x / y if y != 0 else 0,
-    "safe_divide": lambda x, y: (x / y) if y != 0 else 0,
-    "safe_divide_minus": lambda x, y, z: (x / y - z) if y != 0 else 0,
-    "gt": lambda x, y: x > y,
-    "gt_eq": lambda x, y: x >= y,
-    "lt": lambda x, y: x < y,
-    "lt_eq": lambda x, y: x <= y,
-    "equal": lambda x, y: x == y,
-    "if": lambda condition, true_val, false_val: true_val if condition else false_val,
-    "min": lambda x, y: min(x, y),
-    "max": lambda x, y: max(x, y),
-    "abs": lambda x: abs(x),
     "negative": lambda x: -x,
-    "percentage": lambda x: x * 100,
-    "int": lambda x: int(x)
 }
 
 
@@ -50,7 +32,13 @@ class SummaryFinancing:
         self.graph_filters = {"Sources of Financing": ["BAU"], "Changes in the Capital Structure": ["BAU"]}
         self.value_filters = {"Revenues -": ["BAU"], "EBITDA -": ["BAU"], "Grants to CAPEX -": ["BAU"], "New Debt -": ["BAU"], "Equity -": ["BAU"], "CAPEX -": ["BAU"], "Potential Income from Carbon Credits": ["BAU"]}
         self.line_values = ["Equity -", "Potential Income from Carbon Credits"]
-    
+        self.color_palette = [
+            "#14027D",
+            "#7b018e",
+            "#fca818",
+            "#06aa91",
+            "#f1e255",
+        ]
     
     def _load_config(self):
         with open(CONFIG_FILE, "r", encoding='utf-8') as f:
@@ -561,10 +549,15 @@ class SummaryFinancing:
         return final_graph_values
     
     def _render_single_value_bar_graph(self, graph_name, source_values):
-        
+    
         fig = go.Figure()
         
-        for source_name, values in source_values.items():
+        source_names = list(source_values.keys())
+        
+        for idx, source_name in enumerate(source_names):
+            values = source_values[source_name]
+            
+            color = self.color_palette[idx % len(self.color_palette)]
             
             fig.add_trace(go.Bar(
                 name=source_name,
@@ -572,10 +565,11 @@ class SummaryFinancing:
                 y=[values],
                 text=[f"{values:,.2f}"],
                 textposition='auto',
+                marker_color=color
             ))
         
         fig.update_layout(
-            xaxis_title=graph_name,
+            xaxis_title="",
             yaxis_title="Total Value",
             barmode='group',
             showlegend=False,
@@ -588,13 +582,18 @@ class SummaryFinancing:
 
         fig = go.Figure()
         
-        for source_name, values in source_values.items():
-
-            if self._should_skip_value(source_name):
-                continue
-
+        filtered_sources = []
+        for source_name in source_values.keys():
+            if not self._should_skip_value(source_name):
+                filtered_sources.append(source_name)
+        
+        for idx, source_name in enumerate(filtered_sources):
+            values = source_values[source_name]
+            
             if isinstance(values, list) and len(values) == len(years):
                 is_line = any(line_pattern in source_name for line_pattern in self.line_values)
+                
+                color = self.color_palette[idx % len(self.color_palette)]
                 
                 if is_line:
                     fig.add_trace(go.Scatter(
@@ -602,9 +601,7 @@ class SummaryFinancing:
                         x=[str(year) for year in years],
                         y=values,
                         mode='lines+markers',
-                        line=dict(width=3),
-                        marker=dict(size=8),
-                        text=[f"{v:,.2f}" for v in values],
+                        line=dict(width=3, color=color),  marker=dict(size=8, color=color),  text=[f"{v:,.2f}" for v in values],
                         hoverinfo='text+name+x'
                     ))
                 else:
@@ -614,6 +611,7 @@ class SummaryFinancing:
                         y=values,
                         text=[f"{v:,.2f}" for v in values],
                         textposition='auto',
+                        marker_color=color
                     ))
         
         fig.update_layout(
@@ -633,7 +631,7 @@ class SummaryFinancing:
         )
         
         st.plotly_chart(fig, use_container_width=True, key=f"yearly_bar_{graph_name}")
-    
+
     def _should_skip_graph(self, graph_name):
 
         for pattern, exclude_list in self.graph_filters.items():
@@ -655,24 +653,52 @@ class SummaryFinancing:
         return False
     
     def __call__(self):
-        
+    
         st.write("### Summary Financing Dashboard")
         graph_values = self._calculate_values()
         
+        graph_items = []
         for graph_name, graph_data in graph_values.items():
+            if not self._should_skip_graph(graph_name):
+                graph_items.append((graph_name, graph_data))
+        
+        if not graph_items:
+            return
+        
+        total_graphs = len(graph_items)
+        
+        for i in range(0, total_graphs, 2):
+            col1, col2 = st.columns(2, gap="large")
+            
+            with col1:
+                
+                graph_name1, graph_data1 = graph_items[i]
+                st.write(f"###### {graph_name1}")
+                
+                source_values1 = graph_data1["source_values"]
+                chart_type1 = graph_data1.get("chart_type", "bar")
+                year_range1 = graph_data1.get("years", range(2020, 2061))
+                
+                if chart_type1 == "single_value_bar":
+                    self._render_single_value_bar_graph(graph_name1, source_values1)
+                elif chart_type1 == "yearly_group_bar":
+                    self._render_yearly_bar_graph(graph_name1, source_values1, year_range1)
 
-            if self._should_skip_graph(graph_name):
-                continue
+            with col2:
+                if i + 1 < total_graphs:
+                    
+                    graph_name2, graph_data2 = graph_items[i + 1]
+                    st.write(f"###### {graph_name2}")
+                    
+                    source_values2 = graph_data2["source_values"]
+                    chart_type2 = graph_data2.get("chart_type", "bar")
+                    year_range2 = graph_data2.get("years", range(2020, 2061))
+                    
+                    if chart_type2 == "single_value_bar":
+                        self._render_single_value_bar_graph(graph_name2, source_values2)
+                    elif chart_type2 == "yearly_group_bar":
+                        self._render_yearly_bar_graph(graph_name2, source_values2, year_range2)
+            
+            if i + 2 < total_graphs:
+                st.divider()  
 
-            st.write(f"#### {graph_name}")
-            
-            source_values = graph_data["source_values"]
-            chart_type = graph_data.get("chart_type", "bar")
-            year_range = graph_data.get("years", range(2020, 2061))
-            
-            if chart_type == "single_value_bar":
-                self._render_single_value_bar_graph(graph_name, source_values)
-            elif chart_type == "yearly_group_bar":
-                self._render_yearly_bar_graph(graph_name, source_values, year_range)
-            
-            st.divider()
