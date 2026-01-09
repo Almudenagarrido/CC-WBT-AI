@@ -101,6 +101,16 @@
             }
         }
     },
+    "UPSTREAMS": {
+        "template": {
+            "model": {
+                "fuel": {}
+            }
+        },
+        "Rwanda": {
+            "CleanStep": {}
+        }
+    },
     "ELECTRICITY_VARIANTS": [
         "Electricity",
         "Electricity & E-Cooking",
