@@ -18,6 +18,13 @@
     "INFLATIONS": {
         "Rwanda": 5
     },
+    "MODELS": {
+        "Rwanda": [
+            "BAU",
+            "CleanStep",
+            "Aligned"
+        ]
+    },
     "FUELS": {
         "template": {
             "normal": [
@@ -28,10 +35,6 @@
                 "Electricity",
                 "LPG",
                 "Carbon Credits"
-            ],
-            "rest": [
-                "Electricity",
-                "LPG"
             ],
             "expanded": [
                 "Electricity & E-Cooking",
@@ -55,10 +58,6 @@
                 "LPG",
                 "Carbon Credits"
             ],
-            "rest": [
-                "Electricity",
-                "LPG"
-            ],
             "expanded": [
                 "Electricity & E-Cooking",
                 "Electricity (Low access)",
@@ -77,19 +76,37 @@
             "model": []
         }
     },
+    "TARIFFS": {
+        "template": {
+            "model": {
+                "fuel": {}
+            }
+        },
+        "Rwanda": {
+            "CleanStep": {
+                "Electricity": {
+                    "2023": 0.15,
+                    "2024": 0.16,
+                    "2025": 0.17,
+                    "2026": 0.17,
+                    "2027": 0.18,
+                    "2028": 0.19,
+                    "2029": 0.2,
+                    "2030": 0.21,
+                    "2031": 0.22,
+                    "2032": 0.23,
+                    "2033": 0.24,
+                    "2034": 0.26
+                }
+            }
+        }
+    },
     "ELECTRICITY_VARIANTS": [
         "Electricity",
         "Electricity & E-Cooking",
         "Electricity (Low access)",
         "Electricity (Only E-Cooking)"
     ],
-    "MODELS": {
-        "Rwanda": [
-            "BAU",
-            "CleanStep",
-            "Aligned"
-        ]
-    },
     "SHARED_ROUTES": [
         "fuel-financial-inputs.xlsx",
         "carbon-credits-general.xlsx"
