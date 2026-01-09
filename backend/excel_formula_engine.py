@@ -355,7 +355,7 @@ class ExcelFormulaProcessor:
                 if not cell_refs:
                     return False
                 source_cells_list.append(cell_refs)
-            
+
             if target_label not in self.previously_calculated:
                 self.previously_calculated[target_label] = [None] * len(target_cells)
             
