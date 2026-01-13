@@ -76,7 +76,7 @@ class TechnologyUpstreams:
             data[str(year)] = [value]
         
         df = pd.DataFrame(data)
-        df.insert(0, "Upstream", [self.fuel])
+        df.insert(0, "Upstream", "M$/kWh")
         
         return df
     

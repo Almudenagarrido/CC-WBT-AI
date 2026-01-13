@@ -76,7 +76,7 @@ class TechnologyTariffs:
             data[str(year)] = [value]
         
         df = pd.DataFrame(data)
-        df.insert(0, "Tariff", [self.fuel])
+        df.insert(0, "Tariff", "M$/kWh")
         
         return df
     

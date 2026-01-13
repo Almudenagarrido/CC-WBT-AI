@@ -353,7 +353,10 @@ class ExcelFormulaProcessor:
             for source_label in source_labels:
                 cell_refs = self._get_cell_refs_from_source_label(source_label, ws, year_range)
                 if not cell_refs:
-                    return False
+                    if "config.json" in source_label:
+                        source_cells_list.append([source_label])
+                    else:
+                        return False
                 source_cells_list.append(cell_refs)
 
             if target_label not in self.previously_calculated:
@@ -374,11 +377,15 @@ class ExcelFormulaProcessor:
                             else:
                                 value = 0
                         else:
-                            if cell_index < len(cell_refs):
-                                ref = cell_refs[cell_index]
-                                value = self._get_cell_value_from_ref(ref, ws)
+                            if "config.json" in str(cell_refs[0]):
+                                ref = cell_refs[0]
+                                value = self._get_cell_value_from_ref(ref, ws, cell_index)
                             else:
-                                value = 0
+                                if cell_index < len(cell_refs):
+                                    ref = cell_refs[cell_index]
+                                    value = self._get_cell_value_from_ref(ref, ws, cell_index)
+                                else:
+                                    value = 0
                     else:
                         value = 0
                     current_values.append(value)
@@ -403,14 +410,16 @@ class ExcelFormulaProcessor:
             traceback.print_exc()
             return False  
     
-    def _get_cell_value_from_ref(self, cell_ref, default_ws):
-
+    def _get_cell_value_from_ref(self, cell_ref, default_ws, cell_index=None):
         try:
             if "config.json" in cell_ref:
                 parts = cell_ref.split("::")
                 if len(parts) == 3:
                     _, country, config_key = parts
                     return self._get_config_value(country, config_key)
+                elif len(parts) == 5:
+                    _, country, config_key, model, fuel = parts
+                    return self._get_config_value(country, config_key, model, fuel, cell_index)
                 else:
                     return 0
                 
@@ -642,8 +651,7 @@ class ExcelFormulaProcessor:
                 
         return numeric_cells
     
-    def _get_config_value(self, country, config_key):
-        
+    def _get_config_value(self, country, config_key, model=None, fuel=None, cell_index=None):
         try:
             if not os.path.exists(CONFIG_FILE):
                 return 0
@@ -653,27 +661,60 @@ class ExcelFormulaProcessor:
             
             if ":" in config_key:
                 main_key, sub_key = config_key.split(":", 1)
-                if main_key in config:
-                    country_data = config[main_key].get(country, {})
-                    value = country_data.get(sub_key)
-                    if value is not None:
-                        return float(value)
-                    else:
-                        return 0
-                else:
-                    return 0
             else:
-                if config_key in config:
-                    value = config.get(config_key, {}).get(country)
-                    if isinstance(value, dict):
-                        return value
-                    elif value is not None:
-                        return float(value)
-                    else:
-                        return 0
-                else:
-                    return 0
+                main_key, sub_key = config_key, None
+            
+            if main_key not in config:
+                return 0
+            
+            main_config = config[main_key]
+            
+            if model and fuel:
+                if country in main_config:
+                    country_data = main_config[country]
                     
+                    if model in country_data:
+                        model_data = country_data[model]
+                        if isinstance(model_data, dict) and fuel in model_data:
+                            fuel_data = model_data[fuel]
+                            
+                            if sub_key:
+                                value = fuel_data.get(sub_key)
+                                if value is not None:
+                                    return float(value)
+                            else:
+                                if cell_index is not None and isinstance(fuel_data, dict):
+                                    years = list(fuel_data.keys())
+                                    if years and 0 <= cell_index < len(years):
+                                        year = years[cell_index]
+                                        value = fuel_data.get(year)
+                                        if value is not None:
+                                            return float(value)
+                                
+                                if isinstance(fuel_data, dict):
+                                    return fuel_data
+                                else:
+                                    return float(fuel_data)
+                        return None
+                    return None
+                return 0
+            
+            if sub_key:
+                if country in main_config:
+                    country_data = main_config[country]
+                    if isinstance(country_data, dict):
+                        value = country_data.get(sub_key)
+                        if value is not None:
+                            return float(value)
+            else:
+                value = main_config.get(country)
+                if isinstance(value, dict):
+                    return value
+                elif value is not None:
+                    return float(value)
+            
+            return 0
+                            
         except Exception as e:
             return 0
     
