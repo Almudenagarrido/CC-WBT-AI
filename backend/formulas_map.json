@@ -662,7 +662,8 @@
         {
             "formula_steps": [
             { "op": "copy", "operands": [["index", 0]], "result": "temp1"},
-            { "op": "multiply", "operands": [["index", "temp1"], ["index", 1]], "result": "final"}
+            { "op": "addition", "operands": [["index", 1], ["index", 2]], "result": "temp2"},
+            { "op": "multiply", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "final"}
             ],
             "target": "Tariff Income - Energy & SHS",
             "sources": ["config.json::{country}::TARIFFS::{model}::Electricity",
@@ -808,9 +809,33 @@
             "sources": ["{country}\\design-capital-{model}.xlsx::Electricity & E-Cooking::Cost of Debt - GRID",
             "{country}\\design-capital-{model}.xlsx::Electricity & E-Cooking::Cost of Debt - OFF-GRID"
             ]
+        },
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["index", 0]], "result": "temp1"},
+            { "op": "addition", "operands": [["index", 1], ["index", 2]], "result": "temp2"},
+            { "op": "multiply", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "final"}
+            ],
+            "target": "Upstream Cost of Energy",
+            "sources": ["config.json::{country}::UPSTREAMS::{model}::Electricity",
+            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity & E-Cooking::GRID:Demand",
+            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity & E-Cooking::OFF-GRID:Demand"
+            ]
         }
     ],
     "Electricity (Low access)": [
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["index", 0]], "result": "temp1"},
+            { "op": "addition", "operands": [["index", 1], ["index", 2]], "result": "temp2"},
+            { "op": "multiply", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "final"}
+            ],
+            "target": "Tariff Income - Energy & SHS",
+            "sources": ["config.json::{country}::TARIFFS::{model}::Electricity",
+            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity (Low access)::GRID:Demand",
+            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity (Low access)::OFF-GRID:Demand"
+            ]
+        },
         {
             "formula_steps": [
             { "op": "get_cell", "operands": [["index", 0], ["literal", 2]], "result": "temp1" },
@@ -829,8 +854,8 @@
             "{country}\\capex-fuels-{model}.xlsx::Electricity (Low access)::GRID:RAB",
             "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity (Low access)::GRID:OPEX",
             "{country}\\capex-fuels-{model}.xlsx::Electricity (Low access)::GRID:Total Annual Depreciation",
-            "{country}\\financial-statements-{model}.xlsx::Electricity (Low access)::Upstream Cost of Energy",
-            "{country}\\design-capital-{model}.xlsx::Electricity (Low access)::WACC - OFF-GRID",
+            "{country}\\financial-statements-{model}.xlsx::{sheet}::Upstream Cost of Energy",
+            "{country}\\design-capital-{model}.xlsx::{sheet}::WACC - OFF-GRID",
             "{country}\\capex-fuels-{model}.xlsx::Electricity (Low access)::OFF-GRID:RAB",
             "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity (Low access)::OFF-GRID:OPEX",
             "{country}\\capex-fuels-{model}.xlsx::Electricity (Low access)::OFF-GRID:Total Annual Depreciation"
@@ -844,7 +869,7 @@
             { "op": "subtraction", "operands": [["index", 0], ["index", "temp3"]], "result": "final" }
             ],
             "target": "Long term subsidies",
-            "sources": ["{country}\\financial-statements-{model}.xlsx::Electricity (Low access)::Annual Cost of Service",
+            "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::Annual Cost of Service",
             "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity (Low access)::GRID:Tariff",
             "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity (Low access)::OFF-GRID:Tariff",
             "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity (Low access)::GRID:Demand",
@@ -949,6 +974,18 @@
             "sources": ["{country}\\design-capital-{model}.xlsx::Electricity (Low access)::Cost of Debt - GRID",
             "{country}\\design-capital-{model}.xlsx::Electricity (Low access)::Cost of Debt - OFF-GRID"
             ]
+        },
+        {
+            "formula_steps": [
+            { "op": "copy", "operands": [["index", 0]], "result": "temp1"},
+            { "op": "addition", "operands": [["index", 1], ["index", 2]], "result": "temp2"},
+            { "op": "multiply", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "final"}
+            ],
+            "target": "Upstream Cost of Energy",
+            "sources": ["config.json::{country}::UPSTREAMS::{model}::Electricity",
+            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity (Low access)::GRID:Demand",
+            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity (Low access)::OFF-GRID:Demand"
+            ]
         }
     ],
     "Electricity (Only E-Cooking)": [
@@ -1033,6 +1070,16 @@
             "target": "DEBT:Interest rate LT",
             "sources": ["{country}\\design-capital-{model}.xlsx::Electricity & E-Cooking::Cost of Debt - GRID",
             "{country}\\design-capital-{model}.xlsx::Electricity (Low access)::Cost of Debt - OFF-GRID"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "subtraction", "operands": [["index", 0], ["index", 1]], "result": "final"}
+            ],
+            "target": "Upstream Cost of Energy",
+            "sources": [
+            "{country}\\financial-statements-{model}.xlsx::Electricity & E-Cooking::Upstream Cost of Energy",
+            "{country}\\financial-statements-{model}.xlsx::Electricity (Low access)::Upstream Cost of Energy"
             ]
         }
     ],
