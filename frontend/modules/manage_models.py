@@ -7,7 +7,7 @@ class ManageModels:
 
     def __init__(self, country):
         self.country = country
-        self.key_fuels = "normal"
+        self.key_fuels = "expanded_carbon"
         self.template_path = "upload-{model}.xlsx"
 
     def model_creator(self, models):
@@ -170,7 +170,7 @@ class ManageModels:
                 if st.button(f"📄 {model}"):
                     st.session_state.section = "technoeconomic_models"
                     st.session_state.subsection = "technoeconomic_inputs"
-                    st.session_state.fuel = st.session_state.fuels[0]
+                    st.session_state.fuel = st.session_state.fuels_expanded[0]
                     st.session_state.model = model
                     st.rerun()
 

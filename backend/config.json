@@ -1,6 +1,7 @@
 {
     "COUNTRIES": [
-        "Rwanda"
+        "Rwanda",
+        "prueba"
     ],
     "COUNTRY_YEAR_RANGES": {
         "template": {
@@ -10,18 +11,28 @@
         "Rwanda": {
             "start": 2023,
             "end": 2034
+        },
+        "prueba": {
+            "start": 2024,
+            "end": 2036
         }
     },
     "TAX_RATES": {
-        "Rwanda": 28
+        "Rwanda": 28,
+        "prueba": 5
     },
     "INFLATIONS": {
-        "Rwanda": 5
+        "Rwanda": 5,
+        "prueba": 6
     },
     "MODELS": {
         "Rwanda": [
             "BAU",
             "CleanStep",
+            "Aligned"
+        ],
+        "prueba": [
+            "BAU",
             "Aligned"
         ]
     },
@@ -33,6 +44,12 @@
             ],
             "carbon": [
                 "Electricity",
+                "LPG",
+                "Carbon Credits"
+            ],
+            "expanded_carbon": [
+                "Electricity & E-Cooking",
+                "Electricity (Low access)",
                 "LPG",
                 "Carbon Credits"
             ],
@@ -55,6 +72,40 @@
             ],
             "carbon": [
                 "Electricity",
+                "LPG",
+                "Carbon Credits"
+            ],
+            "expanded_carbon": [
+                "Electricity & E-Cooking",
+                "Electricity (Low access)",
+                "LPG",
+                "Carbon Credits"
+            ],
+            "expanded": [
+                "Electricity & E-Cooking",
+                "Electricity (Low access)",
+                "LPG"
+            ],
+            "more_expanded": [
+                "Electricity (Only E-Cooking)",
+                "Electricity & E-Cooking",
+                "Electricity (Low access)",
+                "LPG"
+            ]
+        },
+        "prueba": {
+            "normal": [
+                "Electricity",
+                "LPG"
+            ],
+            "carbon": [
+                "Electricity",
+                "LPG",
+                "Carbon Credits"
+            ],
+            "expanded_carbon": [
+                "Electricity & E-Cooking",
+                "Electricity (Low access)",
                 "LPG",
                 "Carbon Credits"
             ],
@@ -84,20 +135,6 @@
         },
         "Rwanda": {
             "CleanStep": {
-                "Electricity": {
-                    "2023": 12.0,
-                    "2024": 0.16,
-                    "2025": 0.17,
-                    "2026": 0.17,
-                    "2027": 0.18,
-                    "2028": 0.19,
-                    "2029": 0.2,
-                    "2030": 0.21,
-                    "2031": 0.22,
-                    "2032": 0.23,
-                    "2033": 0.24,
-                    "2034": 0.26
-                },
                 "LPG": {
                     "2023": 0.21,
                     "2024": 21.0,
@@ -111,6 +148,20 @@
                     "2032": 0.33,
                     "2033": 0.34,
                     "2034": 0.36
+                },
+                "Electricity": {
+                    "2023": 0.15,
+                    "2024": 0.16,
+                    "2025": 0.17,
+                    "2026": 0.17,
+                    "2027": 0.18,
+                    "2028": 0.19,
+                    "2029": 0.2,
+                    "2030": 0.21,
+                    "2031": 0.22,
+                    "2032": 0.23,
+                    "2033": 0.24,
+                    "2034": 0.26
                 }
             }
         }

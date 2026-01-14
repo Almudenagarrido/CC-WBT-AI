@@ -12,7 +12,7 @@ class CapexFuelMarket:
         self.subsection = subsection
         self.model = model
         self.fuel = fuel
-        self.key_fuels = "normal"
+        self.key_fuels = "expanded"
         self.route = os.path.join(country, f"capex-fuels-{model}.xlsx")
         self.template_route = os.path.join(country, "capex-fuels-{model}.xlsx")
         self.df = None
@@ -21,15 +21,15 @@ class CapexFuelMarket:
         self.subtables = {}
         self.empty_rows = {
             "LPG":{"col": "Type", "partial": ["Total Depreciation"], "full": []},
-            "Electricity":{"Grid": {"col": "Grid", "partial": ["Total Depreciation"], "full": []}, "Off-Grid": {"col": "Off-Grid", "partial": ["Total Depreciation"], "full": []}}  
+            "Electricity & E-Cooking":{"Grid": {"col": "Grid", "partial": ["Total Depreciation"], "full": []}, "Off-Grid": {"col": "Off-Grid", "partial": ["Total Depreciation"], "full": []}},
+            "Electricity (Low access)":{"Grid": {"col": "Grid", "partial": ["Total Depreciation"], "full": []}, "Off-Grid": {"col": "Off-Grid", "partial": ["Total Depreciation"], "full": []}}
         }
         
-
     def split_into_subtables(self):
         df = self.df.reset_index(drop=True)
         self.subtables[self.fuel] = {}
 
-        if self.fuel == "Electricity":
+        if self.fuel in ["Electricity & E-Cooking", "Electricity (Low access)"]:
             self._process_electricity_structure(df)
         else:
             self.subtables[self.fuel][None] = df

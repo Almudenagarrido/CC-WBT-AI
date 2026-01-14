@@ -1,13 +1,13 @@
 {
     "{country}\\technoeconomic-inputs-{model}.xlsx": {
-    "Electricity": [
+    "{sheet}": [
         {
             "formula_steps": [
             { "op": "copy", "operands": [["index", 0]], "result": "final" }
             ],
             "target": "GRID:Demand",
             "sources": [
-                "{country}\\upload-{model}.xlsx::Electricity::GRID:Demand"
+                "{country}\\upload-{model}.xlsx::{sheet}::GRID:Demand"
             ]
         },
         {
@@ -16,7 +16,7 @@
             ],
             "target": "GRID:CAPEX - Growth",
             "sources": [
-                "{country}\\upload-{model}.xlsx::Electricity::GRID:CAPEX - Growth"
+                "{country}\\upload-{model}.xlsx::{sheet}::GRID:CAPEX - Growth"
             ]
         },
         {
@@ -25,7 +25,7 @@
             ],
             "target": "GRID:CAPEX - Maintenance",
             "sources": [
-                "{country}\\upload-{model}.xlsx::Electricity::GRID:CAPEX - Maintenance"
+                "{country}\\upload-{model}.xlsx::{sheet}::GRID:CAPEX - Maintenance"
             ]
         },
         {
@@ -34,7 +34,7 @@
             ],
             "target": "GRID:OPEX",
             "sources": [
-                "{country}\\upload-{model}.xlsx::Electricity::GRID:OPEX"
+                "{country}\\upload-{model}.xlsx::{sheet}::GRID:OPEX"
             ]
         },
         {
@@ -43,7 +43,7 @@
             ],
             "target": "GRID:D&A",
             "sources": [
-                "{country}\\upload-{model}.xlsx::Electricity::GRID:D&A"
+                "{country}\\upload-{model}.xlsx::{sheet}::GRID:D&A"
             ]
         },
         {
@@ -52,7 +52,7 @@
             ],
             "target": "OFF-GRID:Demand",
             "sources": [
-                "{country}\\upload-{model}.xlsx::Electricity::OFF-GRID:Demand"
+                "{country}\\upload-{model}.xlsx::{sheet}::OFF-GRID:Demand"
             ]
         },
         {
@@ -61,7 +61,7 @@
             ],
             "target": "OFF-GRID:CAPEX - Growth",
             "sources": [
-                "{country}\\upload-{model}.xlsx::Electricity::OFF-GRID:CAPEX - Growth"
+                "{country}\\upload-{model}.xlsx::{sheet}::OFF-GRID:CAPEX - Growth"
             ]
         },
         {
@@ -70,7 +70,7 @@
             ],
             "target": "OFF-GRID:CAPEX - Maintenance",
             "sources": [
-                "{country}\\upload-{model}.xlsx::Electricity::OFF-GRID:CAPEX - Maintenance"
+                "{country}\\upload-{model}.xlsx::{sheet}::OFF-GRID:CAPEX - Maintenance"
             ]
         },
         {
@@ -90,9 +90,7 @@
             "sources": [
                 "{country}\\upload-{model}.xlsx::Electricity::OFF-GRID:D&A"
             ]
-        }
-    ],
-    "{fuel}": [
+        },
         {
             "formula_steps": [
             { "op": "copy", "operands": [["index", 0]], "result": "final" }
@@ -193,14 +191,14 @@
     ]
   },
     "{country}\\capex-fuels-{model}.xlsx": {
-    "Electricity": [
+    "{sheet}": [
         {
             "formula_steps": [
             { "op": "copy", "operands": [["index", 0]], "result": "final" }
             ],
             "target": "GRID:Growth CAPEX",
             "sources": [
-                "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity::GRID:CAPEX - Growth"
+                "{country}\\technoeconomic-inputs-{model}.xlsx::{sheet}::GRID:CAPEX - Growth"
             ]
         },
         {
@@ -209,7 +207,7 @@
             ],
             "target": "GRID:Acc. Growth CAPEX", 
             "sources": [
-                "{country}\\capex-fuels-{model}.xlsx::Electricity::GRID:Growth CAPEX"
+                "{country}\\capex-fuels-{model}.xlsx::{sheet}::GRID:Growth CAPEX"
             ]
         },
         {
@@ -218,7 +216,7 @@
             ],
             "target": "GRID:Maintenance CAPEX",
             "sources": [
-                "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity::GRID:CAPEX - Maintenance"
+                "{country}\\technoeconomic-inputs-{model}.xlsx::{sheet}::GRID:CAPEX - Maintenance"
             ]
         },
         {
@@ -227,7 +225,7 @@
             ],
             "target": "GRID:Acc. Maintenance CAPEX", 
             "sources": [
-                "{country}\\capex-fuels-{model}.xlsx::Electricity::GRID:Maintenance CAPEX"
+                "{country}\\capex-fuels-{model}.xlsx::{sheet}::GRID:Maintenance CAPEX"
             ]
         },
         {
@@ -236,8 +234,8 @@
             ],
             "target": "GRID:Total CAPEX", 
             "sources": [
-                "{country}\\capex-fuels-{model}.xlsx::Electricity::GRID:Growth CAPEX",
-                "{country}\\capex-fuels-{model}.xlsx::Electricity::GRID:Maintenance CAPEX"
+                "{country}\\capex-fuels-{model}.xlsx::{sheet}::GRID:Growth CAPEX",
+                "{country}\\capex-fuels-{model}.xlsx::{sheet}::GRID:Maintenance CAPEX"
             ]
         },
         {
@@ -246,8 +244,8 @@
             ],
             "target": "GRID:Acc. Total CAPEX", 
             "sources": [
-                "{country}\\capex-fuels-{model}.xlsx::Electricity::GRID:Acc. Growth CAPEX",
-                "{country}\\capex-fuels-{model}.xlsx::Electricity::GRID:Acc. Maintenance CAPEX"
+                "{country}\\capex-fuels-{model}.xlsx::{sheet}::GRID:Acc. Growth CAPEX",
+                "{country}\\capex-fuels-{model}.xlsx::{sheet}::GRID:Acc. Maintenance CAPEX"
             ]
         },
         {
@@ -256,7 +254,7 @@
             ],
             "target": "GRID:Total Depreciation", 
             "sources": [
-                "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity::GRID:D&A"
+                "{country}\\technoeconomic-inputs-{model}.xlsx::{sheet}::GRID:D&A"
             ]
         },
         {
@@ -269,8 +267,8 @@
             ],
             "target": "GRID:Total Annual Depreciation", 
             "sources": [
-                "{country}\\capex-fuels-{model}.xlsx::Electricity::GRID:Total Depreciation",
-                "{country}\\capex-fuels-{model}.xlsx::Electricity::GRID:Total CAPEX"
+                "{country}\\capex-fuels-{model}.xlsx::{sheet}::GRID:Total Depreciation",
+                "{country}\\capex-fuels-{model}.xlsx::{sheet}::GRID:Total CAPEX"
             ]
         },
         {
@@ -281,9 +279,9 @@
             ],
             "target": "GRID:RAB", 
             "sources": [
-                "{country}\\capex-fuels-{model}.xlsx::Electricity::GRID:RAB",
-                "{country}\\capex-fuels-{model}.xlsx::Electricity::GRID:Total CAPEX",
-                "{country}\\capex-fuels-{model}.xlsx::Electricity::GRID:Total Annual Depreciation"
+                "{country}\\capex-fuels-{model}.xlsx::{sheet}::GRID:RAB",
+                "{country}\\capex-fuels-{model}.xlsx::{sheet}::GRID:Total CAPEX",
+                "{country}\\capex-fuels-{model}.xlsx::{sheet}::GRID:Total Annual Depreciation"
             ]
         },
 
@@ -293,7 +291,7 @@
             ],
             "target": "OFF-GRID:Growth CAPEX",
             "sources": [
-                "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity::OFF-GRID:CAPEX - Growth"
+                "{country}\\technoeconomic-inputs-{model}.xlsx::{sheet}::OFF-GRID:CAPEX - Growth"
             ]
         },
         {
@@ -302,7 +300,7 @@
             ],
             "target": "OFF-GRID:Acc. Growth CAPEX", 
             "sources": [
-                "{country}\\capex-fuels-{model}.xlsx::Electricity::OFF-GRID:Growth CAPEX"
+                "{country}\\capex-fuels-{model}.xlsx::{sheet}::OFF-GRID:Growth CAPEX"
             ]
         },
         {
@@ -311,7 +309,7 @@
             ],
             "target": "OFF-GRID:Maintenance CAPEX",
             "sources": [
-                "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity::OFF-GRID:CAPEX - Maintenance"
+                "{country}\\technoeconomic-inputs-{model}.xlsx::{sheet}::OFF-GRID:CAPEX - Maintenance"
             ]
         },
         {
@@ -320,7 +318,7 @@
             ],
             "target": "OFF-GRID:Acc. Maintenance CAPEX", 
             "sources": [
-                "{country}\\capex-fuels-{model}.xlsx::Electricity::OFF-GRID:Maintenance CAPEX"
+                "{country}\\capex-fuels-{model}.xlsx::{sheet}::OFF-GRID:Maintenance CAPEX"
             ]
         },
         {
@@ -329,8 +327,8 @@
             ],
             "target": "OFF-GRID:Total CAPEX", 
             "sources": [
-                "{country}\\capex-fuels-{model}.xlsx::Electricity::OFF-GRID:Growth CAPEX",
-                "{country}\\capex-fuels-{model}.xlsx::Electricity::OFF-GRID:Maintenance CAPEX"
+                "{country}\\capex-fuels-{model}.xlsx::{sheet}::OFF-GRID:Growth CAPEX",
+                "{country}\\capex-fuels-{model}.xlsx::{sheet}::OFF-GRID:Maintenance CAPEX"
             ]
         },
         {
@@ -339,8 +337,8 @@
             ],
             "target": "OFF-GRID:Acc. Total CAPEX", 
             "sources": [
-                "{country}\\capex-fuels-{model}.xlsx::Electricity::OFF-GRID:Acc. Growth CAPEX",
-                "{country}\\capex-fuels-{model}.xlsx::Electricity::OFF-GRID:Acc. Maintenance CAPEX"
+                "{country}\\capex-fuels-{model}.xlsx::{sheet}::OFF-GRID:Acc. Growth CAPEX",
+                "{country}\\capex-fuels-{model}.xlsx::{sheet}::OFF-GRID:Acc. Maintenance CAPEX"
             ]
         },
         {
@@ -349,7 +347,7 @@
             ],
             "target": "OFF-GRID:Total Depreciation", 
             "sources": [
-                "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity::OFF-GRID:D&A"
+                "{country}\\technoeconomic-inputs-{model}.xlsx::{sheet}::OFF-GRID:D&A"
             ]
         },
         {
@@ -362,8 +360,8 @@
             ],
             "target": "OFF-GRID:Total Annual Depreciation", 
             "sources": [
-                "{country}\\capex-fuels-{model}.xlsx::Electricity::OFF-GRID:Total Depreciation",
-                "{country}\\capex-fuels-{model}.xlsx::Electricity::OFF-GRID:Total CAPEX"
+                "{country}\\capex-fuels-{model}.xlsx::{sheet}::OFF-GRID:Total Depreciation",
+                "{country}\\capex-fuels-{model}.xlsx::{sheet}::OFF-GRID:Total CAPEX"
             ]
         },
         {
@@ -374,20 +372,18 @@
             ],
             "target": "OFF-GRID:RAB", 
             "sources": [
-                "{country}\\capex-fuels-{model}.xlsx::Electricity::OFF-GRID:RAB",
-                "{country}\\capex-fuels-{model}.xlsx::Electricity::OFF-GRID:Total CAPEX",
-                "{country}\\capex-fuels-{model}.xlsx::Electricity::OFF-GRID:Total Annual Depreciation"
+                "{country}\\capex-fuels-{model}.xlsx::{sheet}::OFF-GRID:RAB",
+                "{country}\\capex-fuels-{model}.xlsx::{sheet}::OFF-GRID:Total CAPEX",
+                "{country}\\capex-fuels-{model}.xlsx::{sheet}::OFF-GRID:Total Annual Depreciation"
             ]
-        }
-    ],
-    "{fuel}": [
+        },
         {
             "formula_steps": [
             { "op": "copy", "operands": [["index", 0]], "result": "final" }
             ],
             "target": "Growth CAPEX",
             "sources": [
-                "{country}\\technoeconomic-inputs-{model}.xlsx::{fuel}::CAPEX - Growth"
+                "{country}\\technoeconomic-inputs-{model}.xlsx::{sheet}::CAPEX - Growth"
             ]
         },
         {
@@ -396,7 +392,7 @@
             ],
             "target": "Acc. Growth CAPEX", 
             "sources": [
-                "{country}\\capex-fuels-{model}.xlsx::{fuel}::Growth CAPEX"
+                "{country}\\capex-fuels-{model}.xlsx::{sheet}::Growth CAPEX"
             ]
         },
         {
@@ -405,7 +401,7 @@
             ],
             "target": "Maintenance CAPEX",
             "sources": [
-                "{country}\\technoeconomic-inputs-{model}.xlsx::{fuel}::CAPEX - Maintenance"
+                "{country}\\technoeconomic-inputs-{model}.xlsx::{sheet}::CAPEX - Maintenance"
             ]
         },
         {
@@ -414,7 +410,7 @@
             ],
             "target": "Acc. Maintenance CAPEX", 
             "sources": [
-                "{country}\\capex-fuels-{model}.xlsx::{fuel}::Maintenance CAPEX"
+                "{country}\\capex-fuels-{model}.xlsx::{sheet}::Maintenance CAPEX"
             ]
         },
         {
@@ -423,8 +419,8 @@
             ],
             "target": "Total CAPEX", 
             "sources": [
-                "{country}\\capex-fuels-{model}.xlsx::{fuel}::Growth CAPEX",
-                "{country}\\capex-fuels-{model}.xlsx::{fuel}::Maintenance CAPEX"
+                "{country}\\capex-fuels-{model}.xlsx::{sheet}::Growth CAPEX",
+                "{country}\\capex-fuels-{model}.xlsx::{sheet}::Maintenance CAPEX"
             ]
         },
         {
@@ -433,8 +429,8 @@
             ],
             "target": "Acc. Total CAPEX", 
             "sources": [
-                "{country}\\capex-fuels-{model}.xlsx::{fuel}::Acc. Growth CAPEX",
-                "{country}\\capex-fuels-{model}.xlsx::{fuel}::Acc. Maintenance CAPEX"
+                "{country}\\capex-fuels-{model}.xlsx::{sheet}::Acc. Growth CAPEX",
+                "{country}\\capex-fuels-{model}.xlsx::{sheet}::Acc. Maintenance CAPEX"
             ]
         },
         {
@@ -443,7 +439,7 @@
             ],
             "target": "Total Depreciation", 
             "sources": [
-                "{country}\\technoeconomic-inputs-{model}.xlsx::{fuel}::D&A"
+                "{country}\\technoeconomic-inputs-{model}.xlsx::{sheet}::D&A"
             ]
         },
         {
@@ -456,8 +452,8 @@
             ],
             "target": "Total Annual Depreciation", 
             "sources": [
-                "{country}\\capex-fuels-{model}.xlsx::{fuel}::Total Depreciation",
-                "{country}\\capex-fuels-{model}.xlsx::{fuel}::Total CAPEX"
+                "{country}\\capex-fuels-{model}.xlsx::{sheet}::Total Depreciation",
+                "{country}\\capex-sheets-{model}.xlsx::{sheet}::Total CAPEX"
             ]
         },
         {
@@ -468,9 +464,9 @@
             ],
             "target": "RAB", 
             "sources": [
-                "{country}\\capex-fuels-{model}.xlsx::{fuel}::RAB",
-                "{country}\\capex-fuels-{model}.xlsx::{fuel}::Total CAPEX",
-                "{country}\\capex-fuels-{model}.xlsx::{fuel}::Total Annual Depreciation"
+                "{country}\\capex-fuels-{model}.xlsx::{sheet}::RAB",
+                "{country}\\capex-fuels-{model}.xlsx::{sheet}::Total CAPEX",
+                "{country}\\capex-fuels-{model}.xlsx::{sheet}::Total Annual Depreciation"
             ]
         }
     ]
@@ -670,8 +666,8 @@
             ],
             "target": "Tariff Income - Energy & SHS",
             "sources": ["config.json::{country}::TARIFFS::{model}::Electricity",
-            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity::GRID:Demand",
-            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity::OFF-GRID:Demand"
+            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity & E-Cooking::GRID:Demand",
+            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity & E-Cooking::OFF-GRID:Demand"
             ]
         },
         {
@@ -688,15 +684,15 @@
             { "op": "addition", "operands": [["index", "temp4"], ["index", 4]], "result": "final" }
             ],
             "target": "Annual Cost of Service",
-            "sources": ["{country}\\design-capital-{model}.xlsx::{sheet}::WACC - GRID",
-            "{country}\\capex-fuels-{model}.xlsx::Electricity::GRID:RAB",
-            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity::GRID:OPEX",
-            "{country}\\capex-fuels-{model}.xlsx::Electricity::GRID:Total Annual Depreciation",
+            "sources": ["{country}\\design-capital-{model}.xlsx::Electricity & E-Cooking::WACC - GRID",
+            "{country}\\capex-fuels-{model}.xlsx::Electricity & E-Cooking::GRID:RAB",
+            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity & E-Cooking::GRID:OPEX",
+            "{country}\\capex-fuels-{model}.xlsx::Electricity & E-Cooking::GRID:Total Annual Depreciation",
             "{country}\\financial-statements-{model}.xlsx::{sheet}::Upstream Cost of Energy",
             "{country}\\design-capital-{model}.xlsx::{sheet}::WACC - OFF-GRID",
-            "{country}\\capex-fuels-{model}.xlsx::Electricity::OFF-GRID:RAB",
-            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity::OFF-GRID:OPEX",
-            "{country}\\capex-fuels-{model}.xlsx::Electricity::OFF-GRID:Total Annual Depreciation"
+            "{country}\\capex-fuels-{model}.xlsx::Electricity & E-Cooking::OFF-GRID:RAB",
+            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity & E-Cooking::OFF-GRID:OPEX",
+            "{country}\\capex-fuels-{model}.xlsx::Electricity & E-Cooking::OFF-GRID:Total Annual Depreciation"
             ]
         },
         {
@@ -708,10 +704,10 @@
             ],
             "target": "Long term subsidies",
             "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::Annual Cost of Service",
-            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity::GRID:Tariff",
-            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity::OFF-GRID:Tariff",
-            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity::GRID:Demand",
-            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity::OFF-GRID:Demand"
+            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity & E-Cooking::GRID:Tariff",
+            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity & E-Cooking::OFF-GRID:Tariff",
+            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity & E-Cooking::GRID:Demand",
+            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity & E-Cooking::OFF-GRID:Demand"
             ]
         },
         {
@@ -719,8 +715,8 @@
             { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "final" }
             ],
             "target": "OPEX",
-            "sources": ["{country}\\technoeconomic-inputs-{model}.xlsx::Electricity::GRID:OPEX",
-            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity::OFF-GRID:OPEX"
+            "sources": ["{country}\\technoeconomic-inputs-{model}.xlsx::Electricity & E-Cooking::GRID:OPEX",
+            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity & E-Cooking::OFF-GRID:OPEX"
             ]
         },
         {
@@ -729,8 +725,8 @@
             { "op": "negative", "operands": [["index", "temp1"]], "result": "final" }
             ],
             "target": "D&A",
-            "sources": ["{country}\\capex-fuels-{model}.xlsx::Electricity::GRID:Total Annual Depreciation",
-            "{country}\\capex-fuels-{model}.xlsx::Electricity::OFF-GRID:Total Annual Depreciation"
+            "sources": ["{country}\\capex-fuels-{model}.xlsx::Electricity & E-Cooking::GRID:Total Annual Depreciation",
+            "{country}\\capex-fuels-{model}.xlsx::Electricity & E-Cooking::OFF-GRID:Total Annual Depreciation"
             ]
         },
         {
@@ -740,9 +736,9 @@
             { "op": "addition", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "final" }
             ],
             "target": "CAPEX",
-            "sources": ["{country}\\technoeconomic-inputs-{model}.xlsx::Electricity::GRID:CAPEX - Growth","{country}\\technoeconomic-inputs-{model}.xlsx::Electricity::OFF-GRID:CAPEX - Growth",
-            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity::GRID:CAPEX - Maintenance",
-            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity::OFF-GRID:CAPEX - Maintenance"
+            "sources": ["{country}\\technoeconomic-inputs-{model}.xlsx::Electricity & E-Cooking::GRID:CAPEX - Growth","{country}\\technoeconomic-inputs-{model}.xlsx::Electricity & E-Cooking::OFF-GRID:CAPEX - Growth",
+            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity & E-Cooking::GRID:CAPEX - Maintenance",
+            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity & E-Cooking::OFF-GRID:CAPEX - Maintenance"
             ]
         },
         {
@@ -754,9 +750,9 @@
             { "op": "multiply_per", "operands": [["index", "temp1"], ["index", "temp4"]], "result": "final" }
             ],
             "target": "+/- Capital Increase/Reduction",
-            "sources": ["{country}\\design-capital-{model}.xlsx::{sheet}::How much to be financed",
-            "{country}\\design-capital-{model}.xlsx::{sheet}::1. Equity - GRID",
-            "{country}\\design-capital-{model}.xlsx::{sheet}::1. Equity - OFF-GRID"
+            "sources": ["{country}\\design-capital-{model}.xlsx::Electricity & E-Cooking::How much to be financed",
+            "{country}\\design-capital-{model}.xlsx::Electricity & E-Cooking::1. Equity - GRID",
+            "{country}\\design-capital-{model}.xlsx::Electricity & E-Cooking::1. Equity - OFF-GRID"
             ]
         },
         {
@@ -768,9 +764,9 @@
             { "op": "multiply_per", "operands": [["index", "temp1"], ["index", "temp4"]], "result": "final" }
             ],
             "target": "GRANTS:+ Increase",
-            "sources": ["{country}\\design-capital-{model}.xlsx::{sheet}::How much to be financed",
-            "{country}\\design-capital-{model}.xlsx::{sheet}::2. Grants - GRID",
-            "{country}\\design-capital-{model}.xlsx::{sheet}::2. Grants - OFF-GRID"
+            "sources": ["{country}\\design-capital-{model}.xlsx::Electricity & E-Cooking::How much to be financed",
+            "{country}\\design-capital-{model}.xlsx::Electricity & E-Cooking::2. Grants - GRID",
+            "{country}\\design-capital-{model}.xlsx::Electricity & E-Cooking::2. Grants - OFF-GRID"
             ]
         },
         {
@@ -794,12 +790,12 @@
             {"op": "negative", "operands": [["index", "outside_if"]], "result": "final"}
             ],
             "target": "DEBT:- Repayment",
-            "sources": ["{country}\\design-capital-{model}.xlsx::{sheet}::Grace period - GRID",
-            "{country}\\design-capital-{model}.xlsx::{sheet}::Amortization period - GRID",
-            "{country}\\financial-statements-{model}.xlsx::{sheet}::DEBT:+ Increase",
+            "sources": ["{country}\\design-capital-{model}.xlsx::Electricity & E-Cooking::Grace period - GRID",
+            "{country}\\design-capital-{model}.xlsx::Electricity & E-Cooking::Amortization period - GRID",
+            "{country}\\financial-statements-{model}.xlsx::Electricity & E-Cooking::DEBT:+ Increase",
             "config.json::{country}::COUNTRY_YEAR_RANGES:start",
-            "{country}\\design-capital-{model}.xlsx::{sheet}::Grace period - OFF-GRID",
-            "{country}\\design-capital-{model}.xlsx::{sheet}::Amortization period - OFF-GRID"
+            "{country}\\design-capital-{model}.xlsx::Electricity & E-Cooking::Grace period - OFF-GRID",
+            "{country}\\design-capital-{model}.xlsx::Electricity & E-Cooking::Amortization period - OFF-GRID"
             ]
         },
         {
@@ -809,8 +805,8 @@
             { "op": "addition", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "final" }
             ],
             "target": "DEBT:Interest rate LT",
-            "sources": ["{country}\\design-capital-{model}.xlsx::{sheet}::Cost of Debt - GRID",
-            "{country}\\design-capital-{model}.xlsx::{sheet}::Cost of Debt - OFF-GRID"
+            "sources": ["{country}\\design-capital-{model}.xlsx::Electricity & E-Cooking::Cost of Debt - GRID",
+            "{country}\\design-capital-{model}.xlsx::Electricity & E-Cooking::Cost of Debt - OFF-GRID"
             ]
         }
     ],
@@ -829,15 +825,15 @@
             { "op": "addition", "operands": [["index", "temp4"], ["index", 4]], "result": "final" }
             ],
             "target": "Annual Cost of Service",
-            "sources": ["{country}\\design-capital-{model}.xlsx::{sheet}::WACC - GRID",
-            "{country}\\capex-fuels-{model}.xlsx::Electricity::GRID:RAB",
-            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity::GRID:OPEX",
-            "{country}\\capex-fuels-{model}.xlsx::Electricity::GRID:Total Annual Depreciation",
-            "{country}\\financial-statements-{model}.xlsx::{sheet}::Upstream Cost of Energy",
-            "{country}\\design-capital-{model}.xlsx::{sheet}::WACC - OFF-GRID",
-            "{country}\\capex-fuels-{model}.xlsx::Electricity::OFF-GRID:RAB",
-            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity::OFF-GRID:OPEX",
-            "{country}\\capex-fuels-{model}.xlsx::Electricity::OFF-GRID:Total Annual Depreciation"
+            "sources": ["{country}\\design-capital-{model}.xlsx::Electricity (Low access)::WACC - GRID",
+            "{country}\\capex-fuels-{model}.xlsx::Electricity (Low access)::GRID:RAB",
+            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity (Low access)::GRID:OPEX",
+            "{country}\\capex-fuels-{model}.xlsx::Electricity (Low access)::GRID:Total Annual Depreciation",
+            "{country}\\financial-statements-{model}.xlsx::Electricity (Low access)::Upstream Cost of Energy",
+            "{country}\\design-capital-{model}.xlsx::Electricity (Low access)::WACC - OFF-GRID",
+            "{country}\\capex-fuels-{model}.xlsx::Electricity (Low access)::OFF-GRID:RAB",
+            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity (Low access)::OFF-GRID:OPEX",
+            "{country}\\capex-fuels-{model}.xlsx::Electricity (Low access)::OFF-GRID:Total Annual Depreciation"
             ]
         },
         {
@@ -848,11 +844,11 @@
             { "op": "subtraction", "operands": [["index", 0], ["index", "temp3"]], "result": "final" }
             ],
             "target": "Long term subsidies",
-            "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::Annual Cost of Service",
-            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity::GRID:Tariff",
-            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity::OFF-GRID:Tariff",
-            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity::GRID:Demand",
-            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity::OFF-GRID:Demand"
+            "sources": ["{country}\\financial-statements-{model}.xlsx::Electricity (Low access)::Annual Cost of Service",
+            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity (Low access)::GRID:Tariff",
+            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity (Low access)::OFF-GRID:Tariff",
+            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity (Low access)::GRID:Demand",
+            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity (Low access)::OFF-GRID:Demand"
             ]
         },
         {
@@ -860,8 +856,8 @@
             { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "final" }
             ],
             "target": "OPEX",
-            "sources": ["{country}\\technoeconomic-inputs-{model}.xlsx::Electricity::GRID:OPEX",
-            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity::OFF-GRID:OPEX"
+            "sources": ["{country}\\technoeconomic-inputs-{model}.xlsx::Electricity (Low access)::GRID:OPEX",
+            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity (Low access)::OFF-GRID:OPEX"
             ]
         },
         {
@@ -870,8 +866,8 @@
             { "op": "negative", "operands": [["index", "temp1"]], "result": "final" }
             ],
             "target": "D&A",
-            "sources": ["{country}\\capex-fuels-{model}.xlsx::Electricity::GRID:Total Annual Depreciation",
-            "{country}\\capex-fuels-{model}.xlsx::Electricity::OFF-GRID:Total Annual Depreciation"
+            "sources": ["{country}\\capex-fuels-{model}.xlsx::Electricity (Low access)::GRID:Total Annual Depreciation",
+            "{country}\\capex-fuels-{model}.xlsx::Electricity (Low access)::OFF-GRID:Total Annual Depreciation"
             ]
         },
         {
@@ -881,9 +877,9 @@
             { "op": "addition", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "final" }
             ],
             "target": "CAPEX",
-            "sources": ["{country}\\technoeconomic-inputs-{model}.xlsx::Electricity::GRID:CAPEX - Growth","{country}\\technoeconomic-inputs-{model}.xlsx::Electricity::OFF-GRID:CAPEX - Growth",
-            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity::GRID:CAPEX - Maintenance",
-            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity::OFF-GRID:CAPEX - Maintenance"
+            "sources": ["{country}\\technoeconomic-inputs-{model}.xlsx::Electricity (Low access)::GRID:CAPEX - Growth","{country}\\technoeconomic-inputs-{model}.xlsx::Electricity (Low access)::OFF-GRID:CAPEX - Growth",
+            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity (Low access)::GRID:CAPEX - Maintenance",
+            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity (Low access)::OFF-GRID:CAPEX - Maintenance"
             ]
         },
         {
@@ -895,9 +891,9 @@
             { "op": "multiply_per", "operands": [["index", "temp1"], ["index", "temp4"]], "result": "final" }
             ],
             "target": "+/- Capital Increase/Reduction",
-            "sources": ["{country}\\design-capital-{model}.xlsx::{sheet}::How much to be financed",
-            "{country}\\design-capital-{model}.xlsx::{sheet}::1. Equity - GRID",
-            "{country}\\design-capital-{model}.xlsx::{sheet}::1. Equity - OFF-GRID"
+            "sources": ["{country}\\design-capital-{model}.xlsx::Electricity (Low access)::How much to be financed",
+            "{country}\\design-capital-{model}.xlsx::Electricity (Low access)::1. Equity - GRID",
+            "{country}\\design-capital-{model}.xlsx::Electricity (Low access)::1. Equity - OFF-GRID"
             ]
         },
         {
@@ -909,9 +905,9 @@
             { "op": "multiply_per", "operands": [["index", "temp1"], ["index", "temp4"]], "result": "final" }
             ],
             "target": "GRANTS:+ Increase",
-            "sources": ["{country}\\design-capital-{model}.xlsx::{sheet}::How much to be financed",
-            "{country}\\design-capital-{model}.xlsx::{sheet}::2. Grants - GRID",
-            "{country}\\design-capital-{model}.xlsx::{sheet}::2. Grants - OFF-GRID"
+            "sources": ["{country}\\design-capital-{model}.xlsx::Electricity (Low access)::How much to be financed",
+            "{country}\\design-capital-{model}.xlsx::Electricity (Low access)::2. Grants - GRID",
+            "{country}\\design-capital-{model}.xlsx::Electricity (Low access)::2. Grants - OFF-GRID"
             ]
         },
         {
@@ -935,12 +931,12 @@
             {"op": "negative", "operands": [["index", "outside_if"]], "result": "final"}
             ],
             "target": "DEBT:- Repayment",
-            "sources": ["{country}\\design-capital-{model}.xlsx::{sheet}::Grace period - GRID",
-            "{country}\\design-capital-{model}.xlsx::{sheet}::Amortization period - GRID",
-            "{country}\\financial-statements-{model}.xlsx::{sheet}::DEBT:+ Increase",
+            "sources": ["{country}\\design-capital-{model}.xlsx::Electricity (Low access)::Grace period - GRID",
+            "{country}\\design-capital-{model}.xlsx::Electricity (Low access)::Amortization period - GRID",
+            "{country}\\financial-statements-{model}.xlsx::Electricity (Low access)::DEBT:+ Increase",
             "config.json::{country}::COUNTRY_YEAR_RANGES:start",
-            "{country}\\design-capital-{model}.xlsx::{sheet}::Grace period - OFF-GRID",
-            "{country}\\design-capital-{model}.xlsx::{sheet}::Amortization period - OFF-GRID"
+            "{country}\\design-capital-{model}.xlsx::Electricity (Low access)::Grace period - OFF-GRID",
+            "{country}\\design-capital-{model}.xlsx::Electricity (Low access)::Amortization period - OFF-GRID"
             ]
         },
         {
@@ -950,8 +946,8 @@
             { "op": "addition", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "final" }
             ],
             "target": "DEBT:Interest rate LT",
-            "sources": ["{country}\\design-capital-{model}.xlsx::{sheet}::Cost of Debt - GRID",
-            "{country}\\design-capital-{model}.xlsx::{sheet}::Cost of Debt - OFF-GRID"
+            "sources": ["{country}\\design-capital-{model}.xlsx::Electricity (Low access)::Cost of Debt - GRID",
+            "{country}\\design-capital-{model}.xlsx::Electricity (Low access)::Cost of Debt - OFF-GRID"
             ]
         }
     ],
@@ -1032,11 +1028,11 @@
             "formula_steps": [
             { "op": "get_cell", "operands": [["index", 0], ["literal", 2]], "result": "temp1" },
             { "op": "get_cell", "operands": [["index", 1], ["literal", 2]], "result": "temp2" },
-            { "op": "addition", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "final" }
+            { "op": "subtraction", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "final" }
             ],
             "target": "DEBT:Interest rate LT",
-            "sources": ["{country}\\design-capital-{model}.xlsx::{sheet}::Cost of Debt - GRID",
-            "{country}\\design-capital-{model}.xlsx::{sheet}::Cost of Debt - OFF-GRID"
+            "sources": ["{country}\\design-capital-{model}.xlsx::Electricity & E-Cooking::Cost of Debt - GRID",
+            "{country}\\design-capital-{model}.xlsx::Electricity (Low access)::Cost of Debt - OFF-GRID"
             ]
         }
     ],
@@ -1049,7 +1045,7 @@
             ],
             "target": "Tariff Income - Energy & SHS",
             "sources": ["config.json::{country}::TARIFFS::{model}::{fuel}",
-            "{country}\\technoeconomic-inputs-{model}.xlsx::{fuel}::Demand"
+            "{country}\\technoeconomic-inputs-{model}.xlsx::{sheet}::Demand"
             ]
         },
         {
@@ -1069,7 +1065,7 @@
             ],
             "target": "Upstream Cost of Energy",
             "sources": ["config.json::{country}::UPSTREAMS::{model}::{fuel}",
-            "{country}\\technoeconomic-inputs-{model}.xlsx::{fuel}::Demand"
+            "{country}\\technoeconomic-inputs-{model}.xlsx::{sheet}::Demand"
             ]
         },
         {
@@ -1092,9 +1088,9 @@
             ],
             "target": "Annual Cost of Service",
             "sources": ["{country}\\design-capital-{model}.xlsx::{sheet}::WACC",
-            "{country}\\capex-fuels-{model}.xlsx::{fuel}::RAB",
-            "{country}\\technoeconomic-inputs-{model}.xlsx::{fuel}::OPEX",
-            "{country}\\capex-fuels-{model}.xlsx::{fuel}::Total Annual Depreciation",
+            "{country}\\capex-fuels-{model}.xlsx::{sheet}::RAB",
+            "{country}\\technoeconomic-inputs-{model}.xlsx::{sheet}::OPEX",
+            "{country}\\capex-fuels-{model}.xlsx::{sheet}::Total Annual Depreciation",
             "{country}\\financial-statements-{model}.xlsx::{sheet}::Upstream Cost of Energy"
             ]
         },
@@ -1115,8 +1111,8 @@
             ],
             "target": "Long term subsidies",
             "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::Annual Cost of Service",
-            "{country}\\technoeconomic-inputs-{model}.xlsx::{fuel}::Tariff",
-            "{country}\\technoeconomic-inputs-{model}.xlsx::{fuel}::Demand"
+            "{country}\\technoeconomic-inputs-{model}.xlsx::{sheet}::Tariff",
+            "{country}\\technoeconomic-inputs-{model}.xlsx::{sheet}::Demand"
             ]
         },
         {
@@ -1134,7 +1130,7 @@
             { "op": "negative", "operands": [["index", 0]], "result": "final" }
             ],
             "target": "OPEX",
-            "sources": ["{country}\\technoeconomic-inputs-{model}.xlsx::{fuel}::OPEX"
+            "sources": ["{country}\\technoeconomic-inputs-{model}.xlsx::{sheet}::OPEX"
             ]
         },
         {
@@ -1184,7 +1180,7 @@
             { "op": "negative", "operands": [["index", 0]], "result": "final" }
             ],
             "target": "D&A",
-            "sources": ["{country}\\capex-fuels-{model}.xlsx::{fuel}::Total Annual Depreciation"
+            "sources": ["{country}\\capex-fuels-{model}.xlsx::{sheet}::Total Annual Depreciation"
             ]
         },
         {
@@ -1200,8 +1196,8 @@
             { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "final" }
             ],
             "target": "CAPEX",
-            "sources": ["{country}\\technoeconomic-inputs-{model}.xlsx::{fuel}::CAPEX - Growth",
-            "{country}\\technoeconomic-inputs-{model}.xlsx::{fuel}::CAPEX - Maintenance"
+            "sources": ["{country}\\technoeconomic-inputs-{model}.xlsx::{sheet}::CAPEX - Growth",
+            "{country}\\technoeconomic-inputs-{model}.xlsx::{sheet}::CAPEX - Maintenance"
             ]
         },
         {
