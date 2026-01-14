@@ -1,10 +1,10 @@
 import os
-import re
 import uuid
 import stat
 import copy
 import json
 import shutil
+import zipfile
 import tempfile
 import openpyxl
 import traceback
@@ -908,56 +908,78 @@ async def expand_sheet(expand_request: SheetUpdate):
 
 @app.get("/get-sheet")
 async def get_sheet(country, route, template_route, sheet_name, key_fuels):
-
-    config = load_config()
-    fuels = config["FUELS"].get(country, {}).get("normal", [])
-    expected_sheets = config["FUELS"].get(country, {}).get(key_fuels, [])
-    models = config["MODELS"].get(country, [])
-
-    if sheet_name not in expected_sheets:
-        raise HTTPException(status_code=400, detail="Sheet name not allowed for this fuel and country")
-
-    is_carbon_credits = "carbon" in sheet_name.lower()
-    
-    full_path = os.path.join(BASE_DIR, route)
-    template_full_path = os.path.join(BASE_DIR, template_route)
-
-    if not os.path.isfile(full_path):
-        if not os.path.isfile(template_full_path):
-            raise HTTPException(status_code=404, detail="Template file not found")
-        os.makedirs(os.path.dirname(full_path), exist_ok=True)
-        copyfile(template_full_path, full_path)
-
-    wb = openpyxl.load_workbook(full_path)
-
-    if is_carbon_credits:
-        year_range = config["COUNTRY_YEAR_RANGES"].get(country)    
-        if year_range:
-            start_year, end_year = year_range["start"], year_range["end"]
-            drop_out_of_range_years_from_workbook(wb, sheet_name, start_year, end_year)
-            wb.save(full_path)
-    else:
+    try:
+        config = load_config()
+        fuels = config["FUELS"].get(country, {}).get("normal", [])
+        expected_sheets = config["FUELS"].get(country, {}).get(key_fuels, [])
+        models = config["MODELS"].get(country, [])
+        
+        if sheet_name not in expected_sheets:
+            raise HTTPException(status_code=400, detail="Sheet name not allowed for this fuel and country")
+        
+        is_carbon_credits = "carbon" in sheet_name.lower()
+        
+        full_path = os.path.join(BASE_DIR, route)
+        template_full_path = os.path.join(BASE_DIR, template_route)
+        
+        if not os.path.isfile(full_path):
+            if not os.path.isfile(template_full_path):
+                raise HTTPException(status_code=404, detail="Template file not found")
+            os.makedirs(os.path.dirname(full_path), exist_ok=True)
+            copyfile(template_full_path, full_path)
+        
         try:
-            sync_sheets_with_fuels(country, route, template_route, expected_sheets)
+            wb = openpyxl.load_workbook(full_path)
+        except zipfile.BadZipFile as e:
+            if os.path.isfile(template_full_path):
+                copyfile(template_full_path, full_path)
+                wb = openpyxl.load_workbook(full_path)
+            else:
+                raise HTTPException(
+                    status_code=500, 
+                    detail=f"Excel file is corrupted and no template available: {str(e)}"
+                )
         except Exception as e:
-            wb.close()
-            raise HTTPException(status_code=500, detail=f"Error syncing sheets: {str(e)}")
-
-    wb.close()
-    excel_processor.clear_workbook_cache()
-    excel_processor.apply_formulas(
-        file_path=route,
-        formulas_json_path=JSON_FORMULAS,
-        country=country,
-        models=models,
-        fuels=fuels,
-        expected_sheets=expected_sheets
-    )
-
-    df = pd.read_excel(full_path, sheet_name=sheet_name, engine="openpyxl")
-    df = df.where(pd.notnull(df), None)
-
-    return JSONResponse({"sheet": df.to_dict(orient="records")})
+            raise HTTPException(status_code=500, detail=f"Cannot open Excel file: {str(e)}")
+        
+        if is_carbon_credits:
+            year_range = config["COUNTRY_YEAR_RANGES"].get(country)
+            
+            if year_range:
+                start_year, end_year = year_range["start"], year_range["end"]
+                drop_out_of_range_years_from_workbook(wb, sheet_name, start_year, end_year)
+                wb.save(full_path)
+            
+        else:
+            try:
+                sync_sheets_with_fuels(country, route, template_route, expected_sheets)
+            except Exception as e:
+                wb.close()
+                raise HTTPException(status_code=500, detail=f"Error syncing sheets: {str(e)}")
+        
+        wb.close()
+        excel_processor.clear_workbook_cache()
+        
+        excel_processor.apply_formulas(
+            file_path=route,
+            formulas_json_path=JSON_FORMULAS,
+            country=country,
+            models=models,
+            fuels=fuels,
+            expected_sheets=expected_sheets
+        )
+        
+        df = pd.read_excel(full_path, sheet_name=sheet_name, engine="openpyxl")
+        df = df.where(pd.notnull(df), None)
+        
+        result_dict = df.to_dict(orient="records")
+        return JSONResponse({"sheet": result_dict})
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 @app.post("/save-sheet")
 async def save_sheet(update: SheetUpdate):

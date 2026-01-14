@@ -11,7 +11,7 @@ class CarbonCredits:
         self.subsection = subsection
         self.model = model
         self.fuel = "Carbon Credits"
-        self.key_fuels = "carbon"
+        self.key_fuels = "expanded_carbon"
         self.route = os.path.join(country, "carbon-credits-general.xlsx")
         self.template_route = os.path.join(country, "carbon-credits-{template}.xlsx")
         self.df = None

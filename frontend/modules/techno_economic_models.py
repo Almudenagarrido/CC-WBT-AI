@@ -3,6 +3,8 @@ from modules.manage_models import ManageModels
 from modules.techno_economic_inputs import TechnoEconomicInputs
 from modules.carbon_credits import CarbonCredits
 from modules.capex_fuels import CapexFuelMarket
+from modules.technology_tariffs import TechnologyTariffs
+from modules.technology_upstreams import TechnologyUpstreams
 from modules.design_capital import DesignCapitalStructure
 from modules.financial_statements import FinancialStatements
 from modules.summary_financing import SummaryFinancing
@@ -22,6 +24,8 @@ class TechnoEconomicModels:
             "carbon_credits": CarbonCredits(excel_editor, country, subsection, model),
             "capex_fuels": CapexFuelMarket(excel_editor, country, subsection, model, fuel),
             "design_capital": DesignCapitalStructure(excel_editor, country, subsection, model, fuel),
+            "technology_tariffs": TechnologyTariffs(excel_editor, country, subsection, model, fuel),
+            "technology_upstreams": TechnologyUpstreams(excel_editor, country, subsection, model, fuel),
             "financial_statements": FinancialStatements(excel_editor, country, subsection, model, fuel),
             "summary_financing": SummaryFinancing(country)
         }
