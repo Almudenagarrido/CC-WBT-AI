@@ -26,8 +26,9 @@ class ExcelEditor:
         }
         self.expected_years = [str(year) for year in range(2021, 2061)]
 
-    def load_data(self, df, height, editable_columns, empty_rows):
+    def load_data(self, df, fuel, height, editable_columns, empty_rows):
         
+        self.fuel = fuel
         existing_columns = list(df.columns)
         filtered_editable_columns = [col for col in editable_columns if col in existing_columns]
         self.df = df.copy().replace("-", np.nan).infer_objects(copy=False)
@@ -150,7 +151,8 @@ class ExcelEditor:
             allow_unsafe_jscode=True,
             enable_enterprise_modules=False,
             height=self.height,
-            fit_columns_on_grid_load=False
+            fit_columns_on_grid_load=False,
+            key=f"aggrid_{self.fuel}"
         )
         edited_df = pd.DataFrame(grid_response["data"])
 

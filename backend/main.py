@@ -4,7 +4,6 @@ import stat
 import copy
 import json
 import shutil
-import zipfile
 import tempfile
 import openpyxl
 import traceback
@@ -220,11 +219,15 @@ def add_fuel(request: FuelRequest):
 
     added_to = []
     for key in config["FUELS"][country]:
+        if key == "only_carbon":
+            continue
         if fuel == "Electricity":
             if key == "carbon":
                 continue
 
             if key == "expanded":
+                values = ["Electricity & E-Cooking", "Electricity (Low access)"]
+            if key == "expanded_carbon":
                 values = ["Electricity & E-Cooking", "Electricity (Low access)"]
             elif key == "more_expanded":
                 values = ["Electricity (Only E-Cooking)", "Electricity & E-Cooking", "Electricity (Low access)"]
@@ -506,7 +509,10 @@ def sync_sheets_with_fuels(country, route, template_route, expected_sheets):
                 for cell in row:
                     new_sheet[cell.coordinate].value = cell.value
                     if cell.has_style:
-                        new_sheet[cell.coordinate]._style = cell._style
+                        new_sheet[cell.coordinate].font = copy.copy(cell.font)
+                        new_sheet[cell.coordinate].fill = copy.copy(cell.fill)
+                        new_sheet[cell.coordinate].border = copy.copy(cell.border)
+                        new_sheet[cell.coordinate].number_format = copy.copy(cell.number_format)
 
             for col_letter, dimension in template_source_sheet.column_dimensions.items():
                 new_sheet.column_dimensions[col_letter].width = dimension.width
@@ -552,7 +558,11 @@ def add_carbon_credits_sheet(country, download_path, template_path, model):
                 for cell in row:
                     new_sheet[cell.coordinate].value = cell.value
                     if cell.has_style:
-                        new_sheet[cell.coordinate]._style = cell._style
+                        new_sheet[cell.coordinate].font = copy.copy(cell.font)
+                        new_sheet[cell.coordinate].fill = copy.copy(cell.fill)
+                        new_sheet[cell.coordinate].border = copy.copy(cell.border)
+                        new_sheet[cell.coordinate].number_format = copy.copy(cell.number_format)
+                        
         
         if model:
             for sheet_name in wb_download.sheetnames:
@@ -888,7 +898,10 @@ async def expand_sheet(expand_request: SheetUpdate):
                         new_cell.value = orig_cell.value
                     
                     if orig_cell.has_style:
-                        new_cell._style = orig_cell._style
+                        new_cell.font = copy.copy(orig_cell.font)
+                        new_cell.fill = copy.copy(orig_cell.fill)
+                        new_cell.border = copy.copy(orig_cell.border)
+                        new_cell.number_format = copy.copy(orig_cell.number_format)
 
         wb.save(full_path)
         wb.close()
@@ -907,69 +920,52 @@ async def get_sheet(country, route, template_route, sheet_name, key_fuels):
         fuels = config["FUELS"].get(country, {}).get("normal", [])
         expected_sheets = config["FUELS"].get(country, {}).get(key_fuels, [])
         models = config["MODELS"].get(country, [])
-        
+
         if sheet_name not in expected_sheets:
-            raise HTTPException(status_code=400, detail="Sheet name not allowed for this fuel and country")
-        
+            raise HTTPException(
+                status_code=400,
+                detail="Sheet name not allowed for this fuel and country"
+            )
+
         is_carbon_credits = "carbon" in sheet_name.lower()
-        
+
         full_path = os.path.join(BASE_DIR, route)
         template_full_path = os.path.join(BASE_DIR, template_route)
-        
+
         if not os.path.isfile(full_path):
             if not os.path.isfile(template_full_path):
                 raise HTTPException(status_code=404, detail="Template file not found")
             os.makedirs(os.path.dirname(full_path), exist_ok=True)
             copyfile(template_full_path, full_path)
-        
+
         try:
             wb = openpyxl.load_workbook(full_path)
-        except zipfile.BadZipFile as e:
+        except Exception as e:
             if os.path.isfile(template_full_path):
                 copyfile(template_full_path, full_path)
                 wb = openpyxl.load_workbook(full_path)
             else:
                 raise HTTPException(
-                    status_code=500, 
-                    detail=f"Excel file is corrupted and no template available: {str(e)}"
+                    status_code=500,
+                    detail=f"Cannot open Excel file: {str(e)}"
                 )
-        except KeyError as e:
-            if "[Content_Types].xml" in str(e):
-                if os.path.isfile(template_full_path):
-                    try:
-                        os.remove(full_path)
-                    except:
-                        pass
-                    copyfile(template_full_path, full_path)
-                    wb = openpyxl.load_workbook(full_path)
-                else:
-                    raise HTTPException(
-                        status_code=500, 
-                        detail=f"Excel file is not a valid .xlsx file (missing [Content_Types].xml) and no template available"
-                    )
-            else:
-                raise HTTPException(status_code=500, detail=f"Cannot open Excel file: {str(e)}")
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Cannot open Excel file: {str(e)}")
-        
+
         if is_carbon_credits:
-            year_range = config["COUNTRY_YEAR_RANGES"].get(country)
             
-            if year_range:
-                start_year, end_year = year_range["start"], year_range["end"]
-                drop_out_of_range_years_from_workbook(wb, sheet_name, start_year, end_year)
-                wb.save(full_path)
-            
+            models_carbon = [m for m in models if "bau" not in m.lower()]
+            add_carbon_credits_sheet(
+                country=country,
+                download_path=full_path,
+                template_path=template_full_path,
+                model=models_carbon[0] if models_carbon else None
+            )
+            wb = openpyxl.load_workbook(full_path)
+
         else:
-            try:
-                sync_sheets_with_fuels(country, route, template_route, expected_sheets)
-            except Exception as e:
-                wb.close()
-                raise HTTPException(status_code=500, detail=f"Error syncing sheets: {str(e)}")
-        
+            sync_sheets_with_fuels(country, route, template_route, expected_sheets)
+
         wb.close()
         excel_processor.clear_workbook_cache()
-        
         excel_processor.apply_formulas(
             file_path=route,
             formulas_json_path=JSON_FORMULAS,
@@ -978,13 +974,13 @@ async def get_sheet(country, route, template_route, sheet_name, key_fuels):
             fuels=fuels,
             expected_sheets=expected_sheets
         )
-        
+
         df = pd.read_excel(full_path, sheet_name=sheet_name, engine="openpyxl")
         df = df.where(pd.notnull(df), None)
-        
         result_dict = df.to_dict(orient="records")
+
         return JSONResponse({"sheet": result_dict})
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -1013,7 +1009,10 @@ async def save_sheet(update: SheetUpdate):
                     temp_cell = temp_sheet[cell.coordinate]
                     temp_cell.value = cell.value
                     if cell.has_style:
-                        temp_cell._style = cell._style
+                        new_cell.font = copy.copy(cell.font)
+                        new_cell.fill = copy.copy(cell.fill)
+                        new_cell.border = copy.copy(cell.border)
+                        new_cell.number_format = copy.copy(cell.number_format)
             
             wb.remove(original_sheet)
         
@@ -1024,7 +1023,10 @@ async def save_sheet(update: SheetUpdate):
             for cell in original_sheet[1]:
                 new_cell = new_sheet.cell(row=1, column=cell.column, value=cell.value)
                 if cell.has_style:
-                    new_cell._style = cell._style
+                    new_cell.font = copy.copy(cell.font)
+                    new_cell.fill = copy.copy(cell.fill)
+                    new_cell.border = copy.copy(cell.border)
+                    new_cell.number_format = copy.copy(cell.number_format)
 
         for r_idx, row in enumerate(df_data.itertuples(index=False), start=2):
             for c_idx, value in enumerate(row, start=1):
@@ -1033,7 +1035,10 @@ async def save_sheet(update: SheetUpdate):
                 if temp_sheet:
                     temp_cell = temp_sheet.cell(row=r_idx, column=c_idx)
                     if temp_cell.has_style:
-                        cell._style = temp_cell._style
+                        cell.font = copy.copy(temp_cell.font)
+                        cell.fill = copy.copy(temp_cell.fill)
+                        cell.border = copy.copy(temp_cell.border)
+                        cell.number_format = copy.copy(temp_cell.number_format)
         
         if original_sheet:
             for col_letter, dimension in original_sheet.column_dimensions.items():
@@ -1086,7 +1091,10 @@ async def reset_sheet(update: SheetUpdate):
                 new_cell = new_sheet[cell.coordinate]
                 new_cell.value = cell.value
                 if cell.has_style:
-                    new_cell._style = cell._style
+                    new_cell.font = copy.copy(cell.font)
+                    new_cell.fill = copy.copy(cell.fill)
+                    new_cell.border = copy.copy(cell.border)
+                    new_cell.number_format = copy.copy(cell.number_format)
         
         wb_target.save(excel_path)
         wb_target.close()

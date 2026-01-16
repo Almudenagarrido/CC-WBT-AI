@@ -103,7 +103,7 @@ class CarbonCredits:
         height = base_height + 120*(len(models))
 
         empty_rows = self.empty_rows.get(self.fuel, self.empty_rows["LPG"])
-        self.excel_editor.load_data(self.df, height, [], empty_rows)
+        self.excel_editor.load_data(self.df, self.fuel, height, [], empty_rows)
         self.edited_df = self.excel_editor.show()
     
     def __call__(self):

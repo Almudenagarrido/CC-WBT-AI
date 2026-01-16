@@ -82,7 +82,7 @@ class CapexFuelMarket:
     def show_excel_editor(self):
         st.subheader(f"{self.fuel} - CAPEX")
 
-        for key, df in self.subtables[self.fuel].items():
+        for idx, (key, df) in enumerate(self.subtables[self.fuel].items()):
             if key != None:
                 st.markdown(f"##### {key}")
 
@@ -95,7 +95,7 @@ class CapexFuelMarket:
             else:
                 empty_rows = self.empty_rows.get(self.fuel, {})
 
-            self.excel_editor.load_data(df, height, editable_cols, empty_rows)
+            self.excel_editor.load_data(df, f"{self.fuel}_{idx}", height, editable_cols, empty_rows)
             self.edited_df = self.excel_editor.show()
                 
     def __call__(self):
