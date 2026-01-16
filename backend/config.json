@@ -1,7 +1,6 @@
 {
     "COUNTRIES": [
-        "Rwanda",
-        "prueba"
+        "Rwanda"
     ],
     "COUNTRY_YEAR_RANGES": {
         "template": {
@@ -11,28 +10,18 @@
         "Rwanda": {
             "start": 2023,
             "end": 2034
-        },
-        "prueba": {
-            "start": 2024,
-            "end": 2036
         }
     },
     "TAX_RATES": {
-        "Rwanda": 28,
-        "prueba": 5
+        "Rwanda": 28
     },
     "INFLATIONS": {
-        "Rwanda": 5,
-        "prueba": 6
+        "Rwanda": 5
     },
     "MODELS": {
         "Rwanda": [
             "BAU",
             "CleanStep",
-            "Aligned"
-        ],
-        "prueba": [
-            "BAU",
             "Aligned"
         ]
     },
@@ -41,6 +30,9 @@
             "normal": [
                 "Electricity",
                 "LPG"
+            ],
+            "only_carbon": [
+                "Carbon Credits"
             ],
             "carbon": [
                 "Electricity",
@@ -70,33 +62,8 @@
                 "Electricity",
                 "LPG"
             ],
-            "carbon": [
-                "Electricity",
-                "LPG",
+            "only_carbon": [
                 "Carbon Credits"
-            ],
-            "expanded_carbon": [
-                "Electricity & E-Cooking",
-                "Electricity (Low access)",
-                "LPG",
-                "Carbon Credits"
-            ],
-            "expanded": [
-                "Electricity & E-Cooking",
-                "Electricity (Low access)",
-                "LPG"
-            ],
-            "more_expanded": [
-                "Electricity (Only E-Cooking)",
-                "Electricity & E-Cooking",
-                "Electricity (Low access)",
-                "LPG"
-            ]
-        },
-        "prueba": {
-            "normal": [
-                "Electricity",
-                "LPG"
             ],
             "carbon": [
                 "Electricity",
@@ -213,7 +180,7 @@
     ],
     "SHARED_ROUTES": [
         "fuel-financial-inputs.xlsx",
-        "carbon-credits-general.xlsx"
+        "carbon-credits.xlsx"
     ],
     "ROUTES": [
         "technoeconomic-inputs-{model}.xlsx",
@@ -224,6 +191,6 @@
     "UPLOAD_DEPENDENT_FILES": [
         "technoeconomic-inputs-{model}.xlsx",
         "financial-statements-{model}.xlsx",
-        "carbon-credits-general.xlsx"
+        "carbon-credits.xlsx"
     ]
 }

@@ -14,7 +14,7 @@ class TechnoEconomicInputs:
         self.model = model
         self.fuel = fuel
         self.key_fuels_technoeconomic = "expanded"
-        self.key_fuels_financial = "expanded_carbon"
+        self.key_fuels_financial = "expanded"
         self.route = os.path.join(country, f"technoeconomic-inputs-{model}.xlsx")
         self.template_route = os.path.join(country, "technoeconomic-inputs-{model}.xlsx")
         self.route_fuels = os.path.join(country, "fuel-financial-inputs.xlsx")

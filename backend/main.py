@@ -464,7 +464,7 @@ def drop_out_of_range_years_from_workbook(wb, sheet_name, start_year, end_year):
     cols_to_delete = []
 
     for col_idx, year in year_columns.items():
-
+        
         if year < start_year or year > end_year:
             cols_to_delete.append(col_idx)
 
@@ -685,12 +685,6 @@ def delete_model(request: ModelRequest):
             upload_path = os.path.join(BASE_DIR, country, f"upload-{m}.xlsx")
             if os.path.exists(upload_path):
                 os.remove(upload_path)
-
-        destination_upload_path = os.path.join(BASE_DIR, country, "upload-BAU.xlsx")
-        source_upload_path = os.path.join(BASE_DIR, "{templates}", "upload-{model}.xlsx")
-        
-        formatted_source_path = source_upload_path.format(model="BAU")
-        shutil.copy2(formatted_source_path, destination_upload_path)
 
         config["MODELS"].pop(country, None)
         config["COUNTRY_YEAR_RANGES"].pop(country, None)
@@ -939,6 +933,22 @@ async def get_sheet(country, route, template_route, sheet_name, key_fuels):
                     status_code=500, 
                     detail=f"Excel file is corrupted and no template available: {str(e)}"
                 )
+        except KeyError as e:
+            if "[Content_Types].xml" in str(e):
+                if os.path.isfile(template_full_path):
+                    try:
+                        os.remove(full_path)
+                    except:
+                        pass
+                    copyfile(template_full_path, full_path)
+                    wb = openpyxl.load_workbook(full_path)
+                else:
+                    raise HTTPException(
+                        status_code=500, 
+                        detail=f"Excel file is not a valid .xlsx file (missing [Content_Types].xml) and no template available"
+                    )
+            else:
+                raise HTTPException(status_code=500, detail=f"Cannot open Excel file: {str(e)}")
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Cannot open Excel file: {str(e)}")
         

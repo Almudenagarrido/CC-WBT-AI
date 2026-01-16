@@ -11,14 +11,14 @@ class CarbonCredits:
         self.subsection = subsection
         self.model = model
         self.fuel = "Carbon Credits"
-        self.key_fuels = "expanded_carbon"
-        self.route = os.path.join(country, "carbon-credits-general.xlsx")
+        self.key_fuels = "only_carbon"
+        self.route = os.path.join(country, "carbon-credits.xlsx")
         self.template_route = os.path.join(country, "carbon-credits-{template}.xlsx")
         self.df = None
         self.edited_df = None
-        self.df_heights = {"Electricity": 80}
+        self.df_heights = {"LPG": 90}
         self.empty_rows = {
-            "Electricity": {"col": "Inputs", "partial": [], "full": []}
+            "LPG": {"col": "Inputs", "partial": [], "full": []}
         }
         self.last_models = []
 
@@ -99,10 +99,10 @@ class CarbonCredits:
         st.subheader(f"Carbon Credits")
 
         models = [m for m in st.session_state.models if m.lower() != "bau"]
-        base_height = self.df_heights.get(self.fuel, self.df_heights["Electricity"])
+        base_height = self.df_heights.get(self.fuel, self.df_heights["LPG"])
         height = base_height + 120*(len(models))
 
-        empty_rows = self.empty_rows.get(self.fuel, self.empty_rows["Electricity"])
+        empty_rows = self.empty_rows.get(self.fuel, self.empty_rows["LPG"])
         self.excel_editor.load_data(self.df, height, [], empty_rows)
         self.edited_df = self.excel_editor.show()
     

@@ -189,7 +189,7 @@
                 { "op": "copy", "operands": [["index", 0]], "result": "final" }
                 ],
                 "data_sources": [
-                "{country}\\carbon-credits-general.xlsx::Carbon Credits::CO2 emited - {model} scenario"
+                "{country}\\carbon-credits.xlsx::Carbon Credits::CO2 emited - {model} scenario"
                 ]
             },
             "Potential Income from Carbon Credits in the{model} Plan - right": {
@@ -197,7 +197,7 @@
                 { "op": "copy", "operands": [["index", 0]], "result": "final" }
                 ],
                 "data_sources": [
-                "{country}\\carbon-credits-general.xlsx::Carbon Credits::Potential income from Carbon Credits in the {model} Plan - right"
+                "{country}\\carbon-credits.xlsx::Carbon Credits::Potential income from Carbon Credits in the {model} Plan - right"
                 ]
             }
         }
