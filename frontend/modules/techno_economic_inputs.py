@@ -14,7 +14,7 @@ class TechnoEconomicInputs:
         self.model = model
         self.fuel = fuel
         self.key_fuels_technoeconomic = "expanded"
-        self.key_fuels_financial = "expanded"
+        self.key_fuels_financial = "normal"
         self.route = os.path.join(country, f"technoeconomic-inputs-{model}.xlsx")
         self.template_route = os.path.join(country, "technoeconomic-inputs-{model}.xlsx")
         self.route_fuels = os.path.join(country, "fuel-financial-inputs.xlsx")
@@ -37,18 +37,22 @@ class TechnoEconomicInputs:
         height = self.df_heights.get(self.fuel, self.df_heights["LPG"])
         empty_rows = self.empty_rows.get(self.fuel, self.empty_rows["LPG"])
 
-        self.excel_editor.load_data(self.df_fuels, height_fuels, [], empty_rows)
+        self.excel_editor.load_data(self.df_fuels, self.fuel, height_fuels, [], empty_rows)
         self.edited_df_fuels = self.excel_editor.show()
 
-        self.excel_editor.load_data(self.df, height, self.editable_columns, empty_rows)
+        self.excel_editor.load_data(self.df, f"{self.fuel}_1", height, self.editable_columns, empty_rows)
         self.edited_df = self.excel_editor.show()
 
     def __call__(self):
+
+        fuel = "Electricity"
+        if "Electricity" not in self.fuel:
+            fuel = self.fuel
         sheet_fuels = u.get_sheet_from_backend(
             self.country,
             self.route_fuels,
             self.template_route_fuels,
-            self.fuel,
+            fuel,
             self.key_fuels_financial
         )
         self.df_fuels = pd.DataFrame(sheet_fuels)
