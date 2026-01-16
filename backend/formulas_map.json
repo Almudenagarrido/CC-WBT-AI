@@ -138,7 +138,7 @@
         }
     ]
   },
-    "{country}\\carbon-credits-general.xlsx": {
+    "{country}\\carbon-credits.xlsx": {
     "Carbon Credits": [
         {
             "formula_steps": [
@@ -155,8 +155,8 @@
             ],
             "target": "{model} vs. BAU",
             "sources": [
-                "{country}\\carbon-credits-general.xlsx::Carbon Credits::CO2 emited - BAU scenario",
-                "{country}\\carbon-credits-general.xlsx::Carbon Credits::CO2 emited - {model} scenario"
+                "{country}\\carbon-credits.xlsx::Carbon Credits::CO2 emited - BAU scenario",
+                "{country}\\carbon-credits.xlsx::Carbon Credits::CO2 emited - {model} scenario"
             ]
         },
         {
@@ -172,7 +172,7 @@
             "target": "CO2 equivalent avoided in the {model}",
             "sources": [
                 "{country}\\fuel-financial-inputs.xlsx::Carbon Credits::Number of years that you could sell those carbon credits", 
-                "{country}\\carbon-credits-general.xlsx::Carbon Credits::{model} vs. BAU",
+                "{country}\\carbon-credits.xlsx::Carbon Credits::{model} vs. BAU",
                 "{country}\\fuel-financial-inputs.xlsx::Carbon Credits::CO2 certificate (%) - from the total CO2 avoided"
             ]
         },
@@ -183,7 +183,7 @@
             ],
             "target": "Potential income from Carbon Credits in the {model} Plan - right",
             "sources": [
-                "{country}\\carbon-credits-general.xlsx::Carbon Credits::CO2 equivalent avoided in the {model}",
+                "{country}\\carbon-credits.xlsx::Carbon Credits::CO2 equivalent avoided in the {model}",
                 "{country}\\fuel-financial-inputs.xlsx::Carbon Credits::Liquidity",
                 "{country}\\fuel-financial-inputs.xlsx::Carbon Credits::Price per TON"
             ]

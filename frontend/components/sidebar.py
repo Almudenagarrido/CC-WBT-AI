@@ -59,7 +59,7 @@ def show():
                     st.session_state.subsection = None
                     st.session_state.model = None
             
-            fuels_with_unexpanded_carbon = st.session_state.fuels_unexpanded_carbon
+            fuels_with_unexpanded_carbon = st.session_state.fuels_carbon
             fuel_to_delete = st.selectbox("Delete fuel market", options=fuels_with_unexpanded_carbon)
             if st.button("🗑️"):
                 if u.delete_fuel_from_backend(fuel_to_delete, st.session_state.country):
@@ -70,7 +70,7 @@ def show():
                     st.rerun()
 
             st.markdown("---")
-            if "Carbon Credits" in st.session_state.fuels_unexpanded_carbon:
+            if "Carbon Credits" in st.session_state.fuels_carbon:
                 if st.button(f"Carbon Credits Financial Inputs"):
                         st.session_state.section = "financial_inputs"
                         st.session_state.fuel = "Carbon Credits"
