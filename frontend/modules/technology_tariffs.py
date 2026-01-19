@@ -174,7 +174,7 @@ class TechnologyTariffs:
         height = self.df_heights.get(self.fuel, self.df_heights["LPG"])
         empty_rows = self.empty_rows.get(self.fuel, self.empty_rows["LPG"])
         
-        self.excel_editor.load_data(df, height, self.editable_columns, empty_rows)
+        self.excel_editor.load_data(df, self.fuel, height, self.editable_columns, empty_rows)
         self.edited_df = self.excel_editor.show()
         
         if st.button("Save", key=f"save_tariff_{self.country}_{self.model}_{self.fuel}"):
