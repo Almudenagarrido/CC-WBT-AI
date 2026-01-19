@@ -76,7 +76,7 @@ class FinancialStatements:
 
             height = self.subtable_heights.get(section, self.subtable_heights["Profit & Loss"])
             empty_rows = self.empty_rows.get(section, self.empty_rows["Profit & Loss"])
-            self.excel_editor.load_data(df, height, [], empty_rows)
+            self.excel_editor.load_data(df, section, height, [], empty_rows)
             edited_df = self.excel_editor.show()
             self.subtables[self.fuel][section] = edited_df
 

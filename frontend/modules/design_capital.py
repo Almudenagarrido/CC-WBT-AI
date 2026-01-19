@@ -192,7 +192,7 @@ class DesignCapitalStructure:
             editable_cols = self.editable_columns.get(section, self.editable_columns[self.section_headers[0]])
             empty_rows = self.empty_rows.get(section, self.empty_rows[self.section_headers[0]])
             
-            self.excel_editor.load_data(df, height, editable_cols, empty_rows)
+            self.excel_editor.load_data(df, f"{self.fuel}_{section}_editor",height, editable_cols, empty_rows)
             edited_df = self.excel_editor.show()
             self.subtables[self.fuel][section] = edited_df
     
@@ -228,7 +228,7 @@ class DesignCapitalStructure:
                 df = self.subtables[self.fuel][section]
                 height = self.subtable_heights.get(section, self.subtable_heights[self.section_headers[0]])
                 editable_cols = self.editable_columns.get(section, self.editable_columns[self.section_headers[0]])
-                self.excel_editor.load_data(df, height, editable_cols, empty_rows={})
+                self.excel_editor.load_data(df, f"{self.fuel}_{section}_validator", height, editable_cols, empty_rows={})
                 section_invalid_cells = self.excel_editor.validate()
                 for error in section_invalid_cells:
                     input_name, col, value, msg = error
@@ -258,7 +258,7 @@ class DesignCapitalStructure:
             editable_cols = self.editable_columns.get(section, self.editable_columns[self.section_headers[0]])
             empty_rows = self.empty_rows.get(section, self.empty_rows[self.section_headers[0]])
             
-            self.excel_editor.load_data(df, height, editable_cols, empty_rows)
+            self.excel_editor.load_data(df, self.fuel, height, editable_cols, empty_rows)
             _ = self.excel_editor.show()
 
     def __call__(self):
