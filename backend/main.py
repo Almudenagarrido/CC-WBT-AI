@@ -542,56 +542,7 @@ def sync_sheets_with_fuels(country, route, template_route, expected_sheets):
 
     return changed
 
-def add_carbon_credits_sheet(country, download_path, template_path, model):
-    try:
-        carbon_sheet = "Carbon Credits"
-        config = load_config()
-        
-        wb_download = openpyxl.load_workbook(download_path)
-        wb_template = openpyxl.load_workbook(template_path)
-        
-        if carbon_sheet in wb_template.sheetnames and carbon_sheet not in wb_download.sheetnames:
-            template_sheet = wb_template[carbon_sheet]
-            new_sheet = wb_download.create_sheet(carbon_sheet)
-            
-            for row in template_sheet.iter_rows():
-                for cell in row:
-                    new_sheet[cell.coordinate].value = cell.value
-                    if cell.has_style:
-                        new_sheet[cell.coordinate].font = copy.copy(cell.font)
-                        new_sheet[cell.coordinate].fill = copy.copy(cell.fill)
-                        new_sheet[cell.coordinate].border = copy.copy(cell.border)
-                        new_sheet[cell.coordinate].number_format = copy.copy(cell.number_format)
-                        
-        
-        if model:
-            for sheet_name in wb_download.sheetnames:
-                worksheet = wb_download[sheet_name]
-                for row in worksheet.iter_rows():
-                    for cell in row:
-                        if cell.value and isinstance(cell.value, str) and "{model}" in cell.value:
-                            cell.value = cell.value.replace("{model}", model)
-
-        year_range = config["COUNTRY_YEAR_RANGES"].get(country)
-        if year_range:
-            start_year, end_year = year_range["start"], year_range["end"]
-            for sheet_name in wb_download.sheetnames:
-                drop_out_of_range_years_from_workbook(wb_download, sheet_name, start_year, end_year)
-            
-        wb_download.save(download_path)
-        
-        wb_download.close()
-        wb_template.close()
-        
-    except Exception as e:
-        try:
-            wb_download.close()
-            wb_template.close()
-        except:
-            pass
-        raise e
-  
-@app.get("/download-template")
+"""@app.get("/download-template")
 def download_template_file(country, template, model, key_fuels):
     config = load_config()
     expected_sheets = config["FUELS"].get(country, {}).get(key_fuels, [])
@@ -613,8 +564,57 @@ def download_template_file(country, template, model, key_fuels):
             template_route=template_path,
             expected_sheets=expected_sheets
         )
-        add_carbon_credits_sheet(country, temp_file_path, template_path, model)
+        
+        return FileResponse(
+            temp_file_path,
+            media_type="application/vnd.ms-excel",
+            filename=template
+        )
+        
+    except Exception as e:
+        if temp_file_path and os.path.exists(temp_file_path):
+            try:
+                os.unlink(temp_file_path)
+            except:
+                pass
+        raise HTTPException(status_code=500, detail=str(e))
+"""
 
+@app.get("/download-template")
+def download_template_file(country, template, model, key_fuels):
+    config = load_config()
+    expected_sheets = config["FUELS"].get(country, {}).get(key_fuels, [])
+    temp_file_path = None
+    
+    try:
+        template_path = os.path.join(BASE_DIR, country, template)
+        
+        if not os.path.exists(template_path):
+            raise HTTPException(status_code=404, detail="Template file not found")
+        
+        temp_dir = tempfile.gettempdir()
+        temp_filename = f"synced_{uuid.uuid4().hex[:8]}_{template}"
+        temp_file_path = os.path.join(temp_dir, temp_filename)
+        
+        # Copiamos y sincronizamos las hojas según los fuels
+        sync_sheets_with_fuels(
+            country=country,
+            route=temp_file_path,
+            template_route=template_path,
+            expected_sheets=expected_sheets
+        )
+        
+        # Abrimos el archivo temporal para modificar Carbon Credits
+        wb = openpyxl.load_workbook(temp_file_path)
+        if "Carbon Credits" in wb.sheetnames and model:
+            ws = wb["Carbon Credits"]
+            for row in ws.iter_rows(min_row=1, max_row=ws.max_row, min_col=1, max_col=ws.max_column):
+                for cell in row:
+                    if cell.value and isinstance(cell.value, str) and "{model}" in cell.value:
+                        cell.value = cell.value.replace("{model}", model)
+        wb.save(temp_file_path)
+        wb.close()
+        
         return FileResponse(
             temp_file_path,
             media_type="application/vnd.ms-excel",
@@ -860,18 +860,18 @@ async def expand_sheet(expand_request: SheetUpdate):
                     'content_type': cell_val.split('{model}')[0].strip()
                 }
                 template_rows.append(row_data)
-        
+                
         if not template_rows:
             wb.close()
             return {"expanded": False}
-        
+
         template_rows.sort(key=lambda x: x['original_idx'])
         current_offset = 0
-        
+
         for template in template_rows:
             original_idx = template['original_idx'] + current_offset
             cells_to_copy = template['cells']
-                        
+            
             for model in models:
                 exists = False
                 for row in ws.iter_rows(min_row=1, max_row=ws.max_row, values_only=True):
@@ -883,11 +883,11 @@ async def expand_sheet(expand_request: SheetUpdate):
                 
                 if exists:
                     continue
-                
+
                 insert_pos = original_idx + 1
                 ws.insert_rows(insert_pos)
                 current_offset += 1
-                
+
                 for col_idx, orig_cell in enumerate(cells_to_copy, start=1):
                     new_cell = ws.cell(row=insert_pos, column=col_idx)
                     
@@ -949,17 +949,6 @@ async def get_sheet(country, route, template_route, sheet_name, key_fuels):
                     status_code=500,
                     detail=f"Cannot open Excel file: {str(e)}"
                 )
-
-        if is_carbon_credits:
-            
-            models_carbon = [m for m in models if "bau" not in m.lower()]
-            add_carbon_credits_sheet(
-                country=country,
-                download_path=full_path,
-                template_path=template_full_path,
-                model=models_carbon[0] if models_carbon else None
-            )
-            wb = openpyxl.load_workbook(full_path)
 
         else:
             sync_sheets_with_fuels(country, route, template_route, expected_sheets)

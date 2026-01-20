@@ -87,15 +87,13 @@ class CapexFuelMarket:
                 st.markdown(f"##### {key}")
 
             height = self.df_heights.get(self.fuel, self.df_heights["LPG"])
-
-            editable_cols = [col for col in df.columns if col not in ['Type', 'Units']]
             
             if self.fuel == "Electricity" and key in ["Grid", "Off-Grid"]:
                 empty_rows = self.empty_rows.get(self.fuel, {}).get(key, {})
             else:
                 empty_rows = self.empty_rows.get(self.fuel, {})
 
-            self.excel_editor.load_data(df, f"{self.fuel}_{idx}", height, editable_cols, empty_rows)
+            self.excel_editor.load_data(df, f"{self.fuel}_{idx}", height, [], empty_rows)
             self.edited_df = self.excel_editor.show()
                 
     def __call__(self):

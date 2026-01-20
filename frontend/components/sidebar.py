@@ -77,12 +77,7 @@ def show():
                         st.session_state.subsection = None
                         st.session_state.model = None
 
-        # Techno-Economic Models
-        if st.session_state.model: 
-            st.markdown(f"##### Techno-Economic Model: {st.session_state.model}")
-        else:
-            st.markdown("##### Techno-Economic Models")
-
+        # Manage Techno-Economic Models
         if st.button("Manage Techno-Economic Models"):
             st.session_state.section = "technoeconomic_models"
             st.session_state.subsection = "manage_models"
@@ -90,13 +85,19 @@ def show():
             st.session_state.fuel = None
             st.rerun()
 
+        # Techno-Economic Models
+        if st.session_state.model:
+            st.markdown("<hr style='margin:4px 0;'>", unsafe_allow_html=True)
+            st.markdown(f"<p style='margin:2px 0; font-size:15px; font-weight:bold;'>Techno-Economic Model: {st.session_state.model}</p>", unsafe_allow_html=True)
+            st.markdown("<hr style='margin:4px 0;'>", unsafe_allow_html=True)
+
         if st.session_state.model:
 
             st.markdown("##### Inputs")
 
             with st.expander("Techno-Economic Inputs", expanded=False):
                 for fuel in st.session_state.fuels_expanded:
-                    if st.button(f"{fuel} Inputs"):
+                    if st.button(f"{fuel}"):
                         st.session_state.section = "technoeconomic_models"
                         st.session_state.subsection = "technoeconomic_inputs"
                         st.session_state.fuel = fuel
@@ -110,20 +111,8 @@ def show():
                 st.session_state.subsection = "carbon_credits"
                 st.rerun()
 
-            with st.expander("Capex Fuel Market", expanded=False):
-                for fuel in st.session_state.fuels_expanded:
-                    if st.button(f"{fuel} - CAPEX"):
-                        st.session_state.section = "technoeconomic_models"
-                        st.session_state.subsection = "capex_fuels"
-                        st.session_state.fuel = fuel
-                        st.rerun()
-                    
-                if st.session_state.section == "technoeconomic_models" and st.session_state.subsection == "capex_fuels " and not st.session_state.fuel:
-                    st.session_state.fuel = st.session_state.fuels_expanded[0]
-
             if st.session_state.model != "BAU":
                 
-                st.markdown("##### Revenues and Costs")
                 with st.expander("Tariffs", expanded=False):
                     for fuel in st.session_state.fuels:
                         if st.button(f"{fuel}", key=f"tariff_{fuel}"):
@@ -145,23 +134,40 @@ def show():
 
                 if st.session_state.section == "technoeconomic_models" and st.session_state.subsection == "technology_upstreams" and not st.session_state.fuel:
                     st.session_state.fuel = st.session_state.fuels[0]
-                
-                st.markdown("##### Design Capital Structure")
+            
+            with st.expander("CAPEX Fuel Market", expanded=False):
                 for fuel in st.session_state.fuels_expanded:
-                    if st.button(f"{fuel} Financial Plan", key=f"design_{fuel}"):
+                    if st.button(f"{fuel}", key=f"tech_inputs_{fuel}"):
                         st.session_state.section = "technoeconomic_models"
-                        st.session_state.subsection = "design_capital"
+                        st.session_state.subsection = "capex_fuels"
                         st.session_state.fuel = fuel
                         st.rerun()
+                    
+                if st.session_state.section == "technoeconomic_models" and st.session_state.subsection == "capex_fuels " and not st.session_state.fuel:
+                    st.session_state.fuel = st.session_state.fuels_expanded[0]
+
+            if st.session_state.model != "BAU":
+                
+                st.markdown("<hr style='margin:4px 0;'>", unsafe_allow_html=True)
+                st.markdown("##### Design Capital Structure")
+                
+                with st.expander("Financial Plan", expanded=False):
+                    for fuel in st.session_state.fuels_expanded:
+                        if st.button(f"{fuel}", key=f"design_{fuel}"):
+                            st.session_state.section = "technoeconomic_models"
+                            st.session_state.subsection = "design_capital"
+                            st.session_state.fuel = fuel
+                            st.rerun()
 
                 if st.session_state.section == "technoeconomic_models" and st.session_state.subsection == "design_capital" and not st.session_state.fuel:
                     st.session_state.fuel = st.session_state.fuels_expanded[0]
 
+                st.markdown("<hr style='margin:4px 0;'>", unsafe_allow_html=True)
                 st.markdown("##### Outputs")
 
                 with st.expander("Financial Statements", expanded=False):
                     for fuel in st.session_state.fuels_more_expanded:
-                        if st.button(f"{fuel} - FFSS"):
+                        if st.button(f"{fuel}", key=f"ffss_{fuel}"):
                             st.session_state.section = "technoeconomic_models"
                             st.session_state.subsection = "financial_statements"
                             st.session_state.fuel = fuel
@@ -174,6 +180,7 @@ def show():
                     st.session_state.section = "technoeconomic_models"
                     st.session_state.subsection = "summary_financing"
                     st.rerun()
+        
         else:
             st.markdown("##### Outputs")
             if st.button("Summary Financing"):

@@ -21,13 +21,13 @@ class TechnoEconomicInputs:
         self.template_route_fuels = os.path.join(country, "fuel-financial-inputs-{template}.xlsx")
         self.df = None
         self.edited_df = None
-        self.df_heights = {"Electricity & E-Cooking": 410, "Electricity (Low access)": 410, "LPG": 230}
+        self.df_heights = {"Electricity & E-Cooking": 350, "Electricity (Low access)": 350, "LPG": 210}
         self.df_fuels = None
         self.edited_df_fuels = None
-        self.df_heights_fuels = {"Electricity": 150, "LPG": 150, "C02": 170}
+        self.df_heights_fuels = {"LPG": 150}
         self.editable_columns = [str(year) for year in range(2021, 2061)]
         self.empty_rows = {
-            "LPG":{"col": "Inputs", "partial": ["D&A"], "full": ["Outputs"]}
+            "LPG":{"col": "Inputs", "partial": ["D&A"], "full": []}
         }
     
     def show_excel_editor(self):
