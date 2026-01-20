@@ -188,6 +188,10 @@
         "design-capital-{model}.xlsx",
         "financial-statements-{model}.xlsx"
     ],
+    "BAU_ROUTES": [
+        "technoeconomic-inputs-{model}.xlsx",
+        "capex-fuels-{model}.xlsx"
+    ],
     "UPLOAD_DEPENDENT_FILES": [
         "technoeconomic-inputs-{model}.xlsx",
         "financial-statements-{model}.xlsx",

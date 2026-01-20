@@ -298,30 +298,28 @@ def create_all_model_files(country: str, model: str, config: dict):
 
     folder_path = os.path.join(BASE_DIR, country)
     os.makedirs(folder_path, exist_ok=True)
-    
-    for route in config["ROUTES"]:
-        src_path = os.path.join(BASE_DIR, country, route.format(model="{model}"))
-        dst_path = os.path.join(BASE_DIR, country, route.format(model=model))
-        
+
+    if model.upper() == "BAU":
+        model_routes = config.get("BAU_ROUTES", [])
+    else:
+        model_routes = config.get("ROUTES", [])
+
+    for route in model_routes:
+        src_path = os.path.join(folder_path, route.format(model="{model}"))
+        dst_path = os.path.join(folder_path, route.format(model=model))
+
         if not os.path.exists(dst_path):
             if os.path.exists(src_path):
                 shutil.copy(src_path, dst_path)
             else:
-                existing_files = [f for f in os.listdir(folder_path) if f.endswith('.xlsx') and os.path.isfile(os.path.join(folder_path, f))]
-                
-                if existing_files:
-                    base_file = os.path.join(folder_path, existing_files[0])
-                    shutil.copy(base_file, dst_path)
-                else:
-                    wb = openpyxl.Workbook()
-                    wb.save(dst_path)
+                wb = openpyxl.Workbook()
+                wb.save(dst_path)
 
-    for shared_route in config["SHARED_ROUTES"]:
+    for shared_route in config.get("SHARED_ROUTES", []):
         full_path = os.path.join(folder_path, shared_route)
-        
+
         if not os.path.exists(full_path):
             template_path = os.path.join(BASE_DIR, "templates", shared_route)
-            
             if os.path.exists(template_path):
                 shutil.copy(template_path, full_path)
             else:
@@ -381,6 +379,14 @@ def download_model_files(country: str, model: str, background_tasks: BackgroundT
 
         if model.lower() != "bau":
             for route in config["ROUTES"]:
+                filename = route.format(model=model)
+                full_path = os.path.join(folder_path, filename)
+                if not os.path.exists(full_path):
+                    shutil.rmtree(temp_dir)
+                    raise HTTPException(status_code=404, detail=f"{filename} not found")
+                files_to_copy.append(full_path)
+        else:
+            for route in config["BAU_ROUTES"]:
                 filename = route.format(model=model)
                 full_path = os.path.join(folder_path, filename)
                 if not os.path.exists(full_path):
@@ -926,9 +932,7 @@ async def get_sheet(country, route, template_route, sheet_name, key_fuels):
                 status_code=400,
                 detail="Sheet name not allowed for this fuel and country"
             )
-
-        is_carbon_credits = "carbon" in sheet_name.lower()
-
+        
         full_path = os.path.join(BASE_DIR, route)
         template_full_path = os.path.join(BASE_DIR, template_route)
 
