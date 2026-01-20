@@ -245,8 +245,7 @@ class DesignCapitalStructure:
         if st.button("Calculate Financial Tables", type="secondary", key="calculate_financial"):
             st.subheader("Calculated Financial Tables")
             
-            calculated_sections = [section for section in self.section_headers 
-                                  if any(keyword in section for keyword in ["Financiation", "Total"])]
+            calculated_sections = [section for section in self.section_headers if any(keyword in section for keyword in ["Financiation", "Total"])]
             
             for section in calculated_sections:
                 self.show_calculated_section(section)
@@ -258,7 +257,7 @@ class DesignCapitalStructure:
             editable_cols = self.editable_columns.get(section, self.editable_columns[self.section_headers[0]])
             empty_rows = self.empty_rows.get(section, self.empty_rows[self.section_headers[0]])
             
-            self.excel_editor.load_data(df, self.fuel, height, editable_cols, empty_rows)
+            self.excel_editor.load_data(df, f"{self.fuel}_{section}_calc", height, editable_cols, empty_rows)
             _ = self.excel_editor.show()
 
     def __call__(self):
