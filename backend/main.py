@@ -990,35 +990,36 @@ async def get_sheet(country, route, template_route, sheet_name, key_fuels):
 @app.post("/save-sheet")
 async def save_sheet(update: SheetUpdate):
     excel_path = os.path.join(BASE_DIR, update.route)
-    
+
     if not os.path.isfile(excel_path):
         raise HTTPException(status_code=404, detail="File not found")
 
     wb = None
-    original_sheet = None
-    temp_sheet = None
-    
+
     try:
         wb = openpyxl.load_workbook(excel_path)
-        if update.sheet_name in wb.sheetnames:
-            original_sheet = wb[update.sheet_name]
-            
+
+        original_sheet = wb[update.sheet_name] if update.sheet_name in wb.sheetnames else None
+        temp_sheet = None
+
+        if original_sheet:
             temp_sheet = wb.create_sheet("temp_style_sheet")
+
             for row in original_sheet.iter_rows():
                 for cell in row:
                     temp_cell = temp_sheet[cell.coordinate]
                     temp_cell.value = cell.value
                     if cell.has_style:
-                        new_cell.font = copy.copy(cell.font)
-                        new_cell.fill = copy.copy(cell.fill)
-                        new_cell.border = copy.copy(cell.border)
-                        new_cell.number_format = copy.copy(cell.number_format)
-            
+                        temp_cell.font = copy.copy(cell.font)
+                        temp_cell.fill = copy.copy(cell.fill)
+                        temp_cell.border = copy.copy(cell.border)
+                        temp_cell.number_format = copy.copy(cell.number_format)
+
             wb.remove(original_sheet)
-        
+
         new_sheet = wb.create_sheet(update.sheet_name)
         df_data = pd.DataFrame(update.data)
-        
+
         if original_sheet:
             for cell in original_sheet[1]:
                 new_cell = new_sheet.cell(row=1, column=cell.column, value=cell.value)
@@ -1027,11 +1028,13 @@ async def save_sheet(update: SheetUpdate):
                     new_cell.fill = copy.copy(cell.fill)
                     new_cell.border = copy.copy(cell.border)
                     new_cell.number_format = copy.copy(cell.number_format)
+        else:
+            for c_idx, col_name in enumerate(df_data.columns, start=1):
+                new_sheet.cell(row=1, column=c_idx, value=col_name)
 
         for r_idx, row in enumerate(df_data.itertuples(index=False), start=2):
             for c_idx, value in enumerate(row, start=1):
                 cell = new_sheet.cell(row=r_idx, column=c_idx, value=value)
-                
                 if temp_sheet:
                     temp_cell = temp_sheet.cell(row=r_idx, column=c_idx)
                     if temp_cell.has_style:
@@ -1039,22 +1042,24 @@ async def save_sheet(update: SheetUpdate):
                         cell.fill = copy.copy(temp_cell.fill)
                         cell.border = copy.copy(temp_cell.border)
                         cell.number_format = copy.copy(temp_cell.number_format)
-        
+
         if original_sheet:
-            for col_letter, dimension in original_sheet.column_dimensions.items():
-                new_sheet.column_dimensions[col_letter].width = dimension.width
-                new_sheet.column_dimensions[col_letter].hidden = dimension.hidden
-        
+            for col_letter, dim in original_sheet.column_dimensions.items():
+                new_sheet.column_dimensions[col_letter].width = dim.width
+                new_sheet.column_dimensions[col_letter].hidden = dim.hidden
+
         if temp_sheet:
             wb.remove(temp_sheet)
+
         wb.save(excel_path)
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error saving sheet: {str(e)}")
+
     finally:
         if wb:
             wb.close()
-    
+
     return {"message": f"Sheet '{update.sheet_name}' updated with preserved styles."}
 
 @app.post("/reset-sheet")
