@@ -1,6 +1,15 @@
+import os
+import json
 import time
 import utils as u
 import streamlit as st
+
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FRONTEND_DIR = os.path.dirname(BASE_DIR)
+PROJECT_ROOT = os.path.dirname(FRONTEND_DIR)
+BACKEND_DIR = os.path.join(PROJECT_ROOT, "backend")
+CONFIG_FILE = os.path.join(BACKEND_DIR, "config.json")
 
 
 class ManageModels:
@@ -9,7 +18,23 @@ class ManageModels:
         self.country = country
         self.key_fuels = "expanded_carbon"
         self.template_path = "upload-{model}.xlsx"
+        self.config = self._load_config()
 
+    def _load_config(self):
+        with open(CONFIG_FILE, "r") as f:
+            return json.load(f)
+    
+    def _get_country_year_range(self):
+        ranges = self.config.get("COUNTRY_YEAR_RANGES", {})
+
+        if self.country in ranges:
+            start = ranges[self.country].get("start")
+            end = ranges[self.country].get("end")
+            return start, end
+
+        template = ranges.get("template", {})
+        return template.get("start"), template.get("end")
+    
     def model_creator(self, models):
         st.markdown("#### ➕ Create New Techno-Economic Model")
 
@@ -18,8 +43,14 @@ class ManageModels:
         if not bau_exists:
             st.info("First create the BAU (Business As Usual) model.")
             with st.form("create_bau_form"):
-                start_year = st.number_input("Start Year (BAU)", step=1, format="%d")
-                end_year = st.number_input("End Year (BAU)", step=1, format="%d")
+
+                st.info(
+                    "The BAU model defines the time horizon for this country. "
+                    "All techno-economic models created afterwards will use the same year range."
+                )
+
+                start_year = st.number_input("Scenario start year", step=1, format="%d")
+                end_year = st.number_input("Scenario end year", step=1, format="%d")
 
                 # Hidden consumer functionality
                 """
@@ -76,13 +107,10 @@ class ManageModels:
                         st.error(msg)
 
         else:
+            start_year, end_year = self._get_country_year_range()
+
             with st.form("create_model_form"):
                 name = st.text_input("Model Name")
-                col1, col2 = st.columns(2)
-                with col1:
-                    start_year = st.number_input("Start Year", step=1, format="%d")
-                with col2:
-                    end_year = st.number_input("End Year", step=1, format="%d")
                 
                 # Hidden consumer section
                 """
@@ -138,10 +166,6 @@ class ManageModels:
             if 'create' in locals() and create:
                 if not name.strip():
                     st.error("Model name cannot be empty.")
-                elif not start_year or not end_year:
-                    st.error("Fill in both start year and end year.")
-                elif start_year >= end_year:
-                    st.error("Start year must be less than end year.")
                 elif name.strip().lower() == "bau":
                     st.error("The model name 'BAU' is reserved for the Business As Usual model.")
                 elif name.strip().lower() in (m.lower() for m in models):
@@ -175,27 +199,31 @@ class ManageModels:
                     st.rerun()
 
             with col2:
-                content = u.download_model_files_from_backend(self.country, model)
-                if content:
-                    st.download_button(
-                        "⬇️",
-                        data=content,
-                        file_name=f"{self.country}_{model}_files.zip",
-                        mime="application/zip",
-                        help="Download files"
-                    )
+                if st.download_button(
+                    label="⬇️",
+                    data=u.download_model_files_from_backend(self.country, model),
+                    file_name=f"{self.country}_{model}_files.zip",
+                    mime="application/zip",
+                    key=f"download_zip_{model}",
+                    help="Download files"
+                ):
+                    pass
             
             with col3:
-                template_content = u.download_template_file_from_backend(self.country, self.template_path, model, self.key_fuels)
-                if template_content:
-                    st.download_button(
-                        "📝",
-                        data=template_content,
-                        file_name=self.template_path.format(model=model),
-                        mime="application/vnd.ms-excel",
-                        key=f"download_template_{model}",
-                        help="Download template"
-                    )
+
+                st.download_button(
+                    label="📝",
+                    data=u.download_template_file_from_backend(
+                        self.country,
+                        self.template_path,
+                        model,
+                        self.key_fuels
+                    ),
+                    file_name=self.template_path.format(model=model),
+                    mime="application/vnd.ms-excel",
+                    key=f"download_template_{model}_final",
+                    help="Download template"
+                )
 
             with col4:
                 if st.button("📤", key=f"upload_{model}", help="Upload template"):

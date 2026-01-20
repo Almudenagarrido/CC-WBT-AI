@@ -77,6 +77,7 @@ def show():
                         st.session_state.subsection = None
                         st.session_state.model = None
 
+        st.markdown("<hr style='margin:4px 0;'>", unsafe_allow_html=True)
         # Manage Techno-Economic Models
         if st.button("Manage Techno-Economic Models"):
             st.session_state.section = "technoeconomic_models"
@@ -182,6 +183,7 @@ def show():
                     st.rerun()
         
         else:
+            st.markdown("<hr style='margin:4px 0;'>", unsafe_allow_html=True)
             st.markdown("##### Outputs")
             if st.button("Summary Financing"):
                 st.session_state.section = "technoeconomic_models"

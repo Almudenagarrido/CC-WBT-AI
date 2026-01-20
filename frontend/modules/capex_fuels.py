@@ -39,7 +39,7 @@ class CapexFuelMarket:
         first_col = df.iloc[:, 0].astype(str).str.strip()
         header_rows = []
         for idx, value in enumerate(first_col):
-            if "type" in value.lower():
+            if "system" in value.lower():
                 header_rows.append(idx)
                 
         if not header_rows:
