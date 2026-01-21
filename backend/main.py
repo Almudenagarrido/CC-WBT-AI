@@ -299,8 +299,8 @@ def create_all_model_files(country: str, model: str, config: dict):
     folder_path = os.path.join(BASE_DIR, country)
     os.makedirs(folder_path, exist_ok=True)
 
-    if model.upper() == "BAU":
-        model_routes = config.get("BAU_ROUTES", [])
+    if model.lower() == "baseline":
+        model_routes = []
     else:
         model_routes = config.get("ROUTES", [])
 
@@ -332,27 +332,17 @@ async def create_model(country: str, model: str, start_year: int, end_year: int)
     country = country.strip()
     model = model.strip()
 
-    if model.lower() == "bau":
+    if model.lower() == "baseline":
         if country not in config["COUNTRY_YEAR_RANGES"]:
             config["COUNTRY_YEAR_RANGES"][country] = {
                 "start": start_year,
                 "end": end_year
             }
-            config["MODELS"][country] = ["BAU"]
+            config["MODELS"][country] = ["Baseline"]
         
-        create_all_model_files(country, "BAU", config)
+        create_all_model_files(country, "Baseline", config)
     
     else:
-        expected_range = config["COUNTRY_YEAR_RANGES"][country]
-        if start_year != expected_range["start"] or end_year != expected_range["end"]:
-            raise HTTPException(
-                status_code=400,
-                detail=(
-                    f"Year range mismatch. Expected "
-                    f"{expected_range['start']}–{expected_range['end']}, "
-                    f"got {start_year}–{end_year}."
-                )
-            )
         
         create_all_model_files(country, model, config)
                 
@@ -377,16 +367,8 @@ def download_model_files(country: str, model: str, background_tasks: BackgroundT
             []
         )
 
-        if model.lower() != "bau":
+        if model.lower() != "baseline":
             for route in config["ROUTES"]:
-                filename = route.format(model=model)
-                full_path = os.path.join(folder_path, filename)
-                if not os.path.exists(full_path):
-                    shutil.rmtree(temp_dir)
-                    raise HTTPException(status_code=404, detail=f"{filename} not found")
-                files_to_copy.append(full_path)
-        else:
-            for route in config["BAU_ROUTES"]:
                 filename = route.format(model=model)
                 full_path = os.path.join(folder_path, filename)
                 if not os.path.exists(full_path):
@@ -686,7 +668,7 @@ def delete_model(request: ModelRequest):
     country = request.country.strip()
     model = request.model.strip()
 
-    if model.lower() == "bau":
+    if model.lower() == "baseline":
         all_models = config["MODELS"].get(country, [])
 
         if country in config.get("CONSUMER_TYPES", {}):
@@ -704,6 +686,7 @@ def delete_model(request: ModelRequest):
 
         config["MODELS"].pop(country, None)
         config["COUNTRY_YEAR_RANGES"].pop(country, None)
+    
     else:
         for route in config["ROUTES"]:
             file_path = os.path.join(BASE_DIR, country, route.format(model=model))

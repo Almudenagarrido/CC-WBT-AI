@@ -36,28 +36,29 @@ class ManageModels:
         return template.get("start"), template.get("end")
     
     def model_creator(self, models):
-        st.markdown("#### ➕ Create New Techno-Economic Model")
 
-        bau_exists = any(model.lower().startswith("bau") for model in models)
+        baseline_exists = any(model.lower().startswith("baseline") for model in models)
 
-        if not bau_exists:
-            st.info("First create the BAU (Business As Usual) model.")
-            with st.form("create_bau_form"):
+        if not baseline_exists:
+
+            st.markdown("#### ➕ Define the Year Range for the Scenario")
+
+            with st.form("create_baseline_form"):
 
                 st.info(
-                    "The BAU model defines the time horizon for this country. "
+                    "The selected year range defines the time horizon for this country. "
                     "All techno-economic models created afterwards will use the same year range."
                 )
 
-                start_year = st.number_input("Scenario start year", step=1, format="%d")
-                end_year = st.number_input("Scenario end year", step=1, format="%d")
+                start_year = st.number_input("Start year", step=1, format="%d")
+                end_year = st.number_input("End year", step=1, format="%d")
 
                 # Hidden consumer functionality
                 """
-                st.markdown("##### Define Consumer Types for BAU")
-                if "bau_consumers" not in st.session_state:
-                    st.session_state.bau_consumers = []
-                for i, consumer in enumerate(st.session_state.bau_consumers):
+                st.markdown("##### Define Consumer Types for Baseline")
+                if "baseline_consumers" not in st.session_state:
+                    st.session_state.baseline_consumers = []
+                for i, consumer in enumerate(st.session_state.baseline_consumers):
                     st.markdown(f"{i+1}. {consumer}")
 
                 col1, col2, col3 = st.columns([0.8, 0.1, 0.1])
@@ -73,33 +74,32 @@ class ManageModels:
 
                 if add_consumer and new_consumer.strip():
                     consumer = new_consumer.strip()
-                    if consumer not in st.session_state.bau_consumers:
-                        st.session_state.bau_consumers.append(consumer)
-                        success = u.add_consumer_to_backend(self.country, "BAU", consumer)
+                    if consumer not in st.session_state.baseline_consumers:
+                        st.session_state.baseline_consumers.append(consumer)
+                        success = u.add_consumer_to_backend(self.country, "Baseline", consumer)
                         if not success:
                             st.error("Could not save consumer to backend.")
                         st.rerun()
 
                 if clear_consumers:
-                    for consumer in st.session_state.bau_consumers:
-                        u.delete_consumer_from_backend(self.country, "BAU", consumer)
-                    st.session_state.bau_consumers = []
+                    for consumer in st.session_state.baseline_consumers:
+                        u.delete_consumer_from_backend(self.country, "Baseline", consumer)
+                    st.session_state.baseline_consumers = []
                     st.rerun()
                 """
 
-                create_bau = st.form_submit_button("Create BAU Model")
+                create_baseline = st.form_submit_button(f"Save year range for the scenario of '{self.country}'")
 
-            if 'create_bau' in locals() and create_bau:
+            if 'create_baseline' in locals() and create_baseline:
                 if not start_year or not end_year:
                     st.error("Fill in both start year and end year.")
                 elif start_year >= end_year:
                     st.error("Start year must be less than end year.")
                 else:
-                    success, msg = u.create_model_in_backend("BAU", start_year, end_year)
+                    success, msg = u.create_model_in_backend("Baseline", start_year, end_year)
                     if success:
                         # Hidden consumer functionality
-                        # st.session_state.bau_consumers = []
-                        st.success(msg)
+                        # st.session_state.baseline_consumers = []
                         st.session_state.models = u.get_models_from_backend()
                         time.sleep(1)
                         st.rerun()
@@ -107,6 +107,48 @@ class ManageModels:
                         st.error(msg)
 
         else:
+
+            start_year, end_year = self._get_country_year_range()
+        
+            col1, col2 = st.columns([0.4, 0.6])
+            with col1:
+                if st.button("🔄 Reset year range"):
+                    st.session_state["confirm_reset"] = True
+            
+            with col2:
+                st.markdown(f"**Current year range:** {start_year} - {end_year}")
+
+            if st.session_state.get("confirm_reset", False):
+                st.warning(
+                    "The year range defined previously will be removed, and all techno-economic models associated with this scenario will be deleted."
+                )
+
+                col1, col2 = st.columns(2)
+
+                with col1:
+                    if st.button("✅ Confirm reset"):
+                        
+                        success = u.delete_model_from_backend("Baseline")
+                        if success:
+                            st.session_state.models = u.get_models_from_backend()
+                            st.session_state.pop("confirm_reset", None)
+                            time.sleep(1)
+                            st.rerun()
+
+                with col2:
+                    if st.button("❌ Cancel"):
+                        st.session_state.pop("confirm_reset", None)
+                        st.rerun()
+
+            non_baseline_models = [m for m in st.session_state.models if not m.lower().startswith("baseline")]
+
+            if non_baseline_models:
+                self.show_models(non_baseline_models)
+            else:
+                st.info("No techno-economic models available. Please define one.")
+
+            st.markdown("#### ➕ Create New Techno-Economic Model")
+
             start_year, end_year = self._get_country_year_range()
 
             with st.form("create_model_form"):
@@ -166,8 +208,8 @@ class ManageModels:
             if 'create' in locals() and create:
                 if not name.strip():
                     st.error("Model name cannot be empty.")
-                elif name.strip().lower() == "bau":
-                    st.error("The model name 'BAU' is reserved for the Business As Usual model.")
+                elif name.strip().lower() == "baseline":
+                    st.error("The model name 'Baseline' is reserved for defining the scenario year range.")
                 elif name.strip().lower() in (m.lower() for m in models):
                     st.error(f"The model '{name.strip()}' already exists. Please choose a different name.")
                 else:
@@ -272,13 +314,10 @@ class ManageModels:
             st.rerun()
     
     def __call__(self):
+        
         st.subheader("Manage Techno-Economic Inputs")
+        
         if "models" not in st.session_state or not st.session_state.models:
             st.session_state.models = u.get_models_from_backend()
-
-        if not st.session_state.models:
-            st.info("No techno-economic models available.")
-        else:
-            self.show_models(st.session_state.models)
 
         self.model_creator(st.session_state.models)

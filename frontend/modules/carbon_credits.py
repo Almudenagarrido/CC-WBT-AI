@@ -23,7 +23,7 @@ class CarbonCredits:
         self.last_models = []
 
     def needs_expansion(self):
-        current_models = [m for m in st.session_state.models if m.lower() != "bau"]
+        current_models = [m for m in st.session_state.models if m.lower() != "baseline"]
 
         if not current_models or current_models == self.last_models:
             return False, current_models, []
@@ -94,7 +94,7 @@ class CarbonCredits:
 
     def show_excel_editor(self):
         st.subheader(f"Carbon Credits")
-        models = [m for m in st.session_state.models if m.lower() != "bau"]
+        models = [m for m in st.session_state.models if m.lower() != "baseline"]
         base_height = self.df_heights.get(self.fuel, self.df_heights["LPG"])
         height = base_height + 120*(len(models))
 

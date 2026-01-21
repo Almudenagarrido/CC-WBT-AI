@@ -112,7 +112,7 @@ def show():
                 st.session_state.subsection = "carbon_credits"
                 st.rerun()
 
-            if st.session_state.model != "BAU":
+            if st.session_state.model.lower() != "baseline":
                 
                 with st.expander("Tariffs", expanded=False):
                     for fuel in st.session_state.fuels:
@@ -147,7 +147,7 @@ def show():
                 if st.session_state.section == "technoeconomic_models" and st.session_state.subsection == "capex_fuels " and not st.session_state.fuel:
                     st.session_state.fuel = st.session_state.fuels_expanded[0]
 
-            if st.session_state.model != "BAU":
+            if st.session_state.model.lower() != "baseline":
                 
                 st.markdown("<hr style='margin:4px 0;'>", unsafe_allow_html=True)
                 st.markdown("##### Design Capital Structure")
