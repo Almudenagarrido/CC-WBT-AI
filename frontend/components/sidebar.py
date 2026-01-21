@@ -107,11 +107,6 @@ def show():
                 if st.session_state.section == "technoeconomic_models" and st.session_state.subsection == "technoeconomic_inputs " and not st.session_state.fuel:
                     st.session_state.fuel = st.session_state.fuels_expanded[0]
 
-            if st.button("Carbon Credits"):
-                st.session_state.section = "technoeconomic_models"
-                st.session_state.subsection = "carbon_credits"
-                st.rerun()
-
             if st.session_state.model.lower() != "baseline":
                 
                 with st.expander("Tariffs", expanded=False):
@@ -176,6 +171,11 @@ def show():
 
                     if st.session_state.section == "technoeconomic_models" and st.session_state.subsection == "financial_statements" and not st.session_state.fuel:
                         st.session_state.fuel = st.session_state.fuels_more_expanded[0]
+
+                if st.button("Carbon Credits"):
+                    st.session_state.section = "technoeconomic_models"
+                    st.session_state.subsection = "carbon_credits"
+                    st.rerun()
                 
                 if st.button("Summary Financing"):
                     st.session_state.section = "technoeconomic_models"
@@ -183,8 +183,15 @@ def show():
                     st.rerun()
         
         else:
+
             st.markdown("<hr style='margin:4px 0;'>", unsafe_allow_html=True)
             st.markdown("##### Outputs")
+            
+            if st.button("Carbon Credits"):
+                st.session_state.section = "technoeconomic_models"
+                st.session_state.subsection = "carbon_credits"
+                st.rerun()
+            
             if st.button("Summary Financing"):
                 st.session_state.section = "technoeconomic_models"
                 st.session_state.subsection = "summary_financing"
