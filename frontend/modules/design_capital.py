@@ -35,7 +35,7 @@ class DesignCapitalStructure:
                 "Division - GRID": ["Amount"],
                 "Division - OFF-GRID": ["Amount"],
                 "FFSS - Outputs": [],
-                "FFSS - Inputs": [str(year) for year in range(2021, 2061)],
+                "FFSS - Inputs": [str(year) for year in range(2020, 2061)],
                 "Financiation": [],
                 "Total - GRID": ["Amount"],
                 "Total - OFF-GRID": ["Amount"]
@@ -61,7 +61,7 @@ class DesignCapitalStructure:
             self.editable_columns = {
                 "Division": ["Amount"],
                 "FFSS - Outputs": [],
-                "FFSS - Inputs": [str(year) for year in range(2021, 2061)],
+                "FFSS - Inputs": [str(year) for year in range(2020, 2061)],
                 "Financiation": [],
                 "Total": ["Amount"]
             }

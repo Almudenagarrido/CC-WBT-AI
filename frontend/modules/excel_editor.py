@@ -24,7 +24,7 @@ class ExcelEditor:
             "years": self.validate_positive_integer,
             "$ / ton": self.validate_positive_value,
         }
-        self.expected_years = [str(year) for year in range(2021, 2061)]
+        self.expected_years = [str(year) for year in range(2020, 2061)]
 
     def load_data(self, df, fuel, height, editable_columns, empty_rows):
         
