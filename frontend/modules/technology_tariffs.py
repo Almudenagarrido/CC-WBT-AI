@@ -28,7 +28,7 @@ class TechnologyTariffs:
         self.df = None
         self.edited_df = None
         self.df_heights = {"LPG": 85}
-        self.editable_columns = [str(year) for year in range(2021, 2061)]
+        self.editable_columns = [str(year) for year in range(2020, 2061)]
         self.empty_rows = {"LPG": {"col": "", "partial": [], "full": []}}
         
     def load_config(self):

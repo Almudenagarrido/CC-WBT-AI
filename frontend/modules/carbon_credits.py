@@ -25,8 +25,8 @@ class CarbonCredits:
             "Carbon Credits": 230
         }
         self.editable_columns = {
-            "CO2 emited": [str(year) for year in range(2021, 2061)],
-            "Carbon Credits": [str(year) for year in range(2021, 2061)]
+            "CO2 emited": [str(year) for year in range(2020, 2061)],
+            "Carbon Credits": [str(year) for year in range(2020, 2061)]
         }
         self.empty_rows = {
             "CO2 emited": {"col": "", "partial": [], "full": []},
