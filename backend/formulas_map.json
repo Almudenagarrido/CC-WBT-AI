@@ -153,9 +153,9 @@
             "formula_steps": [
             { "op": "subtraction", "operands": [["index", 0], ["index", 1]], "result": "final" }
             ],
-            "target": "{model} vs. BAU",
+            "target": "{model} vs. Baseline",
             "sources": [
-                "{country}\\carbon-credits.xlsx::Carbon Credits::CO2 emited - BAU scenario",
+                "{country}\\carbon-credits.xlsx::Carbon Credits::CO2 emited - Baseline scenario",
                 "{country}\\carbon-credits.xlsx::Carbon Credits::CO2 emited - {model} scenario"
             ]
         },
@@ -172,7 +172,7 @@
             "target": "CO2 equivalent avoided in the {model}",
             "sources": [
                 "{country}\\fuel-financial-inputs.xlsx::Carbon Credits::Number of years that you could sell those carbon credits", 
-                "{country}\\carbon-credits.xlsx::Carbon Credits::{model} vs. BAU",
+                "{country}\\carbon-credits.xlsx::Carbon Credits::{model} vs. Baseline",
                 "{country}\\fuel-financial-inputs.xlsx::Carbon Credits::CO2 certificate (%) - from the total CO2 avoided"
             ]
         },

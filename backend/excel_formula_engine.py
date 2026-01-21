@@ -539,7 +539,7 @@ class ExcelFormulaProcessor:
                 cell_str = str(cell_value).strip() if cell_value is not None else ""
                 expected_str = expected_value.strip()
                 
-                if "vs. BAU" not in expected_str:
+                if "vs. Baseline" not in expected_str:
                     if expected_str != cell_str:
                         match = False
                         break
@@ -594,8 +594,8 @@ class ExcelFormulaProcessor:
             expected_type = label_parts[0].strip()
             expected_sub = label_parts[1].strip() if len(label_parts) > 1 else ""
             
-            is_vs_bau_label = "vs. BAU" in target_label
-            if not is_vs_bau_label:
+            is_vs_baseline_label = "vs. Baseline" in target_label
+            if not is_vs_baseline_label:
                 type_match = (expected_type == type_value)
             else:
                 type_match = (expected_type in type_value)

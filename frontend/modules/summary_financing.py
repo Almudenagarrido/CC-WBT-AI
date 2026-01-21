@@ -29,8 +29,8 @@ class SummaryFinancing:
         self.year_range = self._get_year_range()
         self.previously_calculated = {}
         self._workbook_cache = {}
-        self.graph_filters = {"Sources of Financing": ["BAU"], "Changes in the Capital Structure": ["BAU"]}
-        self.value_filters = {"Revenues -": ["BAU"], "EBITDA -": ["BAU"], "Grants to CAPEX -": ["BAU"], "New Debt -": ["BAU"], "Equity -": ["BAU"], "CAPEX -": ["BAU"], "Potential Income from Carbon Credits": ["BAU"]}
+        self.graph_filters = {"Sources of Financing": ["Baseline"], "Changes in the Capital Structure": ["Baseline"]}
+        self.value_filters = {"Revenues -": ["Baseline"], "EBITDA -": ["Baseline"], "Grants to CAPEX -": ["Baseline"], "New Debt -": ["Baseline"], "Equity -": ["Baseline"], "CAPEX -": ["Baseline"], "Potential Income from Carbon Credits": ["Baseline"]}
         self.line_values = ["Equity -", "Potential Income from Carbon Credits"]
         self.color_palette = [
             "#14027D",
@@ -315,7 +315,7 @@ class SummaryFinancing:
                     cell_str = str(cell_value).strip() if cell_value is not None else ""
                     expected_str = expected_value.strip()
                     
-                    if "vs. BAU" not in expected_str:
+                    if "vs. Baseline" not in expected_str:
                         if cell_str != expected_str:
                             match = False
                             break
@@ -646,7 +646,6 @@ class SummaryFinancing:
 
         for pattern, exclude_list in self.value_filters.items():
             if pattern in source_name:
-                
                 for exclude_pattern in exclude_list:
                     if exclude_pattern in source_name:
                         return True
