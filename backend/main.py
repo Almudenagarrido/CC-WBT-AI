@@ -530,44 +530,6 @@ def sync_sheets_with_fuels(country, route, template_route, expected_sheets):
 
     return changed
 
-"""@app.get("/download-template")
-def download_template_file(country, template, model, key_fuels):
-    config = load_config()
-    expected_sheets = config["FUELS"].get(country, {}).get(key_fuels, [])
-    temp_file_path = None
-    
-    try:
-        template_path = os.path.join(BASE_DIR, country, template)
-        
-        if not os.path.exists(template_path):
-            raise HTTPException(status_code=404, detail="Template file not found")
-        
-        temp_dir = tempfile.gettempdir()
-        temp_filename = f"synced_{uuid.uuid4().hex[:8]}_{template}"
-        temp_file_path = os.path.join(temp_dir, temp_filename)
-        
-        sync_sheets_with_fuels(
-            country=country,
-            route=temp_file_path,
-            template_route=template_path,
-            expected_sheets=expected_sheets
-        )
-        
-        return FileResponse(
-            temp_file_path,
-            media_type="application/vnd.ms-excel",
-            filename=template
-        )
-        
-    except Exception as e:
-        if temp_file_path and os.path.exists(temp_file_path):
-            try:
-                os.unlink(temp_file_path)
-            except:
-                pass
-        raise HTTPException(status_code=500, detail=str(e))
-"""
-
 @app.get("/download-template")
 def download_template_file(country, template, model, key_fuels):
     config = load_config()
