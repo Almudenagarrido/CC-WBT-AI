@@ -27,7 +27,7 @@ class TechnologyTariffs:
         self.tariff_config = self._get_tariff_config()
         self.df = None
         self.edited_df = None
-        self.df_heights = {"LPG": 85}
+        self.df_heights = {"LPG": 90}
         self.editable_columns = [str(year) for year in range(2020, 2061)]
         self.empty_rows = {"LPG": {"col": "", "partial": [], "full": []}}
         

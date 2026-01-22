@@ -21,8 +21,8 @@ class CarbonCredits:
         self.important_cols = []
         self.section_headers = ["CO2 emited", "Carbon Credits"]
         self.subtable_heights = {
-            "CO2 emited": 150,
-            "Carbon Credits": 230
+            "CO2 emited": 90,
+            "Carbon Credits": 60
         }
         self.editable_columns = {
             "CO2 emited": [str(year) for year in range(2020, 2061)],
@@ -197,12 +197,30 @@ class CarbonCredits:
         input_section = "CO2 emited"
         self.show_section_editor(input_section)
         self.edited_df = self.combine_subtables()
+    
+    def get_num_models(self):
+        return len([m for m in st.session_state.models if m.lower() != "baseline"])
+    
+    def get_section_height(self, section):
+        num_models = self.get_num_models()
+
+        if section == "CO2 emited":
+            base = 90
+            per_model = 30
+            return base + num_models * per_model
+
+        if section == "Carbon Credits":
+            base = 60
+            per_model = 90
+            return base + num_models * per_model
+
+        return 240
 
     def show_section_editor(self, section):
         
         if section in self.subtables[self.fuel] and not self.subtables[self.fuel][section]["df"].empty:
             df = self.subtables[self.fuel][section]["df"]
-            height = self.subtable_heights.get(section, 240)
+            height = self.get_section_height(section)
             editable_cols = self.editable_columns.get(section, [])
             empty_rows = self.empty_rows.get(section, {"col": "", "partial": [], "full": []})
             self.excel_editor.load_data(df, f"{self.fuel}_{section}_editor", height, editable_cols, empty_rows)
@@ -235,7 +253,7 @@ class CarbonCredits:
     def show_calculated_section(self, section):
         if section in self.subtables[self.fuel] and not self.subtables[self.fuel][section]["df"].empty:
             df = self.subtables[self.fuel][section]["df"]
-            height = self.subtable_heights.get(section, 300)
+            height = self.get_section_height(section)
             editable_cols = []
             empty_rows = self.empty_rows.get(section, {"col": "", "partial": [], "full": []})
             self.excel_editor.load_data(df, f"{self.fuel}_{section}_calc", height, editable_cols, empty_rows)
