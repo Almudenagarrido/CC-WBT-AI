@@ -279,10 +279,8 @@ class ManageModels:
                         st.session_state.models = u.get_models_from_backend()
 
             if st.session_state.get(f"show_uploader_{model}", False):
-                st.markdown(f"---")
-                st.markdown(f"**Upload file for {model}**")
-                uploaded_file = st.file_uploader(
-                    f"Choose file for {model}",
+                st.markdown("<hr style='margin:4px 0;'>", unsafe_allow_html=True)
+                uploaded_file = st.file_uploader(f"##### Upload file for {model}",
                     type=["xlsx"],
                     key=f"uploader_{model}"
                 )
