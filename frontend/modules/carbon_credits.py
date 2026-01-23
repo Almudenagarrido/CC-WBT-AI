@@ -190,14 +190,51 @@ class CarbonCredits:
                         combined_df.iloc[start_idx + i, j] = val
 
         return combined_df
+    
+    def baseline_is_defined(self):
+        section = "CO2 emited"
+
+        if section not in self.subtables[self.fuel]:
+            return False, "No data for CO2 emited section"
+
+        df = self.subtables[self.fuel][section]["df"]
+
+        baseline_mask = (
+            df.iloc[:, 0]
+            .astype(str)
+            .str.lower()
+            .str.contains("baseline", na=False)
+        )
+
+        if not baseline_mask.any():
+            return False, "Baseline row not found"
+
+        baseline_df = df[baseline_mask]
+
+        year_cols = self.editable_columns.get(section, [])
+
+        # Filtrar solo las columnas que realmente existen
+        existing_year_cols = [c for c in year_cols if c in baseline_df.columns]
+
+        if not existing_year_cols:
+            return False, "No year columns defined for baseline"
+
+        values = baseline_df[existing_year_cols].values.flatten()
+
+        # Comprobar si hay algún valor definido
+        has_values = any(pd.notna(v) and str(v).strip() not in ["", "-", "0"] for v in values)
+
+        if not has_values:
+            return False, "Baseline has no defined values"
+
+        return True, "Baseline is defined"
 
     def show_input_tables(self):
-        
         st.subheader("Carbon Credits - Input Emissions")
         input_section = "CO2 emited"
         self.show_section_editor(input_section)
         self.edited_df = self.combine_subtables()
-    
+
     def get_num_models(self):
         return len([m for m in st.session_state.models if m.lower() != "baseline"])
     
@@ -244,8 +281,14 @@ class CarbonCredits:
                 st.rerun()
 
     def show_calculation_section(self):
-        
         st.markdown("---")
+
+        baseline_ok, message = self.baseline_is_defined()
+
+        if not baseline_ok:
+            st.info(f"Cannot calculate Carbon Credits: {message}")
+            return
+
         if st.button("Calculate Carbon Credits", type="secondary", key="calculate_carbon"):
             calculated_section = "Carbon Credits"
             self.show_calculated_section(calculated_section)
