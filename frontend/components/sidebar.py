@@ -40,7 +40,7 @@ def show():
         # Financial Inputs
         with st.expander("Financial Inputs", expanded=False):
             for fuel in st.session_state.fuels:
-                if st.button(f"{fuel} Financial Inputs"):
+                if st.button(f"{fuel}", key=f"{fuel}_financial_inputs"):
                     st.session_state.section = "financial_inputs"
                     st.session_state.fuel = fuel
                     st.session_state.subsection = None
@@ -59,15 +59,36 @@ def show():
                     st.session_state.subsection = None
                     st.session_state.model = None
             
-            fuels_with_unexpanded_carbon = st.session_state.fuels_carbon
-            fuel_to_delete = st.selectbox("Delete fuel market", options=fuels_with_unexpanded_carbon)
-            if st.button("🗑️"):
-                if u.delete_fuel_from_backend(fuel_to_delete, st.session_state.country):
-                    st.session_state.fuel = fuels_with_unexpanded_carbon[0]
-                    st.session_state.subsection = None
-                    st.session_state.model = None
-                    st.session_state.reload_fuels = True
+            fuels_no_carbon = st.session_state.fuels
+            fuel_to_delete = st.selectbox("Delete fuel market", options=fuels_no_carbon)
+            confirm_key = f"confirm_delete_fuel_{fuel_to_delete}"
+
+            if confirm_key not in st.session_state:
+                st.session_state[confirm_key] = False
+
+            if not st.session_state[confirm_key]:
+                if st.button("🗑️ Delete fuel"):
+                    st.session_state[confirm_key] = True
                     st.rerun()
+            else:
+                st.warning(f"Are you sure you want to delete '{fuel_to_delete}'?")
+
+                col1, col2 = st.columns(2)
+
+                with col1:
+                    if st.button("✅ Yes, delete"):
+                        if u.delete_fuel_from_backend(fuel_to_delete, st.session_state.country):
+                            st.session_state[confirm_key] = False
+                            st.session_state.fuel = fuels_no_carbon[0]
+                            st.session_state.subsection = None
+                            st.session_state.model = None
+                            st.session_state.reload_fuels = True
+                            st.rerun()
+
+                with col2:
+                    if st.button("❌ Cancel"):
+                        st.session_state[confirm_key] = False
+                        st.rerun()
 
             st.markdown("---")
             if "Carbon Credits" in st.session_state.fuels_carbon:

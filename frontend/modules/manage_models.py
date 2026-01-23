@@ -227,6 +227,11 @@ class ManageModels:
                         st.error(msg)
 
     def show_models(self, models):
+
+        for key in list(st.session_state.keys()):
+            if key.startswith("show_uploader_"):
+                st.session_state[key] = False
+
         deleted_model = None
         
         for model in models:
@@ -268,15 +273,34 @@ class ManageModels:
                 )
 
             with col4:
-                if st.button("📤", key=f"upload_{model}", help="Upload template"):
-                    st.session_state[f"show_uploader_{model}"] = True
+                with col4:
+                    if st.button("📤", key=f"upload_{model}", help="Upload template"):
+                        st.session_state[f"show_uploader_{model}"] = not st.session_state.get(
+                            f"show_uploader_{model}", False
+                        )
 
             with col5:
                 if st.button("❌", key=f"delete_{model}", help="Delete model"):
-                    success = u.delete_model_from_backend(model)
-                    if success:
-                        deleted_model = model
-                        st.session_state.models = u.get_models_from_backend()
+                    st.session_state["confirm_delete_model"] = model
+
+            if st.session_state.get("confirm_delete_model") == model:
+                st.warning(f"⚠️ Are you sure you want to delete **{model}**? This action cannot be undone.")
+
+                col_yes, col_no = st.columns(2)
+
+                with col_yes:
+                    if st.button("✅ Confirm delete", key=f"confirm_delete_{model}"):
+                        success = u.delete_model_from_backend(model)
+                        if success:
+                            st.session_state.models = u.get_models_from_backend()
+                            st.session_state.pop("confirm_delete_model", None)
+                            time.sleep(1)
+                            st.rerun()
+
+                with col_no:
+                    if st.button("❌ Cancel", key=f"cancel_delete_{model}"):
+                        st.session_state.pop("confirm_delete_model", None)
+                        st.rerun()
 
             if st.session_state.get(f"show_uploader_{model}", False):
                 st.markdown("<hr style='margin:4px 0;'>", unsafe_allow_html=True)
