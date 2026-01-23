@@ -1,0 +1,221 @@
+import utils as u
+import streamlit as st
+
+
+def show():
+    
+    if "section" not in st.session_state or not st.session_state.section:
+        st.session_state.section = "technoeconomic_models"
+    if "subsection" not in st.session_state or not st.session_state.subsection:
+        st.session_state.subsection = "manage_models"
+    if "model" not in st.session_state:
+        st.session_state.model = None
+    if "fuel" not in st.session_state:
+        st.session_state.fuel = None
+    if "reload_fuels" not in st.session_state:
+        st.session_state.reload_fuels = True
+
+    if st.session_state.reload_fuels:
+        country = st.session_state.country
+        st.session_state.fuels = u.get_fuels_from_backend("normal", country)
+        st.session_state.fuels_carbon = u.get_fuels_from_backend("carbon", country)
+        st.session_state.fuels_expanded_carbon = u.get_fuels_from_backend("expanded_carbon", country)
+        st.session_state.fuels_expanded = u.get_fuels_from_backend("expanded", country)
+        st.session_state.fuels_more_expanded = u.get_fuels_from_backend("more_expanded", country)
+        st.session_state.reload_fuels = False
+
+    with st.sidebar:
+
+        if st.button("⌂ Country selection"):
+            st.session_state.page = "country_selector"
+            st.session_state.section = None
+            st.session_state.subsection = None
+            st.session_state.models = None
+            st.session_state.model = None
+            st.session_state.fuel = None
+            st.session_state.selected_country = None
+            st.session_state.reload_fuels = True
+            st.rerun()
+        
+        # Financial Inputs
+        with st.expander("Financial Inputs", expanded=False):
+            for fuel in st.session_state.fuels:
+                if st.button(f"{fuel}", key=f"{fuel}_financial_inputs"):
+                    st.session_state.section = "financial_inputs"
+                    st.session_state.fuel = fuel
+                    st.session_state.subsection = None
+                    st.session_state.model = None
+
+            st.markdown("---")
+            if st.button("➕ Add new fuel market"):
+                st.session_state.section = "financial_inputs"
+                st.session_state.subsection = "add"
+                st.session_state.fuel = None
+                st.session_state.model = None
+            
+            if st.session_state.section == "financial_inputs" and st.session_state.subsection is None and st.session_state.fuel is None:
+                if st.session_state.fuels:
+                    st.session_state.fuel = st.session_state.fuels[0]
+                    st.session_state.subsection = None
+                    st.session_state.model = None
+            
+            fuels_no_carbon = st.session_state.fuels
+            fuel_to_delete = st.selectbox("Delete fuel market", options=fuels_no_carbon)
+            confirm_key = f"confirm_delete_fuel_{fuel_to_delete}"
+
+            if confirm_key not in st.session_state:
+                st.session_state[confirm_key] = False
+
+            if not st.session_state[confirm_key]:
+                if st.button("🗑️ Delete fuel"):
+                    st.session_state[confirm_key] = True
+                    st.rerun()
+            else:
+                st.warning(f"Are you sure you want to delete '{fuel_to_delete}'?")
+
+                col1, col2 = st.columns(2)
+
+                with col1:
+                    if st.button("✅ Yes, delete"):
+                        if u.delete_fuel_from_backend(fuel_to_delete, st.session_state.country):
+                            st.session_state[confirm_key] = False
+                            st.session_state.fuel = fuels_no_carbon[0]
+                            st.session_state.subsection = None
+                            st.session_state.model = None
+                            st.session_state.reload_fuels = True
+                            st.rerun()
+
+                with col2:
+                    if st.button("❌ Cancel"):
+                        st.session_state[confirm_key] = False
+                        st.rerun()
+
+            st.markdown("---")
+            if "Carbon Credits" in st.session_state.fuels_carbon:
+                if st.button(f"Carbon Credits Financial Inputs"):
+                        st.session_state.section = "financial_inputs"
+                        st.session_state.fuel = "Carbon Credits"
+                        st.session_state.subsection = None
+                        st.session_state.model = None
+
+        st.markdown("<hr style='margin:4px 0;'>", unsafe_allow_html=True)
+        # Manage Techno-Economic Models
+        if st.button("Manage Techno-Economic Models"):
+            st.session_state.section = "technoeconomic_models"
+            st.session_state.subsection = "manage_models"
+            st.session_state.model = None
+            st.session_state.fuel = None
+            st.rerun()
+
+        # Techno-Economic Models
+        if st.session_state.model:
+            st.markdown("<hr style='margin:4px 0;'>", unsafe_allow_html=True)
+            st.markdown(f"<p style='margin:2px 0; font-size:15px; font-weight:bold;'>Techno-Economic Model: {st.session_state.model}</p>", unsafe_allow_html=True)
+            st.markdown("<hr style='margin:4px 0;'>", unsafe_allow_html=True)
+
+        if st.session_state.model:
+
+            st.markdown("##### Inputs")
+
+            with st.expander("Techno-Economic Inputs", expanded=False):
+                for fuel in st.session_state.fuels_expanded:
+                    if st.button(f"{fuel}"):
+                        st.session_state.section = "technoeconomic_models"
+                        st.session_state.subsection = "technoeconomic_inputs"
+                        st.session_state.fuel = fuel
+                        st.rerun()
+                    
+                if st.session_state.section == "technoeconomic_models" and st.session_state.subsection == "technoeconomic_inputs " and not st.session_state.fuel:
+                    st.session_state.fuel = st.session_state.fuels_expanded[0]
+
+            if st.session_state.model.lower() != "baseline":
+                
+                with st.expander("Tariffs", expanded=False):
+                    for fuel in st.session_state.fuels:
+                        if st.button(f"{fuel}", key=f"tariff_{fuel}"):
+                            st.session_state.section = "technoeconomic_models"
+                            st.session_state.subsection = "technology_tariffs"
+                            st.session_state.fuel = fuel
+                            st.rerun()
+
+                with st.expander("Upstream Costs of Energy", expanded=False):
+                    for fuel in st.session_state.fuels:
+                        if st.button(f"{fuel}", key=f"upstream_{fuel}"):
+                            st.session_state.section = "technoeconomic_models"
+                            st.session_state.subsection = "technology_upstreams"
+                            st.session_state.fuel = fuel
+                            st.rerun()
+
+                if st.session_state.section == "technoeconomic_models" and st.session_state.subsection == "technology_tariffs" and not st.session_state.fuel:
+                    st.session_state.fuel = st.session_state.fuels[0]
+
+                if st.session_state.section == "technoeconomic_models" and st.session_state.subsection == "technology_upstreams" and not st.session_state.fuel:
+                    st.session_state.fuel = st.session_state.fuels[0]
+            
+            with st.expander("CAPEX Fuel Market", expanded=False):
+                for fuel in st.session_state.fuels_expanded:
+                    if st.button(f"{fuel}", key=f"tech_inputs_{fuel}"):
+                        st.session_state.section = "technoeconomic_models"
+                        st.session_state.subsection = "capex_fuels"
+                        st.session_state.fuel = fuel
+                        st.rerun()
+                    
+                if st.session_state.section == "technoeconomic_models" and st.session_state.subsection == "capex_fuels " and not st.session_state.fuel:
+                    st.session_state.fuel = st.session_state.fuels_expanded[0]
+
+            if st.session_state.model.lower() != "baseline":
+                
+                st.markdown("<hr style='margin:4px 0;'>", unsafe_allow_html=True)
+                st.markdown("##### Design Capital Structure")
+                
+                with st.expander("Financial Plan", expanded=False):
+                    for fuel in st.session_state.fuels_expanded:
+                        if st.button(f"{fuel}", key=f"design_{fuel}"):
+                            st.session_state.section = "technoeconomic_models"
+                            st.session_state.subsection = "design_capital"
+                            st.session_state.fuel = fuel
+                            st.rerun()
+
+                if st.session_state.section == "technoeconomic_models" and st.session_state.subsection == "design_capital" and not st.session_state.fuel:
+                    st.session_state.fuel = st.session_state.fuels_expanded[0]
+
+                st.markdown("<hr style='margin:4px 0;'>", unsafe_allow_html=True)
+                st.markdown("##### Outputs")
+
+                with st.expander("Financial Statements", expanded=False):
+                    for fuel in st.session_state.fuels_more_expanded:
+                        if st.button(f"{fuel}", key=f"ffss_{fuel}"):
+                            st.session_state.section = "technoeconomic_models"
+                            st.session_state.subsection = "financial_statements"
+                            st.session_state.fuel = fuel
+                            st.rerun()
+
+                    if st.session_state.section == "technoeconomic_models" and st.session_state.subsection == "financial_statements" and not st.session_state.fuel:
+                        st.session_state.fuel = st.session_state.fuels_more_expanded[0]
+
+                if st.button("Carbon Credits"):
+                    st.session_state.section = "technoeconomic_models"
+                    st.session_state.subsection = "carbon_credits"
+                    st.rerun()
+                
+                if st.button("Summary Financing"):
+                    st.session_state.section = "technoeconomic_models"
+                    st.session_state.subsection = "summary_financing"
+                    st.rerun()
+        
+        else:
+
+            st.markdown("<hr style='margin:4px 0;'>", unsafe_allow_html=True)
+            st.markdown("##### Outputs")
+            
+            if st.button("Carbon Credits"):
+                st.session_state.section = "technoeconomic_models"
+                st.session_state.subsection = "carbon_credits"
+                st.rerun()
+            
+            if st.button("Summary Financing"):
+                st.session_state.section = "technoeconomic_models"
+                st.session_state.subsection = "summary_financing"
+                st.rerun()
+
+    return st.session_state.section, st.session_state.subsection, st.session_state.model, st.session_state.fuel
