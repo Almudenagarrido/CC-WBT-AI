@@ -116,23 +116,42 @@ class ExcelEditor:
                         self.df.loc[idx, col] = np.nan
 
     def show(self):
-
         df = self.df.copy()
 
         df_filtered = df[~df.apply(lambda row: row.astype(str).str.contains(r"\{model\}", regex=True).any(), axis=1)].copy()
 
         for col in df_filtered.columns:
-            if pd.api.types.is_numeric_dtype(df_filtered[col]):
-                df_filtered[col] = df_filtered[col].round(2)
-
+            if pd.api.types.is_numeric_dtype(df_filtered[col]) and col in self.year_columns:
+                df_filtered[col] = df_filtered[col].round(1)
+        
+        unit_col = None
+        for col in df_filtered.columns:
+            if "units" in str(col).lower():
+                unit_col = col
+                break
+        
+        if unit_col and unit_col in df_filtered.columns:
+            percentage_mask = df_filtered[unit_col].astype(str).str.contains('%', na=False)
+            
+            if percentage_mask.any():
+                idx_list = percentage_mask[percentage_mask].index
+                
+                for idx in idx_list:
+                    for col in df_filtered.columns:
+                        if pd.api.types.is_numeric_dtype(df_filtered[col]) and col in self.year_columns:
+                            if pd.notna(df_filtered.at[idx, col]):
+                                df_filtered.at[idx, col] = round(float(df_filtered.at[idx, col]), 0)
+        
         gb = GridOptionsBuilder.from_dataframe(df_filtered)
         
         for col in df_filtered.columns:
             gb.configure_column(
-                col, editable=(col in self.editable_columns),
+                col, 
+                editable=(col in self.editable_columns),
                 suppressMovable=True,
                 minWidth=60,
-                resizable=True)
+                resizable=True
+            )
         
         for col in df_filtered.columns:
             if col in self.year_columns:
@@ -165,7 +184,7 @@ class ExcelEditor:
 
         self.df = df_filtered.copy()
         return df_filtered
-
+    
     def validate_percentage(self, value):
         try:
             if pd.isna(value) or value == "-":
