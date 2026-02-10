@@ -586,28 +586,25 @@
         },
         {
             "formula_steps": [
-            { "op": "get_cell", "operands": [["index", 0], ["literal", 2]], "result": "temp1" },
-            { "op": "get_cell", "operands": [["index", 5], ["literal", 2]], "result": "temp5" },
-            { "op": "multiply_per", "operands": [["index", 1], ["index", "temp1"]], "result": "temp6" },
-            { "op": "multiply_per", "operands": [["index", 6], ["index", "temp5"]], "result": "temp7" },
-            { "op": "addition", "operands": [["index", "temp6"], ["index", "temp7"]], "result": "temp2" },
-            { "op": "addition", "operands": [["index", 2], ["index", 7]], "result": "temp8" },
-            { "op": "addition", "operands": [["index", "temp2"], ["index", "temp8"]], "result": "temp3" },
-            { "op": "addition", "operands": [["index", 3], ["index", 8]], "result": "temp9" },
-            { "op": "addition", "operands": [["index", "temp3"], ["index", "temp9"]], "result": "temp4" },
-            { "op": "subtraction", "operands": [["index", "temp4"], ["index", 4]], "result": "temp5"},
-            { "op": "negative", "operands": [["index", "temp5"]], "result": "final"}
+                { "op": "get_cell", "operands": [["index", 0], ["literal", 2]], "result": "temp1" },
+                { "op": "addition", "operands": [["index", 1], ["index", 5]], "result": "temp2" },
+                { "op": "multiply_per", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "temp3" },
+                { "op": "addition", "operands": [["index", 2], ["index", 6]], "result": "temp4" },
+                { "op": "addition", "operands": [["index", 3], ["index", 7]], "result": "temp5" },
+                { "op": "addition", "operands": [["index", "temp3"], ["index", "temp4"]], "result": "temp6" },
+                { "op": "addition", "operands": [["index", "temp6"], ["index", "temp5"]], "result": "temp7" },
+                { "op": "addition", "operands": [["index", "temp7"], ["index", 4]], "result": "temp8" },
+                { "op": "negative", "operands": [["index", "temp8"]], "result": "final" }
             ],
             "target": "Annual Cost of Service",
-            "sources": ["{country}\\design-capital-{model}.xlsx::Electricity & E-Cooking::WACC - GRID",
-            "{country}\\capex-fuels-{model}.xlsx::Electricity & E-Cooking::GRID:RAB",
-            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity & E-Cooking::GRID:OPEX",
-            "{country}\\capex-fuels-{model}.xlsx::Electricity & E-Cooking::GRID:Total Annual Depreciation",
-            "{country}\\financial-statements-{model}.xlsx::{sheet}::Upstream Cost of Energy",
-            "{country}\\design-capital-{model}.xlsx::{sheet}::WACC - OFF-GRID",
-            "{country}\\capex-fuels-{model}.xlsx::Electricity & E-Cooking::OFF-GRID:RAB",
-            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity & E-Cooking::OFF-GRID:OPEX",
-            "{country}\\capex-fuels-{model}.xlsx::Electricity & E-Cooking::OFF-GRID:Total Annual Depreciation"
+            "sources": ["{country}\\design-capital-{model}.xlsx::Electricity & E-Cooking::WACC",
+                "{country}\\capex-fuels-{model}.xlsx::Electricity & E-Cooking::GRID:RAB",
+                "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity & E-Cooking::GRID:OPEX",
+                "{country}\\capex-fuels-{model}.xlsx::Electricity & E-Cooking::GRID:Total Annual Depreciation",
+                "{country}\\financial-statements-{model}.xlsx::{sheet}::Upstream Cost of Energy",
+                "{country}\\capex-fuels-{model}.xlsx::Electricity & E-Cooking::OFF-GRID:RAB",
+                "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity & E-Cooking::OFF-GRID:OPEX",
+                "{country}\\capex-fuels-{model}.xlsx::Electricity & E-Cooking::OFF-GRID:Total Annual Depreciation"
             ]
         },
         {
@@ -740,24 +737,21 @@
         {
             "formula_steps": [
             { "op": "get_cell", "operands": [["index", 0], ["literal", 2]], "result": "temp1" },
-            { "op": "get_cell", "operands": [["index", 5], ["literal", 2]], "result": "temp5" },
-            { "op": "multiply_per", "operands": [["index", 1], ["index", "temp1"]], "result": "temp6" },
-            { "op": "multiply_per", "operands": [["index", 6], ["index", "temp5"]], "result": "temp7" },
-            { "op": "addition", "operands": [["index", "temp6"], ["index", "temp7"]], "result": "temp2" },
-            { "op": "addition", "operands": [["index", 2], ["index", 7]], "result": "temp8" },
-            { "op": "addition", "operands": [["index", "temp2"], ["index", "temp8"]], "result": "temp3" },
-            { "op": "addition", "operands": [["index", 3], ["index", 8]], "result": "temp9" },
-            { "op": "addition", "operands": [["index", "temp3"], ["index", "temp9"]], "result": "temp4" },
-            { "op": "subtraction", "operands": [["index", "temp4"], ["index", 4]], "result": "temp5" },
-            { "op": "negative", "operands": [["index", "temp5"]], "result": "final" }
+            { "op": "addition", "operands": [["index", 1], ["index", 5]], "result": "temp2" },
+            { "op": "multiply_per", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "temp3" },
+            { "op": "addition", "operands": [["index", 2], ["index", 6]], "result": "temp4" },
+            { "op": "addition", "operands": [["index", 3], ["index", 7]], "result": "temp5" },
+            { "op": "addition", "operands": [["index", "temp3"], ["index", "temp4"]], "result": "temp6" },
+            { "op": "addition", "operands": [["index", "temp5"], ["index", "temp6"]], "result": "temp7" },
+            { "op": "addition", "operands": [["index", "temp7"], ["index", 4]], "result": "temp8" },
+            { "op": "negative", "operands": [["index", "temp8"]], "result": "final" }
             ],
             "target": "Annual Cost of Service",
-            "sources": ["{country}\\design-capital-{model}.xlsx::Electricity (Low access)::WACC - GRID",
+            "sources": ["{country}\\design-capital-{model}.xlsx::Electricity (Low access)::WACC",
             "{country}\\capex-fuels-{model}.xlsx::Electricity (Low access)::GRID:RAB",
             "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity (Low access)::GRID:OPEX",
             "{country}\\capex-fuels-{model}.xlsx::Electricity (Low access)::GRID:Total Annual Depreciation",
             "{country}\\financial-statements-{model}.xlsx::{sheet}::Upstream Cost of Energy",
-            "{country}\\design-capital-{model}.xlsx::{sheet}::WACC - OFF-GRID",
             "{country}\\capex-fuels-{model}.xlsx::Electricity (Low access)::OFF-GRID:RAB",
             "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity (Low access)::OFF-GRID:OPEX",
             "{country}\\capex-fuels-{model}.xlsx::Electricity (Low access)::OFF-GRID:Total Annual Depreciation"
@@ -1514,9 +1508,7 @@
         },
         {
             "formula_steps": [
-            { "op": "negative", "operands": [["index", 0]], "result": "temp1" },
-
-            { "op": "addition", "operands": [["index", "temp1"], ["index", 1]], "result": "temp2" },
+            { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "temp2" },
             { "op": "addition", "operands": [["index", "temp2"], ["index", 2]], "result": "temp3" },
             { "op": "addition", "operands": [["index", "temp3"], ["index", 3]], "result": "final" }
             ],

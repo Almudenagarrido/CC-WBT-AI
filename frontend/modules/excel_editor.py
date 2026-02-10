@@ -115,7 +115,7 @@ class ExcelEditor:
                     if col != columns_to_empty[0]:
                         self.df.loc[idx, col] = np.nan
 
-    def show(self):
+    def show(self, decimals=1):
         df = self.df.copy()
 
         df_filtered = df[~df.apply(lambda row: row.astype(str).str.contains(r"\{model\}", regex=True).any(), axis=1)].copy()
@@ -127,12 +127,13 @@ class ExcelEditor:
             for col in df_filtered.columns:
                 if col in self.year_columns:
                     df_filtered.loc[mask, col] = (
-                        df_filtered.loc[mask, col].astype(float).round(1)
+                        df_filtered.loc[mask, col].astype(float).round(decimals)
                     )
 
         for col in df_filtered.columns:
+            print(col)
             if pd.api.types.is_numeric_dtype(df_filtered[col]):
-                df_filtered[col] = df_filtered[col].round(1)
+                df_filtered[col] = df_filtered[col].round(decimals)
         
         unit_col = None
         for col in df_filtered.columns:
@@ -151,6 +152,7 @@ class ExcelEditor:
                         if pd.api.types.is_numeric_dtype(df_filtered[col]) and col in self.year_columns:
                             if pd.notna(df_filtered.at[idx, col]):
                                 df_filtered.at[idx, col] = round(float(df_filtered.at[idx, col]), 0)
+        
         
         gb = GridOptionsBuilder.from_dataframe(df_filtered)
         
