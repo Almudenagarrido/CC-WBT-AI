@@ -161,7 +161,7 @@ class DesignCapitalStructure:
             editable_cols = self.editable_columns.get(section, self.editable_columns[self.section_headers[0]])
             empty_rows = self.empty_rows.get(section, self.empty_rows[self.section_headers[0]])
             
-            self.excel_editor.load_data(df, f"{self.fuel}_{section}_editor",height, editable_cols, empty_rows)
+            self.excel_editor.load_data(df, f"{self.fuel}_{section}_editor", height, editable_cols, empty_rows)
             edited_df = self.excel_editor.show()
             self.subtables[self.fuel][section] = edited_df
     

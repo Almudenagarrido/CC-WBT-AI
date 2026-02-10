@@ -120,8 +120,18 @@ class ExcelEditor:
 
         df_filtered = df[~df.apply(lambda row: row.astype(str).str.contains(r"\{model\}", regex=True).any(), axis=1)].copy()
 
+        row_name = "Calculated debt variation"
+        label_col = df_filtered.columns[0]
+        mask = df_filtered[label_col] == row_name
+        if mask.any():
+            for col in df_filtered.columns:
+                if col in self.year_columns:
+                    df_filtered.loc[mask, col] = (
+                        df_filtered.loc[mask, col].astype(float).round(1)
+                    )
+
         for col in df_filtered.columns:
-            if pd.api.types.is_numeric_dtype(df_filtered[col]) and col in self.year_columns:
+            if pd.api.types.is_numeric_dtype(df_filtered[col]):
                 df_filtered[col] = df_filtered[col].round(1)
         
         unit_col = None
