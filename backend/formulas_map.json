@@ -1337,18 +1337,20 @@
         },
         {
             "formula_steps": [
-            {"op": "sum_range", "operands": [["index", 0], ["literal", "all"]],"direction": "backward", "result": "temp1" },
-            {"op": "safe_divide", "operands": [["index", 0], ["index", "temp1"]],"direction": "backward", "result": "temp2" },
-            {"op": "percentage", "operands": [["index", "temp2"]], "result": "final" }
+            { "op": "get_cell", "operands": [["index", 1], ["literal", 2]], "result": "temp1"},
+            {"op": "sum_range", "operands": [["index", 0], ["index", "temp1"]],"direction": "backward", "result": "temp2" },
+            {"op": "safe_divide", "operands": [["index", 0], ["index", "temp2"]],"direction": "backward", "result": "temp3" },
+            {"op": "percentage", "operands": [["index", "temp3"]], "result": "final" }
             ],
             "target": "GRANTS:- Realisation (% capex)",
             "sources": [
-                "{country}\\financial-statements-{model}.xlsx::{sheet}::CAPEX"
+                "{country}\\financial-statements-{model}.xlsx::{sheet}::CAPEX",
+                "{country}\\design-capital-{model}.xlsx::{sheet}::Years realisation"
             ]
         },
         {
             "formula_steps": [
-            {"op": "sum_range", "operands": [["index", 0], ["literal", "all"]],"direction": "backward", "result": "temp1" },
+            {"op": "copy", "operands": [["index", 0]], "result": "temp1" },
             {"op": "multiply_per", "operands": [["index", 1], ["index", "temp1"]],"direction": "backward", "result": "temp2" },
             {"op": "negative", "operands": [["index", "temp2"]], "result": "final" }
             ],

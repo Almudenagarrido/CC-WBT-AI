@@ -22,7 +22,7 @@ class DesignCapitalStructure:
         self.important_cols = ["Division", "Units", "Amount", "FFSS - Outputs", "FFSS - Inputs", "Type", "Financiation", "Total", "Category"]
         self.section_headers = ["Division", "FFSS - Outputs", "FFSS - Inputs", "Financiation", "Total"]
         self.subtable_heights = {
-            "Division": 240,
+            "Division": 270,
             "FFSS - Outputs": 120,
             "FFSS - Inputs": 90,
             "Financiation": 70,
