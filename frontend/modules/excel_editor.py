@@ -131,7 +131,6 @@ class ExcelEditor:
                     )
 
         for col in df_filtered.columns:
-            print(col)
             if pd.api.types.is_numeric_dtype(df_filtered[col]):
                 df_filtered[col] = df_filtered[col].round(decimals)
         

@@ -738,6 +738,15 @@ class ExcelFormulaProcessor:
                 result = self._execute_sum_range_operation(
                     operands, current_values, results, source_cells_list, cell_index, default_ws, step
                 )
+            elif op == "set_values":
+                index = self._get_operand_value(operands[0], current_values, results)
+                index_start = self._get_operand_value(operands[1], current_values, results)
+                value = self._get_operand_value(operands[2], current_values, results)
+                if cell_index < index_start: 
+                    result = index
+                else:
+                    result = value
+
             elif op == "range":
                 range_value = self._get_operand_value(operands[0], current_values, results)
                 result = cell_index + range_value
@@ -888,7 +897,7 @@ class ExcelFormulaProcessor:
         return 0
     
     def _execute_sum_range_operation(self, operands, current_values, current_results, source_cells_list, current_index, default_ws, step=None):
-        
+    
         if isinstance(operands[0], list) and operands[0][0] == "index":
             source_index = operands[0][1]
         else:
@@ -901,12 +910,28 @@ class ExcelFormulaProcessor:
 
         direction = step.get("direction", "forward") if step else "forward"
         condition = step.get("condition") if step else None
-        source_index = int(source_index)
+        
+        try:
+            source_index = int(source_index)
+        except (TypeError, ValueError) as e:
+            return 0
+        
+        try:
+            current_index = int(current_index)
+        except (TypeError, ValueError) as e:
+            return 0
+        
+        if width != "all":
+            try:
+                width = int(width)
+            except (TypeError, ValueError) as e:
+                return 0
         
         if not (0 <= source_index < len(source_cells_list)):
             return 0
 
         cell_refs = source_cells_list[source_index]
+        
         if not cell_refs:
             return 0
 
@@ -914,26 +939,28 @@ class ExcelFormulaProcessor:
         if cell_refs[0].startswith("CACHED::"):
             label = cell_refs[0].split("::")[-1]
             actual_values = self.previously_calculated.get(label, [])
-        
         else:
-            for ref in cell_refs:
+            for i, ref in enumerate(cell_refs):
                 value = self._get_cell_value_from_ref(ref, default_ws)
                 actual_values.append(value)
-            
+                
         def get_value(i):
             if 0 <= i < len(actual_values):
-                return actual_values[i]
+                val = actual_values[i]
+                return val
             return 0
         
         if width == "all":
             total = 0
             for i in range(len(actual_values)):
                 value = get_value(i)
-                if self._meets_condition(value, condition):
+                meets = self._meets_condition(value, condition)
+                if meets:
                     total += value
             return total
 
         total = 0
+        
         if direction == "backward":
             if width == 0:
                 start_index = 0
@@ -941,23 +968,40 @@ class ExcelFormulaProcessor:
             else:
                 start_index = max(0, current_index - width + 1)
                 end_index = current_index + 1
-
+            
+            start_index = int(start_index)
+            end_index = int(end_index)
+            
+            for i in range(start_index, end_index):
+                value = get_value(i)
+                meets = self._meets_condition(value, condition)
+                if meets:
+                    total += value
+                    
+        elif direction == "forward":
+            
+            from_start = step.get("from_start", False) if step else False
+            
+            if from_start:
+                start_index = 0
+                end_index = min(len(actual_values), width)
+            else:
+                start_index = current_index
+                end_index = min(len(actual_values), current_index + width)
+            
+            start_index = int(start_index)
+            end_index = int(end_index)
+            
+            total = 0
             for i in range(start_index, end_index):
                 value = get_value(i)
                 if self._meets_condition(value, condition):
                     total += value
-
-        else:
-            start_index = current_index
-            end_index = min(len(actual_values), current_index + width)
-
-            for i in range(start_index, end_index):
-                value = get_value(i)
-                if self._meets_condition(value, condition):
-                    total += value
-
+            
+            return total
+        
         return total
-
+    
     def _execute_value_operation(self, operands, current_values, current_results, source_cells_list, default_ws):
 
         if len(operands) >= 2:

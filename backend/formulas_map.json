@@ -1331,10 +1331,11 @@
         },
         {
             "formula_steps": [
-            { "op": "get_cell", "operands": [["index", 1], ["literal", 2]], "result": "temp1"},
-            {"op": "sum_range", "operands": [["index", 0], ["index", "temp1"]],"direction": "backward", "result": "temp2" },
-            {"op": "safe_divide", "operands": [["index", 0], ["index", "temp2"]],"direction": "backward", "result": "temp3" },
-            {"op": "percentage", "operands": [["index", "temp3"]], "result": "final" }
+                {"op": "get_cell", "operands": [["index", 1], ["literal", 2]], "result": "temp1"},
+                { "op": "sum_range", "operands": [["index", 0], ["index","temp1"]], "direction": "forward", "from_start": true, "result": "temp2"},
+                {"op": "safe_divide", "operands": [["index", 0], ["index", "temp2"]], "result": "temp3"},
+                {"op": "percentage", "operands": [["index", "temp3"]], "result": "temp4"},
+                {"op": "set_values", "operands": [["index", "temp4"], ["index", "temp1"], ["literal", 0]], "result": "final"}
             ],
             "target": "GRANTS:- Realisation (% capex)",
             "sources": [
