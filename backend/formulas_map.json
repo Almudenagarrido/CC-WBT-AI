@@ -1186,7 +1186,8 @@
             { "op": "negative", "operands": [["index", 0]], "result": "temp1" },
             { "op": "addition", "operands": [["index", "temp1"], ["index", 1]], "result": "temp2" },
             { "op": "multiply", "operands": [["index", "temp2"], ["index", 2]], "result": "temp3" },
-            { "op": "safe_divide", "operands": [["index", "temp3"], ["literal", 365]], "result": "final" }
+            { "op": "safe_divide", "operands": [["index", "temp3"], ["literal", 365]], "result": "temp4" },
+            { "op": "copy", "operands": [["literal", 0]], "result": "final" }
             ],
             "target": "+ Inventories",
             "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::Upstream Cost of Energy",
@@ -1210,7 +1211,7 @@
         {
             "formula_steps": [
             { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
-            { "op": "addition", "operands": [["index", 1], ["index", 2]], "result": "final" }
+            { "op": "addition", "operands": [["index", "temp1"], ["index", 2]], "result": "final" }
             ],
             "target": "Working Capital",
             "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::+ Trade receivables",
@@ -1831,10 +1832,12 @@
         {
             "formula_steps": [
             { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
-            { "op": "addition", "operands": [["index", 2], ["index", 3]], "result": "temp2" },
-            { "op": "addition", "operands": [["index", 4], ["index", 5]], "result": "temp3" },
-            { "op": "addition", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "temp4" },
-            { "op": "addition", "operands": [["index", "temp3"], ["index", "temp4"]], "result": "final" }
+            { "op": "set_values", "operands": [["index", 3], ["literal", 1], ["literal", 0]], "result": "temp2"},
+            { "op": "addition", "operands": [["index", 2], ["index", "temp2"]], "result": "temp3"},
+            { "op": "set_values", "operands": [["index", 5], ["literal", 1], ["literal", 0]], "result": "temp4"},
+            { "op": "addition", "operands": [["index", 4], ["index", "temp4"]], "result": "temp5" },
+            { "op": "addition", "operands": [["index", "temp1"], ["index", "temp3"]], "result": "temp6" },
+            { "op": "addition", "operands": [["index", "temp5"], ["index", "temp6"]], "result": "final" }
             ],
             "target": "Financing Cash Flow",
             "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::Financial Expense",
@@ -1885,9 +1888,10 @@
         {
             "formula_steps": [
             { "op": "offset", "operands": [["index", 0], ["literal", 1]], "result": "temp1" },
-            { "op": "addition", "operands": [["index", "temp1"], ["index", 1]], "result": "temp2" },
-            { "op": "addition", "operands": [["index", 2], ["index", 3]], "result": "temp3" },
-            { "op": "addition", "operands": [["index", "temp2"], ["index", "temp3"]], "result": "final" }
+            { "op": "set_values", "operands": [["index", 1], ["literal", 1], ["literal", 0]], "result": "temp2"},
+            { "op": "addition", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "temp3"},
+            { "op": "addition", "operands": [["index", 2], ["index", 3]], "result": "temp4"},
+            { "op": "addition", "operands": [["index", "temp3"], ["index", "temp4"]], "result": "final"}
             ],
             "target": "Equity - EoP",
             "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::Equity - EoP",
