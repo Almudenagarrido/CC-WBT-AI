@@ -658,7 +658,8 @@
             "formula_steps": [
             { "op": "get_cell", "operands": [["index", 0], ["literal", 2]], "result": "temp1" },
             { "op": "get_cell", "operands": [["index", 1], ["literal", 2]], "result": "temp2" },
-            { "op": "multiply_per", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "final" }
+            { "op": "multiply_per", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "temp3" },
+            {"op": "set_values", "operands": [["index", "temp3"], ["literal", 1], ["literal", 0]], "result": "final"}
             ],
             "target": "+/- Capital Increase/Reduction",
             "sources": ["{country}\\design-capital-{model}.xlsx::Electricity & E-Cooking::How much to be financed",
@@ -669,7 +670,8 @@
             "formula_steps": [
             { "op": "get_cell", "operands": [["index", 0], ["literal", 2]], "result": "temp1" },
             { "op": "get_cell", "operands": [["index", 1], ["literal", 2]], "result": "temp2" },
-            { "op": "multiply_per", "operands": [["index", "temp1"], ["index", "2"]], "result": "final" }
+            { "op": "multiply_per", "operands": [["index", "temp1"], ["index", "2"]], "result": "temp3"},
+            {"op": "set_values", "operands": [["index", "temp3"], ["literal", 1], ["literal", 0]], "result": "final"}
             ],
             "target": "GRANTS:+ Increase",
             "sources": ["{country}\\design-capital-{model}.xlsx::Electricity & E-Cooking::How much to be financed",
@@ -808,7 +810,8 @@
             "formula_steps": [
             { "op": "get_cell", "operands": [["index", 0], ["literal", 2]], "result": "temp1" },
             { "op": "get_cell", "operands": [["index", 1], ["literal", 2]], "result": "temp2" },
-            { "op": "multiply_per", "operands": [["index", "temp1"], ["index", "temp"]], "result": "final" }
+            { "op": "multiply_per", "operands": [["index", "temp1"], ["index", "temp"]], "result": "temp3"},
+            {"op": "set_values", "operands": [["index", "temp3"], ["literal", 1], ["literal", 0]], "result": "final"}
             ],
             "target": "+/- Capital Increase/Reduction",
             "sources": ["{country}\\design-capital-{model}.xlsx::Electricity (Low access)::How much to be financed",
@@ -819,7 +822,8 @@
             "formula_steps": [
             { "op": "get_cell", "operands": [["index", 0], ["literal", 2]], "result": "temp1" },
             { "op": "get_cell", "operands": [["index", 1], ["literal", 2]], "result": "temp2" },
-            { "op": "multiply_per", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "final" }
+            { "op": "multiply_per", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "temp3" },
+            {"op": "set_values", "operands": [["index", "temp3"], ["literal", 1], ["literal", 0]], "result": "final"}
             ],
             "target": "GRANTS:+ Increase",
             "sources": ["{country}\\design-capital-{model}.xlsx::Electricity (Low access)::How much to be financed",
@@ -907,7 +911,8 @@
         },
         {
             "formula_steps": [
-            { "op": "subtraction", "operands": [["index", 0], ["index", 1]], "result": "final" }
+            { "op": "subtraction", "operands": [["index", 0], ["index", 1]], "result": "temp1"},
+            {"op": "set_values", "operands": [["index", "temp1"], ["literal", 1], ["literal", 0]], "result": "final"}
             ],
             "target": "+/- Capital Increase/Reduction",
             "sources": ["{country}\\financial-statements-{model}.xlsx::Electricity & E-Cooking::+/- Capital Increase/Reduction",
@@ -916,7 +921,7 @@
         },
         {
             "formula_steps": [
-            { "op": "subtraction", "operands": [["index", 0], ["index", 1]], "result": "final" }
+            { "op": "copy", "operands": [["index", 0]], "result": "final"}
             ],
             "target": "GRANTS:+ Increase",
             "sources": ["{country}\\financial-statements-{model}.xlsx::Electricity & E-Cooking::GRANTS:+ Increase",
@@ -1232,7 +1237,8 @@
             "formula_steps": [
             { "op": "get_cell", "operands": [["index", 0], ["literal", 2]], "result": "temp1" },
             { "op": "get_cell", "operands": [["index", 1], ["literal", 2]], "result": "temp2" },
-            { "op": "multiply_per", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "final" }
+            { "op": "multiply_per", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "temp3"},
+            {"op": "set_values", "operands": [["index", "temp3"], ["literal", 1], ["literal", 0]], "result": "final"}
             ],
             "target": "+/- Capital Increase/Reduction",
             "sources": ["{country}\\design-capital-{model}.xlsx::{sheet}::How much to be financed",
@@ -1243,7 +1249,8 @@
             "formula_steps": [
             { "op": "get_cell", "operands": [["index", 0], ["literal", 2]], "result": "temp1" },
             { "op": "get_cell", "operands": [["index", 1], ["literal", 2]], "result": "temp2" },
-            { "op": "multiply_per", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "final" }
+            { "op": "multiply_per", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "temp3"},
+            {"op": "set_values", "operands": [["index", "temp3"], ["literal", 1], ["literal", 0]], "result": "final"}
             ],
             "target": "GRANTS:+ Increase",
             "sources": ["{country}\\design-capital-{model}.xlsx::{sheet}::How much to be financed",
@@ -1303,27 +1310,6 @@
         },
         {
             "formula_steps": [
-            {"op": "offset", "operands": [["index", 0], ["literal", 1]], "result": "temp1" },
-            {"op": "value", "operands": [["index", 1], ["literal", 0]], "result": "temp2" },
-            {"op": "addition", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "temp3" },
-            {"op": "addition", "operands": [["index", "temp3"], ["index", 2]], "result": "final"}
-            ],
-            "target": "GRANTS:EoP",
-            "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::GRANTS:EoP",
-            "{country}\\financial-statements-{model}.xlsx::{sheet}::GRANTS:+ Increase",
-            "{country}\\financial-statements-{model}.xlsx::{sheet}::GRANTS:- Realisation"
-            ]
-        },
-        {
-            "formula_steps": [
-            { "op": "offset", "operands": [["index", 0], ["literal", 1]], "result": "final" }
-            ],
-            "target": "GRANTS:BoP",
-            "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::GRANTS:EoP"
-            ]
-        },
-        {
-            "formula_steps": [
             { "op": "copy", "operands": [["index", 0]], "result": "final" }
             ],
             "target": "Grants/Sub-debt financing",
@@ -1354,6 +1340,26 @@
             "sources": [
                 "{country}\\financial-statements-{model}.xlsx::{sheet}::GRANTS:+ Increase",
                 "{country}\\financial-statements-{model}.xlsx::{sheet}::GRANTS:- Realisation (% capex)"
+            ]
+        },
+        {
+            "formula_steps": [
+            {"op": "offset", "operands": [["index", 0], ["literal", 1]], "result": "temp1" },
+            {"op": "addition", "operands": [["index", "temp1"], ["index", 1]], "result": "temp2" },
+            {"op": "addition", "operands": [["index", "temp2"], ["index", 2]], "result": "final"}
+            ],
+            "target": "GRANTS:EoP",
+            "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::GRANTS:EoP",
+            "{country}\\financial-statements-{model}.xlsx::{sheet}::GRANTS:+ Increase",
+            "{country}\\financial-statements-{model}.xlsx::{sheet}::GRANTS:- Realisation"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "offset", "operands": [["index", 0], ["literal", 1]], "result": "final" }
+            ],
+            "target": "GRANTS:BoP",
+            "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::GRANTS:EoP"
             ]
         },
         {
@@ -2023,7 +2029,7 @@
             "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::Total Assets",
             "{country}\\financial-statements-{model}.xlsx::{sheet}::Total Liabilities"
             ]
-        }  
+        }
     ]
   }
 }
