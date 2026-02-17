@@ -515,10 +515,15 @@ class ExcelFormulaProcessor:
     
         is_special_sheet = (default_ws.title == "Electricity (Only E-Cooking)")
         
+        is_same_file = True
+        
         if "::" in source_label:
             parts = source_label.split("::")
             if len(parts) == 3:
                 file_part, sheet_part, label_part = parts
+                source_file_path = os.path.normpath(file_part)
+                current_file_path = os.path.normpath(default_ws.parent.path)
+                is_same_file = (source_file_path == current_file_path)
             else:
                 if "config.json" in source_label:
                     return [source_label]
@@ -527,6 +532,7 @@ class ExcelFormulaProcessor:
             file_part = None
             sheet_part = default_ws.title
             label_part = source_label
+            is_same_file = True
         
         source_sheet = sheet_part
 
@@ -551,7 +557,7 @@ class ExcelFormulaProcessor:
                     pass
 
         else:
-            if label_part == self.current_target:
+            if is_same_file and label_part == self.current_target:
                 return [f"CACHED::{default_ws.title}::{label_part}"]
             
             if source_sheet in self.previously_calculated and label_part in self.previously_calculated[source_sheet]:
