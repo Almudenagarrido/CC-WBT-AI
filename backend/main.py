@@ -904,6 +904,11 @@ async def get_sheet(country, route, template_route, sheet_name, key_fuels):
 
         wb.close()
         excel_processor.clear_workbook_cache()
+        
+        only_e_cooking = "Electricity (Only E-Cooking)"
+        if only_e_cooking in expected_sheets:
+            fuels = [f for f in fuels if f != only_e_cooking] + [only_e_cooking]
+
         excel_processor.apply_formulas(
             file_path=route,
             formulas_json_path=JSON_FORMULAS,

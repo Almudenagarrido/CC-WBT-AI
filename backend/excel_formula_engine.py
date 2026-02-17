@@ -313,9 +313,10 @@ class ExcelFormulaProcessor:
         try:
             changes_made = False
             for sheet_name, formulas in formulas_sheet_file.items():
-
-                self.previously_calculated = {}
                 
+                if sheet_name not in self.previously_calculated:
+                    self.previously_calculated[sheet_name] = {}
+
                 if sheet_name not in wb.sheetnames:
                     continue
                 
@@ -339,7 +340,6 @@ class ExcelFormulaProcessor:
                 wb.close()
     
     def _execute_single_formula(self, ws, formula, year_range, file_path):
-
         try:
             target_label = formula["target"]
             self.current_target = target_label
@@ -351,11 +351,11 @@ class ExcelFormulaProcessor:
                 return False
             
             source_cells_list = []
-            for i, source_label in enumerate(source_labels):
+            for source_label in source_labels:
                 cell_refs = self._get_cell_refs_from_source_label(source_label, ws, year_range)
                 
                 if source_label == target_label:
-                    cell_refs = [f"CACHED::{target_label}"]
+                    cell_refs = [f"CACHED::{ws.title}::{target_label}"]
                 
                 if not cell_refs:
                     if "config.json" in source_label:
@@ -364,21 +364,29 @@ class ExcelFormulaProcessor:
                         return False
                 else:
                     source_cells_list.append(cell_refs)
+            
+            current_sheet = ws.title
+            if current_sheet not in self.previously_calculated:
+                self.previously_calculated[current_sheet] = {}
 
-            if target_label not in self.previously_calculated:
-                self.previously_calculated[target_label] = [None] * len(target_cells)
+            if target_label not in self.previously_calculated[current_sheet]:
+                self.previously_calculated[current_sheet][target_label] = [None] * len(target_cells)
             
             changes_made = False
+            
             for cell_index in range(len(target_cells)):
                 current_values = []
                 
                 for src_idx, cell_refs in enumerate(source_cells_list):
                     if cell_refs and len(cell_refs) > 0:
                         if isinstance(cell_refs[0], str) and cell_refs[0].startswith("CACHED::"):
-                            label = cell_refs[0].split("::")[-1]
-                            if label in self.previously_calculated:
-                                if cell_index < len(self.previously_calculated[label]):
-                                    value = self.previously_calculated[label][cell_index]
+                            parts = cell_refs[0].split("::")
+                            sheet = parts[1]
+                            label = parts[2]
+                            
+                            if sheet in self.previously_calculated and label in self.previously_calculated[sheet]:
+                                if cell_index < len(self.previously_calculated[sheet][label]):
+                                    value = self.previously_calculated[sheet][label][cell_index]
                                 else:
                                     value = 0
                             else:
@@ -395,13 +403,15 @@ class ExcelFormulaProcessor:
                                     value = 0
                     else:
                         value = 0
+                    
                     current_values.append(value)
                 
                 final_value = self._execute_formula_for_cell(
                     formula_steps, current_values, source_cells_list, cell_index, ws
                 )
                 
-                self.previously_calculated[target_label][cell_index] = final_value
+                self.previously_calculated[current_sheet][target_label][cell_index] = final_value
+                
                 target_cell = target_cells[cell_index]
                 current_target_value = ws[target_cell].value
                 
@@ -410,11 +420,10 @@ class ExcelFormulaProcessor:
                     changes_made = True
                     if isinstance(final_value, str):
                         ws[target_cell].number_format = '@'
-
+            
             return changes_made
 
         except Exception as e:
-            traceback.print_exc()
             return False
     
     def _get_cell_value_from_ref(self, cell_ref, default_ws, cell_index=None):
@@ -503,6 +512,8 @@ class ExcelFormulaProcessor:
             return None
     
     def _get_cell_refs_from_source_label(self, source_label, default_ws, year_range):
+    
+        is_special_sheet = (default_ws.title == "Electricity (Only E-Cooking)")
         
         if "::" in source_label:
             parts = source_label.split("::")
@@ -517,11 +528,34 @@ class ExcelFormulaProcessor:
             sheet_part = default_ws.title
             label_part = source_label
         
-        if label_part == self.current_target:
-            return [f"CACHED::{label_part}"]
-    
-        if label_part in self.previously_calculated:
-            return [f"CACHED::{label_part}"]
+        source_sheet = sheet_part
+
+        if is_special_sheet:
+            if label_part == self.current_target and source_sheet == default_ws.title:
+                return [f"CACHED::{default_ws.title}::{label_part}"]
+            
+            if (source_sheet in self.previously_calculated and 
+                label_part in self.previously_calculated[source_sheet]):
+                
+                cached_values = self.previously_calculated[source_sheet][label_part]
+                
+                has_valid_values = False
+                for val in cached_values:
+                    if val is not None and val != 0:
+                        has_valid_values = True
+                        break
+                
+                if has_valid_values:
+                    return [f"CACHED::{source_sheet}::{label_part}"]
+                else:
+                    pass
+
+        else:
+            if label_part == self.current_target:
+                return [f"CACHED::{default_ws.title}::{label_part}"]
+            
+            if source_sheet in self.previously_calculated and label_part in self.previously_calculated[source_sheet]:
+                return [f"CACHED::{source_sheet}::{label_part}"]
         
         if "config.json" in source_label:
             return [source_label]
@@ -568,7 +602,7 @@ class ExcelFormulaProcessor:
         if not year_range:
             return []
         
-        start_col = self._find_year_column(ws, year_range,)
+        start_col = self._find_year_column(ws, year_range)
         if not start_col:
             return []
         
@@ -588,7 +622,7 @@ class ExcelFormulaProcessor:
             cell_refs.append(ref)
         
         return cell_refs
-    
+
     def _find_cells_from_target_label(self, target_label, worksheet, year_range, file_path):
         
         label_parts = target_label.split(":")
@@ -893,10 +927,12 @@ class ExcelFormulaProcessor:
             return 0
 
         if cell_refs[0].startswith("CACHED::"):
-            label = cell_refs[0].split("::")[-1]
+            parts = cell_refs[0].split("::")
+            sheet = parts[1]
+            label = parts[2]
             
-            if label in self.previously_calculated:
-                cached_values = self.previously_calculated[label]
+            if sheet in self.previously_calculated and label in self.previously_calculated[sheet]:
+                cached_values = self.previously_calculated[sheet][label]
                 return cached_values[target_index] if target_index < len(cached_values) else 0
             else:
                 return 0
@@ -949,8 +985,10 @@ class ExcelFormulaProcessor:
 
         actual_values = []
         if cell_refs[0].startswith("CACHED::"):
-            label = cell_refs[0].split("::")[-1]
-            actual_values = self.previously_calculated.get(label, [])
+            parts = cell_refs[0].split("::")
+            sheet = parts[1]
+            label = parts[2]
+            actual_values = self.previously_calculated.get(sheet, {}).get(label, [])
         else:
             for i, ref in enumerate(cell_refs):
                 value = self._get_cell_value_from_ref(ref, default_ws)
@@ -1037,8 +1075,14 @@ class ExcelFormulaProcessor:
             cell_refs = source_cells_list[source_index]
             
             if cell_refs[0].startswith("CACHED::"):
-                label = cell_refs[0].split("::")[-1]
-                return self.previously_calculated[label][cell_index_to_get] if cell_index_to_get < len(self.previously_calculated[label]) else 0
+                parts = cell_refs[0].split("::")
+                sheet = parts[1]
+                label = parts[2]
+                if sheet in self.previously_calculated and label in self.previously_calculated[sheet]:
+                    cached_values = self.previously_calculated[sheet][label]
+                    return cached_values[cell_index_to_get] if cell_index_to_get < len(cached_values) else 0
+                else:
+                    return 0
                     
             if 0 <= cell_index_to_get < len(cell_refs):
                 return self._get_cell_value_from_ref(cell_refs[cell_index_to_get], default_ws)
@@ -1055,9 +1099,11 @@ class ExcelFormulaProcessor:
 
         cell_refs = source_cells_list[source_index]
         if cell_refs[0].startswith("CACHED::"):
-            label = cell_refs[0].split("::")[-1]
-            if label in self.previously_calculated:
-                cached_values = self.previously_calculated[label]
+            parts = cell_refs[0].split("::")
+            sheet = parts[1]
+            label = parts[2]
+            if sheet in self.previously_calculated and label in self.previously_calculated[sheet]:
+                cached_values = self.previously_calculated[sheet][label]
                 for i, value in enumerate(cached_values):
                     if value != 0:
                         return i
