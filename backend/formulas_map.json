@@ -492,20 +492,21 @@
             "sources": ["{country}\\design-capital-{model}.xlsx::{sheet}::Calculated debt variation:How much to increase"
             ]
         },
-        {
+        {            
             "formula_steps": [
-            { "op": "sum_range", "operands": [["index", 0], ["literal", "all"]], "direction": "backward", "condition": "<0", "result": "temp1" },
-            { "op": "negative", "operands": [["index", "temp1"]], "result": "final" }
+            {"op": "get_cell", "operands": [["index", 0], ["literal", 2]], "result": "temp1"},
+            { "op": "sum_range", "operands": [["index", 1], ["index","temp1"]], "direction": "forward", "from_start": true, "condition": "<0", "result": "temp2"},
+            { "op": "negative", "operands": [["index", "temp2"]], "result": "final" }
             ],
             "target": "How much to be financed",
-            "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::Cash Flow from Assets"
+            "sources": ["{country}\\design-capital-{model}.xlsx::{sheet}::Years realisation",
+            "{country}\\financial-statements-{model}.xlsx::{sheet}::Cash Flow from Assets"
             ]
         },
         {
             "formula_steps": [
             { "op": "get_cell", "operands": [["index", 0], ["literal", 2]], "result": "temp1" },
-            { "op": "get_cell", "operands": [["index", 1], ["literal", 2]], "result": "temp2" },
-            { "op": "multiply_per", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "final" }
+            { "op": "multiply_per", "operands": [["index", "temp1"], ["index", 1]], "result": "final" }
             ],
             "target": "Equity",
             "sources": ["{country}\\design-capital-{model}.xlsx::{sheet}::1. Equity",
@@ -515,8 +516,7 @@
         {
             "formula_steps": [
             { "op": "get_cell", "operands": [["index", 0], ["literal", 2]], "result": "temp1" },
-            { "op": "get_cell", "operands": [["index", 1], ["literal", 2]], "result": "temp2" },
-            { "op": "multiply_per", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "final" }
+            { "op": "multiply_per", "operands": [["index", "temp1"], ["index", 1]], "result": "final" }
             ],
             "target": "Grants",
             "sources": ["{country}\\design-capital-{model}.xlsx::{sheet}::2. Grants",
@@ -533,17 +533,15 @@
         },
         {
             "formula_steps": [
-            { "op": "get_cell", "operands": [["index", 0], ["literal", 2]], "result": "temp1" },
             { "op": "get_cell", "operands": [["index", 1], ["literal", 2]], "result": "temp2" },
-            { "op": "get_cell", "operands": [["index", 2], ["literal", 2]], "result": "temp3" },
             { "op": "get_cell", "operands": [["index", 3], ["literal", 2]], "result": "temp4" },
             {"op": "value", "operands": [["index", 4], ["literal", 0]], "result": "temp5" },
-            {"op": "multiply_per", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "temp6" },
-            {"op": "multiply_per", "operands": [["index", "temp3"], ["index", "temp4"]], "result": "temp7" },
+            {"op": "multiply_per", "operands": [["index", 0], ["index", "temp2"]], "result": "temp6" },
+            {"op": "multiply_per", "operands": [["index", 2], ["index", "temp4"]], "result": "temp7" },
             {"op": "subtraction", "operands": [["literal", 100], ["index", "temp5"]], "result": "temp8" },
             {"op": "multiply_per", "operands": [["index", "temp7"], ["index", "temp8"]], "result": "temp9" },
             {"op": "addition", "operands": [["index", "temp6"], ["index", "temp9"]], "result": "temp10" },
-            {"op": "addition", "operands": [["index", "temp1"], ["index", "temp3"]], "result": "temp11" },
+            {"op": "addition", "operands": [["index", 0], ["index", 2]], "result": "temp11" },
             {"op": "safe_divide", "operands": [["index", "temp10"], ["index", "temp11"]], "result": "temp12" },
             {"op": "percentage", "operands": [["index", "temp12"]], "result": "final" }
             ],
@@ -586,29 +584,6 @@
         },
         {
             "formula_steps": [
-                { "op": "get_cell", "operands": [["index", 0], ["literal", 2]], "result": "temp1" },
-                { "op": "addition", "operands": [["index", 1], ["index", 5]], "result": "temp2" },
-                { "op": "multiply_per", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "temp3" },
-                { "op": "addition", "operands": [["index", 2], ["index", 6]], "result": "temp4" },
-                { "op": "addition", "operands": [["index", 3], ["index", 7]], "result": "temp5" },
-                { "op": "addition", "operands": [["index", "temp3"], ["index", "temp4"]], "result": "temp6" },
-                { "op": "addition", "operands": [["index", "temp6"], ["index", "temp5"]], "result": "temp7" },
-                { "op": "addition", "operands": [["index", "temp7"], ["index", 4]], "result": "temp8" },
-                { "op": "negative", "operands": [["index", "temp8"]], "result": "final" }
-            ],
-            "target": "Annual Cost of Service",
-            "sources": ["{country}\\design-capital-{model}.xlsx::Electricity & E-Cooking::WACC",
-                "{country}\\capex-fuels-{model}.xlsx::Electricity & E-Cooking::GRID:RAB",
-                "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity & E-Cooking::GRID:OPEX",
-                "{country}\\capex-fuels-{model}.xlsx::Electricity & E-Cooking::GRID:Total Annual Depreciation",
-                "{country}\\financial-statements-{model}.xlsx::{sheet}::Upstream Cost of Energy",
-                "{country}\\capex-fuels-{model}.xlsx::Electricity & E-Cooking::OFF-GRID:RAB",
-                "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity & E-Cooking::OFF-GRID:OPEX",
-                "{country}\\capex-fuels-{model}.xlsx::Electricity & E-Cooking::OFF-GRID:Total Annual Depreciation"
-            ]
-        },
-        {
-            "formula_steps": [
             { "op": "addition", "operands": [["index", 1], ["index", 2]], "result": "temp1" },
             { "op": "addition", "operands": [["index", 3], ["index", 4]], "result": "temp2" },
             { "op": "multiply", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "temp3" },
@@ -616,7 +591,7 @@
             { "op": "subtraction", "operands": [["index", "temp4"], ["index", "temp3"]], "result": "final" }
             ],
             "target": "Long term subsidies",
-            "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::Annual Cost of Service",
+            "sources": ["{country}\\financial-statements-{model}.xlsx::Electricity & E-Cooking::Annual Cost of Service",
             "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity & E-Cooking::GRID:Tariff",
             "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity & E-Cooking::OFF-GRID:Tariff",
             "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity & E-Cooking::GRID:Demand",
@@ -683,7 +658,7 @@
             { "op": "get_cell", "operands": [["index", 0], ["literal", 2]], "result": "E81" },
             { "op": "get_cell", "operands": [["index", 1], ["literal", 2]], "result": "E82" },
             {"op": "sum_range", "operands": [["index", 2], ["literal", "all"]], "direction": "backward", "result": "A165"},
-            {"op": "value", "operands": [["index", 3], ["literal", 0]],"result": "D152" },
+            {"op": "range", "operands": [["index", 3]],"result": "D152" },
             {"op": "index_match", "operands": [["index", 2]], "result": "nonzero_index"},
             {"op": "addition", "operands": [["index", "D152"], ["index", "nonzero_index"]], "result": "A164"},
             {"op": "addition", "operands": [["index", "E81"], ["index", "A164"]], "result": "grace_index"},
@@ -738,29 +713,6 @@
         },
         {
             "formula_steps": [
-            { "op": "get_cell", "operands": [["index", 0], ["literal", 2]], "result": "temp1" },
-            { "op": "addition", "operands": [["index", 1], ["index", 5]], "result": "temp2" },
-            { "op": "multiply_per", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "temp3" },
-            { "op": "addition", "operands": [["index", 2], ["index", 6]], "result": "temp4" },
-            { "op": "addition", "operands": [["index", 3], ["index", 7]], "result": "temp5" },
-            { "op": "addition", "operands": [["index", "temp3"], ["index", "temp4"]], "result": "temp6" },
-            { "op": "addition", "operands": [["index", "temp5"], ["index", "temp6"]], "result": "temp7" },
-            { "op": "addition", "operands": [["index", "temp7"], ["index", 4]], "result": "temp8" },
-            { "op": "negative", "operands": [["index", "temp8"]], "result": "final" }
-            ],
-            "target": "Annual Cost of Service",
-            "sources": ["{country}\\design-capital-{model}.xlsx::Electricity (Low access)::WACC",
-            "{country}\\capex-fuels-{model}.xlsx::Electricity (Low access)::GRID:RAB",
-            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity (Low access)::GRID:OPEX",
-            "{country}\\capex-fuels-{model}.xlsx::Electricity (Low access)::GRID:Total Annual Depreciation",
-            "{country}\\financial-statements-{model}.xlsx::{sheet}::Upstream Cost of Energy",
-            "{country}\\capex-fuels-{model}.xlsx::Electricity (Low access)::OFF-GRID:RAB",
-            "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity (Low access)::OFF-GRID:OPEX",
-            "{country}\\capex-fuels-{model}.xlsx::Electricity (Low access)::OFF-GRID:Total Annual Depreciation"
-            ]
-        },
-        {
-            "formula_steps": [
             { "op": "addition", "operands": [["index", 1], ["index", 2]], "result": "temp1" },
             { "op": "addition", "operands": [["index", 3], ["index", 4]], "result": "temp2" },
             { "op": "multiply", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "temp3" },
@@ -768,7 +720,7 @@
             { "op": "subtraction", "operands": [["index", "temp4"], ["index", "temp3"]], "result": "final" }
             ],
             "target": "Long term subsidies",
-            "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::Annual Cost of Service",
+            "sources": ["{country}\\financial-statements-{model}.xlsx::Electricity (Low access)::Annual Cost of Service",
             "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity (Low access)::GRID:Tariff",
             "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity (Low access)::OFF-GRID:Tariff",
             "{country}\\technoeconomic-inputs-{model}.xlsx::Electricity (Low access)::GRID:Demand",
@@ -865,8 +817,7 @@
     "Electricity (Only E-Cooking)": [
         {
             "formula_steps": [
-            { "op": "subtraction", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
-            { "op": "negative", "operands": [["index", "temp1"]], "result": "final" }
+            { "op": "subtraction", "operands": [["index", 0], ["index", 1]], "result": "final"}
             ],
             "target": "Annual Cost of Service",
             "sources": ["{country}\\financial-statements-{model}.xlsx::Electricity & E-Cooking::Annual Cost of Service",
@@ -926,6 +877,15 @@
             "target": "GRANTS:+ Increase",
             "sources": ["{country}\\financial-statements-{model}.xlsx::Electricity & E-Cooking::GRANTS:+ Increase",
             "{country}\\financial-statements-{model}.xlsx::Electricity (Low access)::GRANTS:+ Increase"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "subtraction", "operands": [["index", 0], ["index", 1]], "result": "final"}
+            ],
+            "target": "GRANTS:- Realisation",
+            "sources": ["{country}\\financial-statements-{model}.xlsx::Electricity & E-Cooking::GRANTS:- Realisation",
+            "{country}\\financial-statements-{model}.xlsx::Electricity (Low access)::GRANTS:- Realisation"
             ]
         },
         {
@@ -1017,18 +977,22 @@
         {
             "formula_steps": [
             { "op": "get_cell", "operands": [["index", 0], ["literal", 2]], "result": "temp1" },
-            { "op": "multiply_per", "operands": [["index", "temp1"], ["index", 1]], "result": "temp2" },
+            { "op": "multiply", "operands": [["index", "temp1"], ["index", 1]], "result": "temp2" },
             { "op": "addition", "operands": [["index", "temp2"], ["index", 2]], "result": "temp3" },
             { "op": "addition", "operands": [["index", "temp3"], ["index", 3]], "result": "temp4" },
-            { "op": "subtraction", "operands": [["index", "temp4"], ["index", 4]], "result": "temp5" },
-            { "op": "negative", "operands": [["index", "temp5"]], "result": "final" }
+            { "op": "addition", "operands": [["index", "temp4"], ["index", 4]], "result": "temp5" },
+            { "op": "addition", "operands": [["index", "temp5"], ["index", 5]], "result": "temp6" },
+            { "op": "addition", "operands": [["index", "temp5"], ["index", 6]], "result": "temp7" },
+            { "op": "negative", "operands": [["index", "temp7"]], "result": "final" }
             ],
             "target": "Annual Cost of Service",
             "sources": ["{country}\\design-capital-{model}.xlsx::{sheet}::WACC",
-            "{country}\\capex-fuels-{model}.xlsx::{sheet}::RAB",
-            "{country}\\technoeconomic-inputs-{model}.xlsx::{sheet}::OPEX",
-            "{country}\\capex-fuels-{model}.xlsx::{sheet}::Total Annual Depreciation",
-            "{country}\\financial-statements-{model}.xlsx::{sheet}::Upstream Cost of Energy"
+            "{country}\\financial-statements-{model}.xlsx::{sheet}::PP&E - EoP",
+            "{country}\\financial-statements-{model}.xlsx::{sheet}::OPEX",
+            "{country}\\financial-statements-{model}.xlsx::{sheet}::Provisions for bad debt",
+            "{country}\\financial-statements-{model}.xlsx::{sheet}::D&A",
+            "{country}\\financial-statements-{model}.xlsx::{sheet}::- (+/-) Change in WC",
+            "{country}\\financial-statements-{model}.xlsx::{sheet}::Taxes"
             ]
         },
         {
@@ -1065,7 +1029,9 @@
         },
         {
             "formula_steps": [
-            { "op": "negative", "operands": [["index", 0]], "result": "final" }
+            { "op": "negative", "operands": [["index", 0]], "result": "temp1" },
+            { "op": "lt", "operands": [["index", "temp1"], ["literal", 0]], "result": "temp2" },
+            { "op": "if", "operands": [["index", "temp2"], ["index", "temp1"], ["index", 0]], "result": "final"}
             ],
             "target": "OPEX",
             "sources": ["{country}\\technoeconomic-inputs-{model}.xlsx::{sheet}::OPEX"
@@ -1249,6 +1215,14 @@
         },
         {
             "formula_steps": [
+            { "op": "negative", "operands": [["index", 0]], "result": "final" }
+            ],
+            "target": "- (+/-) Change in WC",
+            "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::Variation"
+            ]
+        },
+        {
+            "formula_steps": [
             { "op": "get_cell", "operands": [["index", 0], ["literal", 2]], "result": "temp1" },
             { "op": "get_cell", "operands": [["index", 1], ["literal", 2]], "result": "temp2" },
             { "op": "multiply_per", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "temp3"},
@@ -1324,14 +1298,6 @@
         },
         {
             "formula_steps": [
-            { "op": "copy", "operands": [["index", 0]], "result": "final" }
-            ],
-            "target": "Grants/Sub-debt financing",
-            "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::GRANTS:+ Increase"
-            ]
-        },
-        {
-            "formula_steps": [
                 {"op": "get_cell", "operands": [["index", 1], ["literal", 2]], "result": "temp1"},
                 { "op": "sum_range", "operands": [["index", 0], ["index","temp1"]], "direction": "forward", "from_start": true, "result": "temp2"},
                 {"op": "safe_divide", "operands": [["index", 0], ["index", "temp2"]], "result": "temp3"},
@@ -1346,14 +1312,26 @@
         },
         {
             "formula_steps": [
-            {"op": "value", "operands": [["index", 0], ["literal", 0]],"result": "temp1"},
-            {"op": "multiply_per", "operands": [["index", "temp1"], ["index", 1]],"direction": "backward", "result": "temp2"},
-            {"op": "negative", "operands": [["index", "temp2"]], "result": "final"}
+            { "op": "get_cell", "operands": [["index", 0], ["literal", 2]], "result": "temp1" },
+            { "op": "get_cell", "operands": [["index", 1], ["literal", 2]], "result": "temp2" },
+            { "op": "multiply_per", "operands": [["index", "temp1"], ["index", "2"]], "result": "temp3"},
+            {"op": "set_values", "operands": [["index", "temp3"], ["literal", 1], ["literal", 0]], "result": "temp4"},
+            {"op": "multiply_per", "operands": [["index", "temp4"], ["index", 1]],"direction": "backward", "result": "temp5"},
+            {"op": "negative", "operands": [["index", "temp5"]], "result": "final"}
             ],
             "target": "GRANTS:- Realisation",
             "sources": [
-                "{country}\\financial-statements-{model}.xlsx::{sheet}::GRANTS:+ Increase",
+                "{country}\\design-capital-{model}.xlsx::{sheet}::How much to be financed",
+                "{country}\\design-capital-{model}.xlsx::{sheet}::2. Grants",
                 "{country}\\financial-statements-{model}.xlsx::{sheet}::GRANTS:- Realisation (% capex)"
+            ]
+        },
+        {
+            "formula_steps": [
+            {"op": "negative", "operands": [["index", 0]], "result": "final"}
+            ],
+            "target": "Grants/Sub-debt financing",
+            "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::GRANTS:- Realisation"
             ]
         },
         {
@@ -1426,7 +1404,7 @@
             "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::Grants"
             ]
         },
-        {
+                {
             "formula_steps": [
             { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
             { "op": "addition", "operands": [["index", "temp1"], ["index", 2]], "result": "final" }
@@ -1450,8 +1428,7 @@
         {
             "formula_steps": [
             { "op": "safe_divide", "operands": [["index", 1], ["index", 0]], "result": "temp1" },
-            { "op": "negative", "operands": [["index", "temp1"]], "result": "temp2" },
-            { "op": "percentage", "operands": [["index", "temp2"]], "result": "final" }
+            { "op": "percentage", "operands": [["index", "temp1"]], "result": "final" }
             ],
             "target": "Grants:% Revenues",
             "sources": [
@@ -1486,7 +1463,8 @@
         {
             "formula_steps": [
             { "op": "safe_divide", "operands": [["index", 1], ["index", 0]], "result": "temp1" },
-            { "op": "percentage", "operands": [["index", "temp1"]], "result": "final" }
+            { "op": "percentage", "operands": [["index", "temp1"]], "result": "temp2" },
+            { "op": "negative", "operands": [["index", "temp2"]], "result": "final"}
             ],
             "target": "Annual Cost of Service:% Revenues",
             "sources": [
@@ -1771,14 +1749,6 @@
         },
         {
             "formula_steps": [
-            { "op": "negative", "operands": [["index", 0]], "result": "final" }
-            ],
-            "target": "- (+/-) Change in WC",
-            "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::Variation"
-            ]
-        },
-        {
-            "formula_steps": [
             { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
             { "op": "addition", "operands": [["index", "temp1"], ["index", 2]], "result": "final" }
             ],
@@ -1852,12 +1822,11 @@
         {
             "formula_steps": [
             { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
-            { "op": "set_values", "operands": [["index", 3], ["literal", 1], ["literal", 0]], "result": "temp2"},
-            { "op": "addition", "operands": [["index", 2], ["index", "temp2"]], "result": "temp3"},
-            { "op": "set_values", "operands": [["index", 5], ["literal", 1], ["literal", 0]], "result": "temp4"},
-            { "op": "addition", "operands": [["index", 4], ["index", "temp4"]], "result": "temp5" },
-            { "op": "addition", "operands": [["index", "temp1"], ["index", "temp3"]], "result": "temp6" },
-            { "op": "addition", "operands": [["index", "temp5"], ["index", "temp6"]], "result": "final" }
+            { "op": "addition", "operands": [["index", 2], ["index", 3]], "result": "temp2"},
+            { "op": "set_values", "operands": [["index", 5], ["literal", 1], ["literal", 0]], "result": "temp3"},
+            { "op": "addition", "operands": [["index", 4], ["index", "temp3"]], "result": "temp4" },
+            { "op": "addition", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "temp5" },
+            { "op": "addition", "operands": [["index", "temp4"], ["index", "temp5"]], "result": "final" }
             ],
             "target": "Financing Cash Flow",
             "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::Financial Expense",
@@ -1910,7 +1879,7 @@
             { "op": "offset", "operands": [["index", 0], ["literal", 1]], "result": "temp1" },
             { "op": "set_values", "operands": [["index", 1], ["literal", 1], ["literal", 0]], "result": "temp2"},
             { "op": "addition", "operands": [["index", "temp1"], ["index", "temp2"]], "result": "temp3"},
-            { "op": "addition", "operands": [["index", 2], ["index", 3]], "result": "temp4"},
+            { "op": "subtraction", "operands": [["index", 2], ["index", 3]], "result": "temp4"},
             { "op": "addition", "operands": [["index", "temp3"], ["index", "temp4"]], "result": "final"}
             ],
             "target": "Equity - EoP",

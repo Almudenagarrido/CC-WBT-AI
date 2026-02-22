@@ -39,6 +39,9 @@ class ExcelFormulaProcessor:
     def __init__(self):
         self.previously_calculated = {}
         self.amount_targets = ["How much to be financed", "Equity", "Equity - GRID", "Equity - OFF-GRID", "Grants", "Grants - GRID", "Grants - OFF-GRID","Debt", "Debt - GRID", "Debt - OFF-GRID", "WACC", "WACC - GRID", "WACC - OFF-GRID"]
+        self.max_iterations = 10
+        self.convergence_threshold = 0.01
+        self.iteration_values = {}
     
     @lru_cache(maxsize=10)
     def _get_workbook(self, file_path, read_only=False, data_only=False):
@@ -167,6 +170,7 @@ class ExcelFormulaProcessor:
             )
             
             year_range = self._get_config_value(country, "COUNTRY_YEAR_RANGES")
+
             self._process_formulas_sheet_file(file_path_norm, expanded_formulas, year_range)
                 
             if just_uploaded:
@@ -305,40 +309,102 @@ class ExcelFormulaProcessor:
         
         return specific_values
     
-    def _process_formulas_sheet_file(self, file_path, formulas_sheet_file, year_range):
+    def _snapshot_sheet_values(self, ws, year_range, formulas):
+        snapshot = {}
         
+        for formula in formulas:
+            target_label = formula.get("target", "")
+            if not target_label:
+                continue
+                
+            target_cells = self._find_cells_from_target_label(
+                target_label, ws, year_range, ws.parent.path
+            )
+            
+            if target_cells:
+                values = []
+                for cell in target_cells:
+                    val = ws[cell].value
+                    try:
+                        values.append(float(val) if val is not None else 0)
+                    except (ValueError, TypeError):
+                        values.append(0)
+                
+                snapshot[target_label] = values
+        
+        return snapshot
+
+    def _calculate_change_ratio(self, before, after):
+
+        if not before or not after:
+            return 1.0
+        
+        max_ratio = 0
+        
+        for key in before:
+            if key in after:
+                b_vals = before[key]
+                a_vals = after[key]
+                
+                for (b, a) in zip(b_vals, a_vals):
+                    if abs(b) > self.convergence_threshold or abs(a) > self.convergence_threshold:
+                        denominator = max(abs(b), abs(a), 1.0)
+                        ratio = abs(a - b) / denominator
+                        max_ratio = max(max_ratio, ratio)
+        
+        return max_ratio
+
+    def _process_formulas_sheet_file(self, file_path, formulas_sheet_file, year_range):
+    
         self.clear_workbook_cache()
         wb = load_workbook(file_path)
         
         try:
-            changes_made = False
-            for sheet_name, formulas in formulas_sheet_file.items():
-                
-                if sheet_name not in self.previously_calculated:
-                    self.previously_calculated[sheet_name] = {}
-
-                if sheet_name not in wb.sheetnames:
-                    continue
-                
-                ws = wb[sheet_name]                
-                for formula in formulas:
-                    try:
-                        formula_changed = self._execute_single_formula(ws, formula, year_range, file_path)
-                        if formula_changed:
-                            changes_made = True
-                    except Exception as e:
-                        continue
+            self.iteration_values = {}
+            changes_by_iteration = []
             
-            if changes_made:
-                #self._apply_number_formatting(ws, year_range)
-                wb.save(file_path)
+            for _ in range(self.max_iterations):
+                iteration_changes = 0
+                max_change_ratio = 0
+                
+                for sheet_name, formulas in formulas_sheet_file.items():
+                    
+                    if sheet_name not in self.previously_calculated:
+                        self.previously_calculated[sheet_name] = {}
+
+                    if sheet_name not in wb.sheetnames:
+                        continue
+                    
+                    ws = wb[sheet_name]
+                    
+                    before_values = self._snapshot_sheet_values(ws, year_range, formulas)
+                    
+                    for formula in formulas:
+                        try:
+                            formula_changed = self._execute_single_formula(ws, formula, year_range, file_path)
+                            if formula_changed:
+                                iteration_changes += 1
+                        except Exception as e:
+                            continue
+                    
+                    after_values = self._snapshot_sheet_values(ws, year_range, formulas)
+                    change_ratio = self._calculate_change_ratio(before_values, after_values)
+                    max_change_ratio = max(max_change_ratio, change_ratio)
+                
+                changes_by_iteration.append(iteration_changes)
+                
+                if iteration_changes > 0:
+                    wb.save(file_path)
+                
+                if max_change_ratio < self.convergence_threshold:
+                    break
             
         except Exception as e:
             traceback.print_exc()
         finally:
             if hasattr(wb, 'close'):
                 wb.close()
-    
+
     def _execute_single_formula(self, ws, formula, year_range, file_path):
         try:
             target_label = formula["target"]

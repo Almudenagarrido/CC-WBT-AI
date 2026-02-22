@@ -180,7 +180,6 @@ class DesignCapitalStructure:
             for section, input_name, col, value, error in invalid_cells:
                 st.warning(f"Section '{section}' - Row '{input_name}' - Column '{col}': {error} (Current value: {value})")
 
-        # Botón Reset (igual que TechnoEconomicInputs)
         if st.button("Reset"):
             reset = u.reset_sheet_in_backend(self.route, self.template_route, self.fuel)
             if reset:
