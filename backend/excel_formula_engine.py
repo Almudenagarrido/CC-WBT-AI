@@ -39,9 +39,6 @@ class ExcelFormulaProcessor:
     def __init__(self):
         self.previously_calculated = {}
         self.amount_targets = ["How much to be financed", "Equity", "Equity - GRID", "Equity - OFF-GRID", "Grants", "Grants - GRID", "Grants - OFF-GRID","Debt", "Debt - GRID", "Debt - OFF-GRID", "WACC", "WACC - GRID", "WACC - OFF-GRID"]
-        self.max_iterations = 10
-        self.convergence_threshold = 0.01
-        self.iteration_values = {}
     
     @lru_cache(maxsize=10)
     def _get_workbook(self, file_path, read_only=False, data_only=False):
@@ -170,7 +167,6 @@ class ExcelFormulaProcessor:
             )
             
             year_range = self._get_config_value(country, "COUNTRY_YEAR_RANGES")
-
             self._process_formulas_sheet_file(file_path_norm, expanded_formulas, year_range)
                 
             if just_uploaded:
@@ -309,102 +305,207 @@ class ExcelFormulaProcessor:
         
         return specific_values
     
-    def _snapshot_sheet_values(self, ws, year_range, formulas):
-        snapshot = {}
-        
-        for formula in formulas:
-            target_label = formula.get("target", "")
-            if not target_label:
-                continue
-                
-            target_cells = self._find_cells_from_target_label(
-                target_label, ws, year_range, ws.parent.path
-            )
-            
-            if target_cells:
-                values = []
-                for cell in target_cells:
-                    val = ws[cell].value
-                    try:
-                        values.append(float(val) if val is not None else 0)
-                    except (ValueError, TypeError):
-                        values.append(0)
-                
-                snapshot[target_label] = values
-        
-        return snapshot
-
-    def _calculate_change_ratio(self, before, after):
-
-        if not before or not after:
-            return 1.0
-        
-        max_ratio = 0
-        
-        for key in before:
-            if key in after:
-                b_vals = before[key]
-                a_vals = after[key]
-                
-                for (b, a) in zip(b_vals, a_vals):
-                    if abs(b) > self.convergence_threshold or abs(a) > self.convergence_threshold:
-                        denominator = max(abs(b), abs(a), 1.0)
-                        ratio = abs(a - b) / denominator
-                        max_ratio = max(max_ratio, ratio)
-        
-        return max_ratio
-
     def _process_formulas_sheet_file(self, file_path, formulas_sheet_file, year_range):
-    
+        
         self.clear_workbook_cache()
         wb = load_workbook(file_path)
         
         try:
-            self.iteration_values = {}
-            changes_by_iteration = []
-            
-            for _ in range(self.max_iterations):
-                iteration_changes = 0
-                max_change_ratio = 0
+            changes_made = False
+            for sheet_name, formulas in formulas_sheet_file.items():
                 
-                for sheet_name, formulas in formulas_sheet_file.items():
-                    
-                    if sheet_name not in self.previously_calculated:
-                        self.previously_calculated[sheet_name] = {}
+                if sheet_name not in self.previously_calculated:
+                    self.previously_calculated[sheet_name] = {}
 
-                    if sheet_name not in wb.sheetnames:
+                if sheet_name not in wb.sheetnames:
+                    continue
+                
+                ws = wb[sheet_name]                
+                for formula in formulas:
+                    try:
+                        formula_changed = self._execute_single_formula(ws, formula, year_range, file_path)
+                        if formula_changed:
+                            changes_made = True
+                    except Exception as e:
                         continue
-                    
-                    ws = wb[sheet_name]
-                    
-                    before_values = self._snapshot_sheet_values(ws, year_range, formulas)
-                    
-                    for formula in formulas:
-                        try:
-                            formula_changed = self._execute_single_formula(ws, formula, year_range, file_path)
-                            if formula_changed:
-                                iteration_changes += 1
-                        except Exception as e:
-                            continue
-                    
-                    after_values = self._snapshot_sheet_values(ws, year_range, formulas)
-                    change_ratio = self._calculate_change_ratio(before_values, after_values)
-                    max_change_ratio = max(max_change_ratio, change_ratio)
-                
-                changes_by_iteration.append(iteration_changes)
-                
-                if iteration_changes > 0:
-                    wb.save(file_path)
-                
-                if max_change_ratio < self.convergence_threshold:
-                    break
+            
+            if changes_made:
+                #self._apply_number_formatting(ws, year_range)
+                wb.save(file_path)
             
         except Exception as e:
             traceback.print_exc()
         finally:
             if hasattr(wb, 'close'):
                 wb.close()
+    
+    # Debugeo
+    """def _execute_single_formula(self, ws, formula, year_range, file_path):
+        try:
+            target_label = formula["target"]
+            self.current_target = target_label
+            source_labels = formula["sources"]
+            formula_steps = formula.get("formula_steps", [])
+            
+            print(f"\n🔍 EJECUTANDO FÓRMULA: '{target_label}'")
+            print(f"📊 Hoja actual: '{ws.title}'")
+            print(f"📝 Fuentes: {source_labels}")
+            print(f"📋 Pasos de fórmula: {formula_steps}")
+            
+            target_cells = self._find_cells_from_target_label(target_label, ws, year_range, file_path)
+            print(f"🎯 Celdas objetivo encontradas: {target_cells} (total: {len(target_cells) if target_cells else 0})")
+            
+            if not target_cells:
+                print(f"  ⚠️ No se encontraron celdas objetivo para '{target_label}'")
+                return False
+            
+            source_cells_list = []
+            for source_idx, source_label in enumerate(source_labels):
+                print(f"  🔍 Procesando fuente {source_idx}: '{source_label}'")
+                cell_refs = self._get_cell_refs_from_source_label(source_label, ws, year_range)
+                
+                if source_label == target_label:
+                    print(f"    📌 Fuente {source_idx} es auto-referencia, reemplazando con CACHED")
+                    cell_refs = [f"CACHED::{ws.title}::{target_label}"]
+                
+                if not cell_refs:
+                    if "config.json" in source_label:
+                        print(f"    📁 Fuente {source_idx} es config.json: '{source_label}'")
+                        source_cells_list.append([source_label])
+                    else:
+                        print(f"    ❌ No se encontraron referencias para fuente '{source_label}'")
+                        return False
+                else:
+                    print(f"    ✅ Fuente {source_idx}: {len(cell_refs)} referencias encontradas")
+                    print(f"       Primeras 3: {cell_refs[:3]}")
+                    source_cells_list.append(cell_refs)
+            
+            current_sheet = ws.title
+            
+            # 🔧 CORRECCIÓN 1: Asegurar que existe el diccionario para la hoja
+            if current_sheet not in self.previously_calculated:
+                print(f"📝 Inicializando caché para hoja '{current_sheet}'")
+                self.previously_calculated[current_sheet] = {}
 
+            # 🔧 CORRECCIÓN 2: VERIFICAR y AJUSTAR el caché para este target
+            if target_label not in self.previously_calculated[current_sheet]:
+                print(f"📝 Creando nuevo caché para target '{target_label}' con {len(target_cells)} posiciones")
+                self.previously_calculated[current_sheet][target_label] = [None] * len(target_cells)
+            else:
+                # Si ya existe, verificar que tenga el tamaño correcto
+                current_cache = self.previously_calculated[current_sheet][target_label]
+                if len(current_cache) != len(target_cells):
+                    print(f"📝 REDIMENSIONANDO caché para '{target_label}' de {len(current_cache)} a {len(target_cells)} posiciones")
+                    new_cache = [None] * len(target_cells)
+                    # Copiar valores existentes donde sea posible
+                    for i in range(min(len(current_cache), len(target_cells))):
+                        new_cache[i] = current_cache[i]
+                    self.previously_calculated[current_sheet][target_label] = new_cache
+                else:
+                    print(f"📝 Caché existente para '{target_label}' con {len(current_cache)} posiciones (correcto)")
+            
+            changes_made = False
+            
+            print(f"\n🔄 Procesando {len(target_cells)} celdas...")
+            
+            for cell_index in range(len(target_cells)):
+                print(f"\n  📍 CELDA {cell_index + 1}/{len(target_cells)}: {target_cells[cell_index]}")
+                current_values = []
+                
+                for src_idx, cell_refs in enumerate(source_cells_list):
+                    print(f"    📍 Fuente {src_idx}:")
+                    
+                    if cell_refs and len(cell_refs) > 0:
+                        if isinstance(cell_refs[0], str) and cell_refs[0].startswith("CACHED::"):
+                            parts = cell_refs[0].split("::")
+                            sheet = parts[1]
+                            label = parts[2]
+                            print(f"      🔄 Usando CACHED[{sheet}][{label}]")
+                            
+                            if sheet in self.previously_calculated and label in self.previously_calculated[sheet]:
+                                cached_array = self.previously_calculated[sheet][label]
+                                print(f"      📊 Array en caché tiene {len(cached_array)} elementos")
+                                
+                                if cell_index < len(cached_array):
+                                    value = cached_array[cell_index]
+                                    print(f"      ✅ Valor en índice {cell_index}: {value}")
+                                else:
+                                    value = 0
+                                    print(f"      ⚠️ Índice {cell_index} fuera de rango (máx: {len(cached_array)-1}) -> 0")
+                            else:
+                                value = 0
+                                print(f"      ⚠️ No hay caché para [{sheet}][{label}] -> 0")
+                        
+                        else:
+                            if "config.json" in str(cell_refs[0]):
+                                ref = cell_refs[0]
+                                print(f"      📁 Leyendo de config.json: {ref}")
+                                value = self._get_cell_value_from_ref(ref, ws, cell_index)
+                                print(f"      📁 Valor: {value}")
+                            else:
+                                if cell_index < len(cell_refs):
+                                    ref = cell_refs[cell_index]
+                                    print(f"      📄 Leyendo celda: {ref}")
+                                    value = self._get_cell_value_from_ref(ref, ws, cell_index)
+                                    print(f"      📄 Valor: {value}")
+                                else:
+                                    value = 0
+                                    print(f"      ⚠️ Índice {cell_index} fuera de rango para referencias (tiene {len(cell_refs)}) -> 0")
+                    else:
+                        value = 0
+                        print(f"      ⚠️ Sin referencias para fuente {src_idx} -> 0")
+                    
+                    current_values.append(value)
+                
+                print(f"    📊 Valores actuales para esta celda: {[round(v, 4) if isinstance(v, (int, float)) else v for v in current_values]}")
+                
+                final_value = self._execute_formula_for_cell(
+                    formula_steps, current_values, source_cells_list, cell_index, ws
+                )
+                
+                print(f"    🧮 Resultado de fórmula: {final_value}")
+                
+                # 🔧 CORRECCIÓN 3: VERIFICAR NUEVAMENTE antes de acceder al caché
+                # (por si acaso algo cambió entre la inicialización y ahora)
+                cache_array = self.previously_calculated[current_sheet][target_label]
+                if cell_index >= len(cache_array):
+                    print(f"    ⚠️ ¡URGENTE! Índice {cell_index} fuera de rango en caché (tamaño: {len(cache_array)})")
+                    print(f"    🔧 Redimensionando caché sobre la marcha...")
+                    # Redimensionar el caché
+                    new_cache = [None] * (cell_index + 1)
+                    for i in range(min(len(cache_array), cell_index + 1)):
+                        new_cache[i] = cache_array[i] if i < len(cache_array) else None
+                    self.previously_calculated[current_sheet][target_label] = new_cache
+                    cache_array = new_cache
+                
+                old_cached = cache_array[cell_index]
+                cache_array[cell_index] = final_value
+                print(f"    💾 Actualizado caché: {old_cached} -> {final_value}")
+                
+                target_cell = target_cells[cell_index]
+                current_target_value = ws[target_cell].value
+                print(f"    📋 Valor actual en Excel: {current_target_value}")
+                
+                if current_target_value != final_value:
+                    ws[target_cell] = final_value
+                    changes_made = True
+                    print(f"    ✅ CAMBIADO: {target_cell} = {final_value}")
+                    if isinstance(final_value, str):
+                        ws[target_cell].number_format = '@'
+                else:
+                    print(f"    ⏭️ Sin cambios (valor ya es correcto)")
+            
+            print(f"\n✅ Fórmula '{target_label}' completada. Cambios realizados: {changes_made}")
+            return changes_made
+
+        except Exception as e:
+            print(f"\n❌ ERROR en fórmula '{target_label if 'target_label' in locals() else 'unknown'}':")
+            print(f"   {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return False
+"""
+    
     def _execute_single_formula(self, ws, formula, year_range, file_path):
         try:
             target_label = formula["target"]
@@ -432,11 +533,19 @@ class ExcelFormulaProcessor:
                     source_cells_list.append(cell_refs)
             
             current_sheet = ws.title
+            
             if current_sheet not in self.previously_calculated:
                 self.previously_calculated[current_sheet] = {}
 
             if target_label not in self.previously_calculated[current_sheet]:
                 self.previously_calculated[current_sheet][target_label] = [None] * len(target_cells)
+            else:
+                current_cache = self.previously_calculated[current_sheet][target_label]
+                if len(current_cache) != len(target_cells):
+                    new_cache = [None] * len(target_cells)
+                    for i in range(min(len(current_cache), len(target_cells))):
+                        new_cache[i] = current_cache[i]
+                    self.previously_calculated[current_sheet][target_label] = new_cache
             
             changes_made = False
             
@@ -451,12 +560,15 @@ class ExcelFormulaProcessor:
                             label = parts[2]
                             
                             if sheet in self.previously_calculated and label in self.previously_calculated[sheet]:
-                                if cell_index < len(self.previously_calculated[sheet][label]):
-                                    value = self.previously_calculated[sheet][label][cell_index]
+                                cached_array = self.previously_calculated[sheet][label]
+                                
+                                if cell_index < len(cached_array):
+                                    value = cached_array[cell_index]
                                 else:
                                     value = 0
                             else:
                                 value = 0
+                        
                         else:
                             if "config.json" in str(cell_refs[0]):
                                 ref = cell_refs[0]
@@ -476,7 +588,15 @@ class ExcelFormulaProcessor:
                     formula_steps, current_values, source_cells_list, cell_index, ws
                 )
                 
-                self.previously_calculated[current_sheet][target_label][cell_index] = final_value
+                cache_array = self.previously_calculated[current_sheet][target_label]
+                if cell_index >= len(cache_array):
+                    new_cache = [None] * (cell_index + 1)
+                    for i in range(min(len(cache_array), cell_index + 1)):
+                        new_cache[i] = cache_array[i] if i < len(cache_array) else None
+                    self.previously_calculated[current_sheet][target_label] = new_cache
+                    cache_array = new_cache
+                
+                cache_array[cell_index] = final_value
                 
                 target_cell = target_cells[cell_index]
                 current_target_value = ws[target_cell].value
@@ -694,7 +814,7 @@ class ExcelFormulaProcessor:
             cell_refs.append(ref)
         
         return cell_refs
-
+    
     def _find_cells_from_target_label(self, target_label, worksheet, year_range, file_path):
         
         label_parts = target_label.split(":")
