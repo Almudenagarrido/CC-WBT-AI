@@ -1,7 +1,15 @@
 import os
+import json
 import utils as u
 import pandas as pd
 import streamlit as st
+
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FRONTEND_DIR = os.path.dirname(BASE_DIR)
+PROJECT_ROOT = os.path.dirname(FRONTEND_DIR)
+BACKEND_DIR = os.path.join(PROJECT_ROOT, "backend")
+CONFIG_FILE = os.path.join(BACKEND_DIR, "config.json")
 
 
 class FinancialStatements:
@@ -13,11 +21,15 @@ class FinancialStatements:
         self.model = model
         self.fuel = fuel
         self.key_fuels = "more_expanded"
+        self.key_fuels_design = "expanded"
         self.route = os.path.join(country, f"financial-statements-{model}.xlsx")
+        self.route_design = os.path.join(country, f"design-capital-{model}.xlsx")
         self.template_route = os.path.join(country, "financial-statements-{model}.xlsx")
+        self.template_route_design = os.path.join(country, "design-capital-{model}.xlsx")
         self.df = None
         self.edited_df = None
         self.subtables = {}
+        self.config = self.load_config()
         self.section_headers = ["Profit & Loss", "Balance Sheet", "Cash Flow Statement", "Property, Plant & Equipement (PP&E) - Capex", "Working Capital Calculations", "Equity Schedule", "Capital Structure"]
         self.subtable_heights = {"Profit & Loss": 1070, "Balance Sheet": 870, "Cash Flow Statement": 580, "Property, Plant & Equipement (PP&E) - Capex": 230, "Working Capital Calculations": 290, "Equity Schedule": 200, "Capital Structure": 410}
         self.empty_rows = {
@@ -27,9 +39,13 @@ class FinancialStatements:
             "Property, Plant & Equipment (PP&E) - Capex": {"col": "", "partial": [], "full": []},
             "Working Capital Calculations": {"col": "", "partial": [], "full": []},
             "Equity Schedule": {"col": "Equity Schedule", "partial": ["+/- Capital Increase/Reduction"], "full": []},
-            "Capital Structure": {"partial": [{"col1": "Capital Structure", "value1": "GRANTS", "col2": "Type", "value2": "+ Increase"}, {"col1": "Capital Structure", "value1": "DEBT", "col2": "Type", "value2": "Interest rate LT"}], "full": []}    
+            "Capital Structure": {"partial": [{"col1": "Capital Structure", "value1": "DEBT", "col2": "Type", "value2": "Interest rate LT"}], "full": []}
         }
-            
+    
+    def load_config(self):
+        with open(CONFIG_FILE, "r") as f:
+            return json.load(f)
+    
     def split_into_subtables(self):
         df = self.df.reset_index(drop=True)
         self.subtables[self.fuel] = {}
@@ -81,6 +97,16 @@ class FinancialStatements:
             self.subtables[self.fuel][section] = edited_df
 
     def __call__(self):
+
+        fuel_design = self.config.get("FUELS", {}).get(self.country, {}).get(self.key_fuels_design, [])[0]
+        _ = u.get_sheet_from_backend(
+            self.country,
+            self.route_design,
+            self.template_route_design,
+            fuel_design,
+            self.key_fuels_design
+        )
+        
         sheet = u.get_sheet_from_backend(
             self.country,
             self.route,
@@ -92,4 +118,3 @@ class FinancialStatements:
         self.df = pd.DataFrame(sheet)
         self.split_into_subtables()
         self.show_excel_editor()
-

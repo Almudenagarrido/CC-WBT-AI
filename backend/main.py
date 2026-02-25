@@ -33,7 +33,7 @@ app = FastAPI()
 excel_processor = ExcelFormulaProcessor()
 
 
-# Countries (GET, POST, COPY, DELETE)
+# Countries (GET, POST, COPY, DOWNLOAD, DELETE)
 class CountryRequest(BaseModel):
     name: str
     tax_rate: int
@@ -177,7 +177,7 @@ def delete_country(request: CountryRequest):
     return {"message": f"Country '{country}' deleted."}
 
 
-# Fuels (GET, POST, DELETE)
+# Fuels (SORT, GET, POST, DELETE)
 class FuelRequest(BaseModel):
     fuel: str
     country: str
@@ -279,7 +279,7 @@ def delete_fuel(request: FuelRequest):
     return {"message": f"Removed entries: {sorted(set(deleted))}"}
 
 
-# Models (GET, POST, DOWNLOAD, DELETE)
+# Models (GET, POST, YEARS, SYNC, DOWNLOAD, UPLOAD, DELETE)
 class ModelRequest(BaseModel):
     country: str
     model: str
@@ -546,7 +546,6 @@ def download_template_file(country, template, model, key_fuels):
         temp_filename = f"synced_{uuid.uuid4().hex[:8]}_{template}"
         temp_file_path = os.path.join(temp_dir, temp_filename)
         
-        # Copiamos y sincronizamos las hojas según los fuels
         sync_sheets_with_fuels(
             country=country,
             route=temp_file_path,
@@ -554,7 +553,6 @@ def download_template_file(country, template, model, key_fuels):
             expected_sheets=expected_sheets
         )
         
-        # Abrimos el archivo temporal para modificar Carbon Credits
         wb = openpyxl.load_workbook(temp_file_path)
         if "Carbon Credits" in wb.sheetnames and model:
             ws = wb["Carbon Credits"]
@@ -904,6 +902,11 @@ async def get_sheet(country, route, template_route, sheet_name, key_fuels):
 
         wb.close()
         excel_processor.clear_workbook_cache()
+        
+        only_e_cooking = "Electricity (Only E-Cooking)"
+        if only_e_cooking in expected_sheets:
+            fuels = [f for f in fuels if f != only_e_cooking] + [only_e_cooking]
+
         excel_processor.apply_formulas(
             file_path=route,
             formulas_json_path=JSON_FORMULAS,

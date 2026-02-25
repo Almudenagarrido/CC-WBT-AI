@@ -13,7 +13,7 @@ def get_base64_of_bin_file(bin_file):
     return base64.b64encode(data).decode()
 
 
-# Countries (GET, POST, COPY, DELETE)
+# Countries (GET, POST, COPY, DOWNLOAD, DELETE)
 def get_countries_from_backend():
     try:
         response = requests.get(f"{API_URL}/countries")
@@ -116,7 +116,7 @@ def delete_fuel_from_backend(fuel, country):
         return False
 
 
-# Models (GET, POST, DOWNLOAD, DELETE)
+# Models (GET, POST, DOWNLOAD, UPLOAD, DELETE)
 def get_models_from_backend():
     try:
         country = st.session_state.country

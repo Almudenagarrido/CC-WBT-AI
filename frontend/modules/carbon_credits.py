@@ -212,8 +212,6 @@ class CarbonCredits:
         baseline_df = df[baseline_mask]
 
         year_cols = self.editable_columns.get(section, [])
-
-        # Filtrar solo las columnas que realmente existen
         existing_year_cols = [c for c in year_cols if c in baseline_df.columns]
 
         if not existing_year_cols:
@@ -221,7 +219,6 @@ class CarbonCredits:
 
         values = baseline_df[existing_year_cols].values.flatten()
 
-        # Comprobar si hay algún valor definido
         has_values = any(pd.notna(v) and str(v).strip() not in ["", "-", "0"] for v in values)
 
         if not has_values:

@@ -19,8 +19,11 @@ class TechnologyUpstreams:
         self.country = country
         self.subsection = subsection
         self.model = model
+        self.route_ffss = os.path.join(country, f"financial-statements-{model}.xlsx")
+        self.template_route_ffss = os.path.join(country, "financial-statements-{model}.xlsx")
         self.fuel = fuel
         self.key_fuels = "normal"
+        self.key_fuels_ffss = "more_expanded"
         self.config = self.load_config()
         self.year_range = self._get_year_range()
         self.inflation_rate = self._get_inflation_rate()
@@ -175,18 +178,34 @@ class TechnologyUpstreams:
         empty_rows = self.empty_rows.get(self.fuel, self.empty_rows["LPG"])
         
         self.excel_editor.load_data(df, self.fuel, height, self.editable_columns, empty_rows)
-        self.edited_df = self.excel_editor.show()
+        self.edited_df = self.excel_editor.show(decimals=2)
         
         if st.button("Save", key=f"save_upstream_{self.country}_{self.model}_{self.fuel}"):
             self._save_upstream_data()
             st.success(f"Upstream Configuration for {self.fuel} saved successfully.")
-            time.sleep(2)
+            
+            fuel_ffss = self.config.get("FUELS", {}).get(self.country, {}).get(self.key_fuels_ffss, [])[0]
+            _ = u.get_sheet_from_backend(
+                self.country,
+                self.route_ffss,
+                self.template_route_ffss,
+                fuel_ffss,
+                self.key_fuels_ffss
+            )
             st.rerun()
     
         if st.button("Reset", key=f"reset_upstream_{self.country}_{self.model}_{self.fuel}"):
             self._reset_upstream_data()
             st.success(f"Upstream Configuration for {self.fuel} reset successfully.")
-            time.sleep(2)
+            
+            fuel_ffss = self.config.get("FUELS", {}).get(self.country, {}).get(self.key_fuels_ffss, [])[0]
+            _ = u.get_sheet_from_backend(
+                self.country,
+                self.route_ffss,
+                self.template_route_ffss,
+                fuel_ffss,
+                self.key_fuels_ffss
+            )
             st.rerun()
     
     def __call__(self):

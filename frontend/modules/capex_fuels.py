@@ -88,7 +88,7 @@ class CapexFuelMarket:
 
             height = self.df_heights.get(self.fuel, self.df_heights["LPG"])
             
-            if self.fuel == "Electricity" and key in ["Grid", "Off-Grid"]:
+            if "Electricity" in self.fuel and key in ["Grid", "Off-Grid"]:
                 empty_rows = self.empty_rows.get(self.fuel, {}).get(key, {})
             else:
                 empty_rows = self.empty_rows.get(self.fuel, {})

@@ -20,58 +20,28 @@ class DesignCapitalStructure:
         self.edited_df = None
         self.subtables = {}
         self.important_cols = ["Division", "Units", "Amount", "FFSS - Outputs", "FFSS - Inputs", "Type", "Financiation", "Total", "Category"]
-        if self.fuel and "electricity" in self.fuel.lower():
-            self.section_headers = ["Division - GRID", "Division - OFF-GRID", "FFSS - Outputs", "FFSS - Inputs", "Financiation", "Total - GRID", "Total - OFF-GRID",]
-            self.subtable_heights = {
-                "Division - GRID": 240,
-                "Division - OFF-GRID": 240,
-                "FFSS - Outputs": 120,
-                "FFSS - Inputs": 90,
-                "Financiation": 70,
-                "Total - GRID": 155,
-                "Total - OFF-GRID": 155,
-            }
-            self.editable_columns = {
-                "Division - GRID": ["Amount"],
-                "Division - OFF-GRID": ["Amount"],
-                "FFSS - Outputs": [],
-                "FFSS - Inputs": [str(year) for year in range(2020, 2061)],
-                "Financiation": [],
-                "Total - GRID": ["Amount"],
-                "Total - OFF-GRID": ["Amount"]
-            }
-            self.empty_rows = {
-                "Division - GRID": {"col": "Division - GRID", "partial": [], "full": ["3. Debt - GRID"], "target_columns": ["Amount"]},
-                "Division - OFF-GRID": {"col": "Division - OFF-GRID", "partial": [], "full": ["3. Debt - OFF-GRID"], "target_columns": ["Amount"]},
-                "FFSS - Outputs": {"col": "", "partial": [], "full": []},
-                "FFSS - Inputs": {"col": "", "partial": [], "full": []},
-                "Financiation": {"col": "", "partial": [], "full": []},
-                "Total - GRID": {"col": "", "partial": [], "full": []},
-                "Total - OFF-GRID": {"col": "", "partial": [], "full": []}
-            }
-        else:
-            self.section_headers = ["Division", "FFSS - Outputs", "FFSS - Inputs", "Financiation", "Total"]
-            self.subtable_heights = {
-                "Division": 240,
-                "FFSS - Outputs": 120,
-                "FFSS - Inputs": 90,
-                "Financiation": 70,
-                "Total": 155
-            }
-            self.editable_columns = {
-                "Division": ["Amount"],
-                "FFSS - Outputs": [],
-                "FFSS - Inputs": [str(year) for year in range(2020, 2061)],
-                "Financiation": [],
-                "Total": ["Amount"]
-            }
-            self.empty_rows = {
-                "Division": {"col": "Division", "partial": [], "full": ["3. Debt"], "target_columns": ["Amount"]},
-                "FFSS - Outputs": {"col": "", "partial": [], "full": []},
-                "FFSS - Inputs": {"col": "", "partial": [], "full": []},
-                "Financiation": {"col": "", "partial": [], "full": []},
-                "Total": {"col": "", "partial": [], "full": []}
-            }
+        self.section_headers = ["Division", "FFSS - Outputs", "FFSS - Inputs", "Financiation", "Total"]
+        self.subtable_heights = {
+            "Division": 270,
+            "FFSS - Outputs": 120,
+            "FFSS - Inputs": 90,
+            "Financiation": 70,
+            "Total": 155
+        }
+        self.editable_columns = {
+            "Division": ["Amount"],
+            "FFSS - Outputs": [],
+            "FFSS - Inputs": [str(year) for year in range(2020, 2061)],
+            "Financiation": [],
+            "Total": ["Amount"]
+        }
+        self.empty_rows = {
+            "Division": {"col": "Division", "partial": [], "full": ["3. Debt"], "target_columns": ["Amount"]},
+            "FFSS - Outputs": {"col": "", "partial": [], "full": []},
+            "FFSS - Inputs": {"col": "", "partial": [], "full": []},
+            "Financiation": {"col": "", "partial": [], "full": []},
+            "Total": {"col": "", "partial": [], "full": []}
+        }
 
     def split_into_subtables(self):
     
@@ -191,7 +161,7 @@ class DesignCapitalStructure:
             editable_cols = self.editable_columns.get(section, self.editable_columns[self.section_headers[0]])
             empty_rows = self.empty_rows.get(section, self.empty_rows[self.section_headers[0]])
             
-            self.excel_editor.load_data(df, f"{self.fuel}_{section}_editor",height, editable_cols, empty_rows)
+            self.excel_editor.load_data(df, f"{self.fuel}_{section}_editor", height, editable_cols, empty_rows)
             edited_df = self.excel_editor.show()
             self.subtables[self.fuel][section] = edited_df
     
@@ -210,7 +180,6 @@ class DesignCapitalStructure:
             for section, input_name, col, value, error in invalid_cells:
                 st.warning(f"Section '{section}' - Row '{input_name}' - Column '{col}': {error} (Current value: {value})")
 
-        # Botón Reset (igual que TechnoEconomicInputs)
         if st.button("Reset"):
             reset = u.reset_sheet_in_backend(self.route, self.template_route, self.fuel)
             if reset:

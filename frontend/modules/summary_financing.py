@@ -110,11 +110,6 @@ class SummaryFinancing:
             fuel_values = fuels if has_fuel else [""]
             sheet_values = sheets if has_sheet else [""]
             more_sheet_values = more_sheets if has_more_sheet else [""]
-            
-            """if "{fuel}" in graph_data:
-                fuel_values = graph_data["{fuel}"]
-            if "{more_sheet}" in graph_data:
-                more_sheet_values = graph_data["{more_sheet}"]"""
 
             for country_val, model_val, fuel_val, sheet_val, more_sheet_val in product(country_values, model_values, fuel_values, sheet_values, more_sheet_values):
                 expanded_name = graph_raw_name
