@@ -643,29 +643,6 @@
         },
         {
             "formula_steps": [
-            { "op": "get_cell", "operands": [["index", 0], ["literal", 2]], "result": "E81" },
-            { "op": "get_cell", "operands": [["index", 1], ["literal", 2]], "result": "E82" },
-            {"op": "sum_range", "operands": [["index", 2], ["literal", "all"]], "direction": "backward", "result": "A165"},
-            {"op": "range", "operands": [["index", 3]],"result": "D152" },
-            {"op": "index_match", "operands": [["index", 2]], "result": "nonzero_index"},
-            {"op": "addition", "operands": [["index", "D152"], ["index", "nonzero_index"]], "result": "A164"},
-            {"op": "addition", "operands": [["index", "E81"], ["index", "A164"]], "result": "grace_index"},
-            {"op": "gt_eq", "operands": [["index", "D152"], ["index", "grace_index"]], "result": "inside_condition"},
-            {"op": "safe_divide", "operands": [["index", "A165"], ["index", "E82"]], "result": "division"},
-            {"op": "if", "operands": [["index", "inside_condition"], ["index", "division"], ["literal", 0]], "result": "inside_if"},
-            {"op": "eq", "operands": [["index", "A165"], ["literal", 0]], "result": "outside_condition"},
-            {"op": "if", "operands": [["index", "outside_condition"], ["index", "inside_if"], ["literal", 0]], "result": "outside_if"},
-            {"op": "negative", "operands": [["index", "outside_if"]], "result": "final"}
-            ],
-            "target": "DEBT:- Repayment",
-            "sources": ["{country}\\design-capital-{model}.xlsx::Electricity & E-Cooking::Grace period",
-            "{country}\\design-capital-{model}.xlsx::Electricity & E-Cooking::Amortization period",
-            "{country}\\financial-statements-{model}.xlsx::Electricity & E-Cooking::DEBT:+ Increase",
-            "config.json::{country}::COUNTRY_YEAR_RANGES:start"
-            ]
-        },
-        {
-            "formula_steps": [
             { "op": "get_cell", "operands": [["index", 0], ["literal", 2]], "result": "final" }
             ],
             "target": "DEBT:Interest rate LT",
@@ -783,29 +760,6 @@
             "target": "+/- Capital Increase/Reduction",
             "sources": ["{country}\\design-capital-{model}.xlsx::Electricity (Low access)::How much to be financed",
             "{country}\\design-capital-{model}.xlsx::Electricity (Low access)::1. Equity"
-            ]
-        },
-        {
-            "formula_steps": [
-            { "op": "get_cell", "operands": [["index", 0], ["literal", 2]], "result": "E81" },
-            { "op": "get_cell", "operands": [["index", 1], ["literal", 2]], "result": "E82" },
-            {"op": "sum_range", "operands": [["index", 2], ["literal", "all"]], "direction": "backward", "result": "A165"},
-            {"op": "value", "operands": [["index", 3], ["literal", 0]],"result": "D152" },
-            {"op": "index_match", "operands": [["index", 2]], "result": "nonzero_index"},
-            {"op": "addition", "operands": [["index", "D152"], ["index", "nonzero_index"]], "result": "A164"},
-            {"op": "addition", "operands": [["index", "E81"], ["index", "A164"]], "result": "grace_index"},
-            {"op": "gt_eq", "operands": [["index", "D152"], ["index", "grace_index"]], "result": "inside_condition"},
-            {"op": "safe_divide", "operands": [["index", "A165"], ["index", "E82"]], "result": "division"},
-            {"op": "if", "operands": [["index", "inside_condition"], ["index", "division"], ["literal", 0]], "result": "inside_if"},
-            {"op": "eq", "operands": [["index", "A165"], ["literal", 0]], "result": "outside_condition"},
-            {"op": "if", "operands": [["index", "outside_condition"], ["index", "inside_if"], ["literal", 0]], "result": "outside_if"},
-            {"op": "negative", "operands": [["index", "outside_if"]], "result": "final"}
-            ],
-            "target": "DEBT:- Repayment",
-            "sources": ["{country}\\design-capital-{model}.xlsx::Electricity (Low access)::Grace period",
-            "{country}\\design-capital-{model}.xlsx::Electricity (Low access)::Amortization period",
-            "{country}\\financial-statements-{model}.xlsx::Electricity (Low access)::DEBT:+ Increase",
-            "config.json::{country}::COUNTRY_YEAR_RANGES:start"
             ]
         },
         {
@@ -1279,15 +1233,16 @@
             { "op": "get_cell", "operands": [["index", 0], ["literal", 2]], "result": "E81" },
             { "op": "get_cell", "operands": [["index", 1], ["literal", 2]], "result": "E82" },
             {"op": "sum_range", "operands": [["index", 2], ["literal", "all"]], "direction": "backward", "result": "A165"},
-            {"op": "value", "operands": [["index", 3], ["literal", 0]],"result": "D152" },
+            {"op": "value", "operands": [["index", 3], ["index", 0]],"result": "$D$152" },
+            {"op": "range", "operands": [["index", 3]],"result": "D152" },
             {"op": "index_match", "operands": [["index", 2]], "result": "nonzero_index"},
-            {"op": "addition", "operands": [["index", "D152"], ["index", "nonzero_index"]], "result": "A164"},
+            {"op": "addition", "operands": [["index", "$D$152"], ["index", "nonzero_index"]], "result": "A164"},
             {"op": "addition", "operands": [["index", "E81"], ["index", "A164"]], "result": "grace_index"},
             {"op": "gt_eq", "operands": [["index", "D152"], ["index", "grace_index"]], "result": "inside_condition"},
             {"op": "safe_divide", "operands": [["index", "A165"], ["index", "E82"]], "result": "division"},
             {"op": "if", "operands": [["index", "inside_condition"], ["index", "division"], ["literal", 0]], "result": "inside_if"},
             {"op": "eq", "operands": [["index", "A165"], ["literal", 0]], "result": "outside_condition"},
-            {"op": "if", "operands": [["index", "outside_condition"], ["index", "inside_if"], ["literal", 0]], "result": "outside_if"},
+            {"op": "if", "operands": [["index", "outside_condition"], ["literal", 0], ["index", "inside_if"]], "result": "outside_if"},
             {"op": "negative", "operands": [["index", "outside_if"]], "result": "final"}
             ],
             "target": "DEBT:- Repayment",
@@ -1345,6 +1300,14 @@
                 "{country}\\design-capital-{model}.xlsx::{sheet}::How much to be financed",
                 "{country}\\design-capital-{model}.xlsx::{sheet}::2. Grants",
                 "{country}\\financial-statements-{model}.xlsx::{sheet}::GRANTS:- Realisation (% capex)"
+            ]
+        },
+        {
+            "formula_steps": [
+            { "op": "negative", "operands": [["index", 0]], "result": "final" }
+            ],
+            "target": "GRANTS:+ Increase",
+            "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::GRANTS:- Realisation"
             ]
         },
         {
