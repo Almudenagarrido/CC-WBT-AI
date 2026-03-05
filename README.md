@@ -291,7 +291,7 @@ When the Streamlit interface opens in your browser:
    - **Grants share**, and
    - **Debt parameters**, including cost of debt, grace period, and amortization period.
 
-   **7.5.2 Financial Structure Support Scheme (FFSS)**
+   **7.5.2 Financial Statements (FFSS)**
 
    Based on the defined capital structure, the application computes intermediate financing requirements, such as:
    - calculated debt needs, and
