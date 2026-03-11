@@ -4,7 +4,7 @@ FinanCCe is a Streamlit-based application with a Python API backend designed to 
 
 FinanCCe enables side-by-side comparison of different financing strategies applied to the same techno-economic configuration, helping users understand trade-offs across cost recovery, capital allocation, and long-term financial performance. The Streamlit frontend provides an interactive user interface, while the backend (served with Uvicorn) handles calculations and supporting services.
 
--- 
+--- 
 
 ## Key Capabilities
 
@@ -361,3 +361,11 @@ When the Streamlit interface opens in your browser:
 ## Stopping the Application
 
 To stop FinanCCe, press `Ctrl + C` in **both terminals**.
+
+---
+
+## Acknowledgments
+
+FinanCCe has been developed by researchers at the [Instituto de Investigación Tecnológica](https://www.iit.comillas.edu/). Key contributors include [Almudena Garrido](https://www.linkedin.com/in/almudena-garridogp), [Santos Diaz](https://www.linkedin.com/in/santos-diazpastor), and [Pablo Duenas](https://www.linkedin.com/in/pablo-duenas-martinez).
+
+FinanCCe has also benefited from the support and collaboration of [Sustainable Energy for All (SE4All)](https://www.seforall.org/), whose engagement has been instrumental in the development of this work.
