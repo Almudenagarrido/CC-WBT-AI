@@ -32,6 +32,8 @@ OPS_MAP = {
     "percentage": lambda x: x*100,
     "int": lambda x: int(x)
 }
+CIRCULAR_MAX_ITER = 10
+CIRCULAR_TOLERANCE = 1e-10
 
 
 class ExcelFormulaProcessor:
@@ -320,20 +322,80 @@ class ExcelFormulaProcessor:
                 if sheet_name not in wb.sheetnames:
                     continue
                 
-                ws = wb[sheet_name]                
-                for formula in formulas:
+                ws = wb[sheet_name]
+
+                non_circular_formulas = [
+                    f for f in formulas
+                    if not f.get("circular", False) and not f.get("post_circular", False)
+                ]
+                circular_formulas = [f for f in formulas if f.get("circular", False)]
+                post_circular_formulas = [f for f in formulas if f.get("post_circular", False)]
+
+                for formula in non_circular_formulas:
                     try:
                         formula_changed = self._execute_single_formula(ws, formula, year_range, file_path)
                         if formula_changed:
                             changes_made = True
-                    except Exception as e:
+                    except Exception:
                         continue
-            
+
+                if circular_formulas:
+                    for _ in range(CIRCULAR_MAX_ITER):
+                        prev_values = {}
+                        for formula in circular_formulas:
+                            target = formula["target"]
+                            if target in self.previously_calculated.get(sheet_name, {}):
+                                prev_values[target] = list(
+                                    self.previously_calculated[sheet_name][target]
+                                )
+
+                        for formula in circular_formulas:
+                            try:
+                                formula_changed = self._execute_single_formula(
+                                    ws, formula, year_range, file_path
+                                )
+                                current = self.previously_calculated.get(sheet_name, {}).get(formula["target"], [])
+                                if formula_changed:
+                                    changes_made = True
+                            except Exception as e:
+                                continue
+
+                        converged = True
+                        for formula in circular_formulas:
+                            target = formula["target"]
+                            if target not in prev_values:
+                                converged = False
+                                break
+                            current = self.previously_calculated.get(sheet_name, {}).get(target, [])
+                            previous = prev_values[target]
+                            max_delta = 0.0
+                            for c, p in zip(current, previous):
+                                if c is None or p is None:
+                                    converged = False
+                                    break
+                                delta = abs(c - p)
+                                max_delta = max(max_delta, delta)
+                                if delta > CIRCULAR_TOLERANCE:
+                                    converged = False
+                            if not converged:
+                                break
+
+                        if converged:
+                            break
+
+                for formula in post_circular_formulas:
+                    try:
+                        formula_changed = self._execute_single_formula(ws, formula, year_range, file_path)
+                        if formula_changed:
+                            changes_made = True
+                    except Exception:
+                        continue
+
             if changes_made:
-                #self._apply_number_formatting(ws, year_range)
                 wb.save(file_path)
             
-        except Exception as e:
+        except Exception:
+            import traceback
             traceback.print_exc()
         finally:
             if hasattr(wb, 'close'):
