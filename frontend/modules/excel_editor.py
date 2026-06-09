@@ -152,7 +152,10 @@ class ExcelEditor:
                             if pd.notna(df_filtered.at[idx, col]):
                                 df_filtered.at[idx, col] = round(float(df_filtered.at[idx, col]), 0)
         
-        
+        for col in df_filtered.columns:
+            if col in self.year_columns:
+                df_filtered[col] = pd.to_numeric(df_filtered[col], errors='coerce')
+
         gb = GridOptionsBuilder.from_dataframe(df_filtered)
         
         for col in df_filtered.columns:
