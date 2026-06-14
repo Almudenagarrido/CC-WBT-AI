@@ -584,8 +584,7 @@
         {
             "circular": true,
             "formula_steps": [
-            { "op": "subtraction", "operands": [["index", 0], ["index", 1]], "result": "temp1"},
-            { "op": "max", "operands": [["literal", 0], ["index", "temp1"]], "result": "final"}
+            { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "final" }
             ],
             "target": "Long term subsidies",
             "sources": ["{country}\\financial-statements-{model}.xlsx::Electricity & E-Cooking::Annual Cost of Service",
@@ -697,8 +696,7 @@
         {
             "circular": true,
             "formula_steps": [
-            { "op": "subtraction", "operands": [["index", 0], ["index", 1]], "result": "temp1"},
-            { "op": "max", "operands": [["literal", 0], ["index", "temp1"]], "result": "final"}
+            { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "final" }
             ],
             "target": "Long term subsidies",
             "sources": ["{country}\\financial-statements-{model}.xlsx::Electricity (Low access)::Annual Cost of Service",
@@ -944,8 +942,7 @@
         {
             "circular": true,
             "formula_steps": [
-            { "op": "subtraction", "operands": [["index", 0], ["index", 1]], "result": "temp1"},
-            { "op": "max", "operands": [["literal", 0], ["index", "temp1"]], "result": "final"}
+            { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "final" }
             ],
             "target": "Long term subsidies",
             "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::Annual Cost of Service",
