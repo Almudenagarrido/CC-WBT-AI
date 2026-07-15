@@ -584,11 +584,12 @@
         {
             "circular": true,
             "formula_steps": [
-            { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "final" }
-            ],
-            "target": "Long term subsidies",
-            "sources": ["{country}\\financial-statements-{model}.xlsx::Electricity & E-Cooking::Annual Cost of Service",
-            "{country}\\financial-statements-{model}.xlsx::Electricity & E-Cooking::Tariff Income - Energy & SHS"
+                { "op": "subtraction", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
+                { "op": "max", "operands": [["index", "temp1"], ["literal", 0]], "result": "final" }
+                ],
+                "target": "Long term subsidies",
+                "sources": ["{country}\\financial-statements-{model}.xlsx::Electricity & E-Cooking::Annual Cost of Service",
+                "{country}\\financial-statements-{model}.xlsx::Electricity & E-Cooking::Tariff Income - Energy & SHS"
             ]
         },
         {
@@ -696,7 +697,8 @@
         {
             "circular": true,
             "formula_steps": [
-            { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "final" }
+            { "op": "subtraction", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
+            { "op": "max", "operands": [["index", "temp1"], ["literal", 0]], "result": "final" }
             ],
             "target": "Long term subsidies",
             "sources": ["{country}\\financial-statements-{model}.xlsx::Electricity (Low access)::Annual Cost of Service",
@@ -942,7 +944,8 @@
         {
             "circular": true,
             "formula_steps": [
-            { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "final" }
+            { "op": "subtraction", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
+            { "op": "max", "operands": [["index", "temp1"], ["literal", 0]], "result": "final" }
             ],
             "target": "Long term subsidies",
             "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::Annual Cost of Service",
@@ -1789,14 +1792,18 @@
         },
         {
             "formula_steps": [
-            { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
-            { "op": "addition", "operands": [["index", "temp1"], ["index", 2]], "result": "temp2" },
-            { "op": "max", "operands": [["index", "temp2"], ["literal", 0]], "result": "final" }
+                { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
+                { "op": "addition", "operands": [["index", "temp1"], ["index", 2]], "result": "temp2" },
+                { "op": "max", "operands": [["index", "temp2"], ["literal", 0]], "result": "temp3" },
+                { "op": "offset", "operands": [["index", 3], ["literal", 1]], "result": "temp4" },
+                { "op": "gt_eq", "operands": [["index", "temp4"], ["literal", 0]], "result": "temp5" },
+                { "op": "if", "operands": [["index", "temp5"], ["index", "temp3"], ["literal", 0]], "result": "final" }
             ],
             "target": "- Dividends (% Net Income)",
             "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::Cash Flow from Assets",
             "{country}\\financial-statements-{model}.xlsx::{sheet}::Financial Expense",
-            "{country}\\financial-statements-{model}.xlsx::{sheet}::Debt repayment"
+            "{country}\\financial-statements-{model}.xlsx::{sheet}::Debt repayment",
+            "{country}\\financial-statements-{model}.xlsx::{sheet}::Cash EoP"
             ]
         },
         {
