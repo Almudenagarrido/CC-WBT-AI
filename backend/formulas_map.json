@@ -533,23 +533,21 @@
         },
         {
             "formula_steps": [
-            {"op": "get_cell", "operands": [["index", 1], ["literal", 2]], "result": "cost_equity"},
-            {"op": "multiply_per", "operands": [["index", 0], ["index", "cost_equity"]], "result": "E_re"},
-            {"op": "get_cell", "operands": [["index", 3], ["literal", 2]], "result": "cost_debt"},
-            {"op": "multiply_per", "operands": [["index", 2], ["index", "cost_debt"]], "result": "D_rd"},
-            {"op": "subtraction", "operands": [["literal", 100], ["index", 4]], "result": "tax_rate"},
-            {"op": "multiply_per", "operands": [["index", "D_rd"], ["index", "tax_rate"]], "result": "temp1"},
-            {"op": "addition", "operands": [["index", "E_re"], ["index", "temp1"]], "result": "temp2"},
-            {"op": "addition", "operands": [["index", 0], ["index", 2]], "result": "E_D"},
-            {"op": "divide", "operands": [["index", "temp2"], ["index", "E_D"]], "result": "temp3"},
-            {"op": "multiply", "operands": [["literal", 100], ["index", "temp3"]], "result": "final"}
+                {"op": "get_cell", "operands": [["index", 1], ["literal", 2]], "result": "cost_equity"},
+                {"op": "multiply_per", "operands": [["index", 0], ["index", "cost_equity"]], "result": "E_re"},
+                {"op": "get_cell", "operands": [["index", 3], ["literal", 2]], "result": "cost_debt"},
+                {"op": "multiply_per", "operands": [["index", 2], ["index", "cost_debt"]], "result": "D_rd"},
+                {"op": "addition", "operands": [["index", "E_re"], ["index", "D_rd"]], "result": "temp2"},
+                {"op": "addition", "operands": [["index", 0], ["index", 2]], "result": "E_D"},
+                {"op": "divide", "operands": [["index", "temp2"], ["index", "E_D"]], "result": "temp3"},
+                {"op": "multiply", "operands": [["literal", 100], ["index", "temp3"]], "result": "final"}
             ],
             "target": "WACC",
-            "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::Equity - EoP",
-            "{country}\\design-capital-{model}.xlsx::{sheet}::Cost of Equity",
-            "{country}\\financial-statements-{model}.xlsx::{sheet}::DEBT:EoP",
-            "{country}\\design-capital-{model}.xlsx::{sheet}::Cost of Debt",
-            "{country}\\financial-statements-{model}.xlsx::{sheet}::% Tax rate"
+            "sources": [
+                "{country}\\design-capital-{model}.xlsx::{sheet}::Equity",
+                "{country}\\design-capital-{model}.xlsx::{sheet}::Cost of Equity",
+                "{country}\\design-capital-{model}.xlsx::{sheet}::Debt",
+                "{country}\\design-capital-{model}.xlsx::{sheet}::Cost of Debt"
             ]
         }
     ]
@@ -584,12 +582,12 @@
         {
             "circular": true,
             "formula_steps": [
-            { "op": "subtraction", "operands": [["index", 0], ["index", 1]], "result": "temp1"},
-            { "op": "max", "operands": [["literal", 0], ["index", "temp1"]], "result": "final"}
-            ],
-            "target": "Long term subsidies",
-            "sources": ["{country}\\financial-statements-{model}.xlsx::Electricity & E-Cooking::Annual Cost of Service",
-            "{country}\\financial-statements-{model}.xlsx::Electricity & E-Cooking::Tariff Income - Energy & SHS"
+                { "op": "subtraction", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
+                { "op": "max", "operands": [["index", "temp1"], ["literal", 0]], "result": "final" }
+                ],
+                "target": "Long term subsidies",
+                "sources": ["{country}\\financial-statements-{model}.xlsx::Electricity & E-Cooking::Annual Cost of Service",
+                "{country}\\financial-statements-{model}.xlsx::Electricity & E-Cooking::Tariff Income - Energy & SHS"
             ]
         },
         {
@@ -697,8 +695,8 @@
         {
             "circular": true,
             "formula_steps": [
-            { "op": "subtraction", "operands": [["index", 0], ["index", 1]], "result": "temp1"},
-            { "op": "max", "operands": [["literal", 0], ["index", "temp1"]], "result": "final"}
+            { "op": "subtraction", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
+            { "op": "max", "operands": [["index", "temp1"], ["literal", 0]], "result": "final" }
             ],
             "target": "Long term subsidies",
             "sources": ["{country}\\financial-statements-{model}.xlsx::Electricity (Low access)::Annual Cost of Service",
@@ -944,8 +942,8 @@
         {
             "circular": true,
             "formula_steps": [
-            { "op": "subtraction", "operands": [["index", 0], ["index", 1]], "result": "temp1"},
-            { "op": "max", "operands": [["literal", 0], ["index", "temp1"]], "result": "final"}
+            { "op": "subtraction", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
+            { "op": "max", "operands": [["index", "temp1"], ["literal", 0]], "result": "final" }
             ],
             "target": "Long term subsidies",
             "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::Annual Cost of Service",
@@ -1271,18 +1269,17 @@
         },
         {
             "formula_steps": [
-            { "op": "value", "operands": [["index", 0], ["index", 0]], "result": "temp1"},
-            { "op": "set_values", "operands": [["index", 0], ["literal", 1], ["index", "temp1"]], "result": "temp2"},
-            { "op": "get_cell", "operands": [["index", 1], ["literal", 2]], "result": "temp3" },
-            { "op": "multiply_per", "operands": [["index", "temp2"], ["index", "temp3"]], "result": "temp4"},
-            {"op": "multiply_per", "operands": [["index", "temp4"], ["index", 2]],"direction": "backward", "result": "temp5"},
-            {"op": "negative", "operands": [["index", "temp5"]], "result": "final"}
+                {"op": "get_cell", "operands": [["index", 2], ["literal", 2]], "result": "pct_grants"},
+                {"op": "multiply_per", "operands": [["index", 0], ["index", "pct_grants"]], "result": "temp1"},
+                {"op": "get_cell", "operands": [["index", 1], ["literal", 2]], "result": "years_real"},
+                {"op": "set_values", "operands": [["index", "temp1"], ["index", "years_real"], ["literal", 0]], "result": "temp2"},
+                {"op": "negative", "operands": [["index", "temp2"]], "result": "final"}
             ],
             "target": "GRANTS:- Realisation",
             "sources": [
-                "{country}\\design-capital-{model}.xlsx::{sheet}::How much to be financed",
-                "{country}\\design-capital-{model}.xlsx::{sheet}::2. Grants",
-                "{country}\\financial-statements-{model}.xlsx::{sheet}::GRANTS:- Realisation (% capex)"
+                "{country}\\financial-statements-{model}.xlsx::{sheet}::CAPEX",
+                "{country}\\design-capital-{model}.xlsx::{sheet}::Years realisation",
+                "{country}\\design-capital-{model}.xlsx::{sheet}::2. Grants"
             ]
         },
         {
@@ -1792,14 +1789,18 @@
         },
         {
             "formula_steps": [
-            { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
-            { "op": "addition", "operands": [["index", "temp1"], ["index", 2]], "result": "temp2" },
-            { "op": "max", "operands": [["index", "temp2"], ["literal", 0]], "result": "final" }
+                { "op": "addition", "operands": [["index", 0], ["index", 1]], "result": "temp1" },
+                { "op": "addition", "operands": [["index", "temp1"], ["index", 2]], "result": "temp2" },
+                { "op": "max", "operands": [["index", "temp2"], ["literal", 0]], "result": "temp3" },
+                { "op": "offset", "operands": [["index", 3], ["literal", 1]], "result": "temp4" },
+                { "op": "gt_eq", "operands": [["index", "temp4"], ["literal", 0]], "result": "temp5" },
+                { "op": "if", "operands": [["index", "temp5"], ["index", "temp3"], ["literal", 0]], "result": "final" }
             ],
             "target": "- Dividends (% Net Income)",
             "sources": ["{country}\\financial-statements-{model}.xlsx::{sheet}::Cash Flow from Assets",
             "{country}\\financial-statements-{model}.xlsx::{sheet}::Financial Expense",
-            "{country}\\financial-statements-{model}.xlsx::{sheet}::Debt repayment"
+            "{country}\\financial-statements-{model}.xlsx::{sheet}::Debt repayment",
+            "{country}\\financial-statements-{model}.xlsx::{sheet}::Cash EoP"
             ]
         },
         {
