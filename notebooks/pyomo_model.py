@@ -16,13 +16,13 @@ def build_model(
     capex_data=None,
     cost_upstream_data=None,
     years_realisation: int = 8,
+    ntlosses_data: dict = None,
+    days_receivable_data: dict = None,
+    days_payable_data: dict = None,
     K1: float = 0.5,
     K2: float = 0.3,
-    NTLOSSES: float = 0.1,
     TAXRATE: float = 0.25,
     pct_grants: float = 0.2,
-    DAYS_PAYABLE: float = 45,
-    DAYS_RECEIVABLE: float = 30,
     N_DEPREC: int = 20,
     N_PERIODS: int = 10,
 ):
@@ -30,7 +30,10 @@ def build_model(
     assert abs((pct_debt + pct_equity + pct_grants) - 1.0) < 1e-9, (
         "pct_debt + pct_equity + pct_grants must equal 1"
     )
- 
+    
+    ntlosses_data        = ntlosses_data        or {t: 0.05 for t in range(N_PERIODS)}
+    days_receivable_data = days_receivable_data or {t: 30.0 for t in range(N_PERIODS)}
+    days_payable_data    = days_payable_data    or {t: 45.0 for t in range(N_PERIODS)}
     capex_data = capex_data or {t: 0.0 for t in range(N_PERIODS)}
     cost_upstream_data = cost_upstream_data or {t: 0.0 for t in range(N_PERIODS)}
     realisation_periods = set(range(years_realisation))
@@ -46,13 +49,13 @@ def build_model(
     model.capex_data = Param(model.T, initialize=capex_data, mutable=True)
     model.cost_upstream_data = Param(model.T, initialize=cost_upstream_data, mutable=True)
  
-    model.K1 = Param(initialize=K1, mutable=True)
-    model.K2 = Param(initialize=K2, mutable=True)
-    model.NTLOSSES = Param(initialize=NTLOSSES, mutable=True)
+    model.K1 = Param(model.T, initialize=K1, mutable=True)
+    model.K2 = Param(model.T, initialize=K2, mutable=True)
+    model.NTLOSSES        = Param(model.T, initialize=ntlosses_data,        mutable=True)
+    model.DAYS_PAYABLE    = Param(model.T, initialize=days_payable_data,    mutable=True)
+    model.DAYS_RECEIVABLE = Param(model.T, initialize=days_receivable_data, mutable=True)
     model.TAXRATE = Param(initialize=TAXRATE, mutable=True)
     model.pct_grants = Param(initialize=pct_grants, mutable=True)
-    model.DAYS_PAYABLE = Param(initialize=DAYS_PAYABLE, mutable=True)
-    model.DAYS_RECEIVABLE = Param(initialize=DAYS_RECEIVABLE, mutable=True)
     model.N_DEPREC = Param(initialize=N_DEPREC, mutable=True)
     model.T2 = Param(initialize=amortization_period, mutable=True)
     model.COST_OF_DEBT = Param(initialize=cost_debt, mutable=True)
@@ -96,9 +99,12 @@ def build_model(
     model.obj = Objective(rule=obj_rule, sense=minimize)
  
     # ----------------- CONSTRAINTS ----------------------
- 
+    def revenues_rule(m, t):
+        return m.tariff_income[t] + m.grants[t] + m.lt_subsidies[t] == m.revenues[t]
+    model.c_revenues = Constraint(model.T, rule=revenues_rule)
+
     def tariff_income_rule(m, t):
-        return m.tariff_income[t] == m.K1 * m.capex_data[t]
+        return m.tariff_income[t] == m.K1[t] * m.capex_data[t]
     model.c_tariff_income = Constraint(model.T, rule=tariff_income_rule)
  
     def grants_rule(m, t):
@@ -107,67 +113,60 @@ def build_model(
         return m.grants[t] == 0
     model.c_grants = Constraint(model.T, rule=grants_rule)
  
-    def revenues_rule(m, t):
-        return m.tariff_income[t] + m.grants[t] + m.lt_subsidies[t] == m.revenues[t]
-    model.c_revenues = Constraint(model.T, rule=revenues_rule)
- 
     def lt_subsidies_rule(m, t):
         return m.lt_subsidies[t] <= m.acofservice[t] - m.tariff_income[t]
     model.c_lt_subsidies = Constraint(model.T, rule=lt_subsidies_rule)
  
-    # upstream_t = COST_UPSTREAM_t * K2 * capex_t
-    def upstream_rule(m, t):
-        return m.upstream[t] == m.cost_upstream_data[t] * m.K2 * m.capex_data[t]
-    model.c_upstream = Constraint(model.T, rule=upstream_rule)
- 
-    # opex_t = K2 * capex_t
-    def opex_rule(m, t):
-        return m.opex[t] == m.K2 * m.capex_data[t]
-    model.c_opex = Constraint(model.T, rule=opex_rule)
- 
-    # provisions_t = NTLOSSES * K1 * capex_t
-    def provisions_rule(m, t):
-        return m.provisions[t] == m.NTLOSSES * m.K1 * m.capex_data[t]
-    model.c_provisions = Constraint(model.T, rule=provisions_rule)
- 
     def costs_rule(m, t):
         return m.upstream[t] + m.opex[t] + m.provisions[t] == m.costs[t]
     model.c_costs = Constraint(model.T, rule=costs_rule)
+
+    def upstream_rule(m, t):
+        return m.upstream[t] == m.cost_upstream_data[t] * m.K2[t] * m.capex_data[t]
+    model.c_upstream = Constraint(model.T, rule=upstream_rule)
  
-    def rab_rule(m, t):
-        if t == first_t:
-            return m.rab[t] == 0
-        return m.rab[t] == m.capex_data[t] - m.da[t] + m.rab[t - 1]
-    model.c_rab = Constraint(model.T, rule=rab_rule)
+    def opex_rule(m, t):
+        return m.opex[t] == m.K2[t] * m.capex_data[t]
+    model.c_opex = Constraint(model.T, rule=opex_rule)
  
-    def treceivables_rule(m, t):
-        return m.treceivables[t] == m.K1 * m.capex_data[t] * m.DAYS_RECEIVABLE / 365
-    model.c_treceivables = Constraint(model.T, rule=treceivables_rule)
- 
-    def tpayables_rule(m, t):
-        return m.tpayables[t] == (m.opex[t] + m.upstream[t]) * m.DAYS_PAYABLE / 365
-    model.c_tpayables = Constraint(model.T, rule=tpayables_rule)
- 
-    def wc_rule(m, t):
-        return m.wc[t] == m.treceivables[t] - m.tpayables[t]
-    model.c_wc = Constraint(model.T, rule=wc_rule)
- 
-    def dwc_rule(m, t):
-        if t == first_t:
-            return m.dwc[t] == 0
-        return m.dwc[t] == m.wc[t] - m.wc[t - 1]
-    model.c_dwc = Constraint(model.T, rule=dwc_rule)
- 
-    def da_rule(m, t):
-        return m.da[t] == (1 / m.N_DEPREC) * sum(m.capex_data[s] for s in m.T if s <= t)
-    model.c_da = Constraint(model.T, rule=da_rule)
- 
+    def provisions_rule(m, t):
+        return m.provisions[t] == m.NTLOSSES[t] * m.K1[t] * m.capex_data[t]
+    model.c_provisions = Constraint(model.T, rule=provisions_rule)
+
     def acofservice_rule(m, t):
         return m.acofservice[t] == (
             m.WACC * m.rab[t] + m.upstream[t] + m.opex[t] + m.provisions[t]
             + m.dwc[t] + m.da[t] + m.taxes[t]
         )
     model.c_acofservice = Constraint(model.T, rule=acofservice_rule)
+ 
+    def rab_rule(m, t):
+        if t == first_t:
+            return m.rab[t] == 0
+        return m.rab[t] == m.capex_data[t] - m.da[t] + m.rab[t - 1]
+    model.c_rab = Constraint(model.T, rule=rab_rule)
+
+    def dwc_rule(m, t):
+        if t == first_t:
+            return m.dwc[t] == 0
+        return m.dwc[t] == m.wc[t] - m.wc[t - 1]
+    model.c_dwc = Constraint(model.T, rule=dwc_rule)
+
+    def wc_rule(m, t):
+        return m.wc[t] == m.treceivables[t] - m.tpayables[t]
+    model.c_wc = Constraint(model.T, rule=wc_rule)
+ 
+    def treceivables_rule(m, t):
+        return m.treceivables[t] == m.K1[t] * m.capex_data[t] * m.DAYS_RECEIVABLE[t] / 365
+    model.c_treceivables = Constraint(model.T, rule=treceivables_rule)
+ 
+    def tpayables_rule(m, t):
+        return m.tpayables[t] == (m.opex[t] + m.upstream[t]) * m.DAYS_PAYABLE[t] / 365
+    model.c_tpayables = Constraint(model.T, rule=tpayables_rule)
+ 
+    def da_rule(m, t):
+        return m.da[t] == (1 / m.N_DEPREC) * sum(m.capex_data[s] for s in m.T if s <= t)
+    model.c_da = Constraint(model.T, rule=da_rule)
  
     def taxes_rule(m, t):
         if t == first_t:
@@ -215,16 +214,25 @@ def build_model(
 def make_capex_data(tech_dict, n_periods):
     grid    = tech_dict.get('GRID',     {}).get('CAPEX - Growth', [])
     offgrid = tech_dict.get('OFF-GRID', {}).get('CAPEX - Growth', [])
-    return {t: (grid[t] if t < len(grid) else 0) + (offgrid[t] if t < len(offgrid) else 0)
-            for t in range(n_periods)}
+    return {t: (grid[t] if t < len(grid) else 0) + (offgrid[t] if t < len(offgrid) else 0) for t in range(n_periods)}
 
 
-def make_k1_k2(tech_dict):
-    grid   = tech_dict.get('GRID', {})
-    capex  = grid.get('CAPEX - Growth', [])
-    demand = grid.get('Demand', [])
-    opex   = grid.get('OPEX',   [])
-    k1 = [c / d for c, d in zip(capex, demand) if d]
-    k2 = [c / o for c, o in zip(capex, opex)   if o]
-    return (sum(k1) / len(k1) if k1 else 0.5,
-            sum(k2) / len(k2) if k2 else 0.3)
+def make_k1_k2(tech_dict, n_periods):
+    grid    = tech_dict.get('GRID',     {})
+    offgrid = tech_dict.get('OFF-GRID', {})
+
+    def _get(d, key): return d.get(key, [])
+
+    capex  = [(_get(grid, 'CAPEX - Growth')[t] if t < len(_get(grid, 'CAPEX - Growth')) else 0)
+             + (_get(offgrid, 'CAPEX - Growth')[t] if t < len(_get(offgrid, 'CAPEX - Growth')) else 0)
+             for t in range(n_periods)]
+    demand = [(_get(grid, 'Demand')[t] if t < len(_get(grid, 'Demand')) else 0)
+             + (_get(offgrid, 'Demand')[t] if t < len(_get(offgrid, 'Demand')) else 0)
+             for t in range(n_periods)]
+    opex   = [(_get(grid, 'OPEX')[t] if t < len(_get(grid, 'OPEX')) else 0)
+             + (_get(offgrid, 'OPEX')[t] if t < len(_get(offgrid, 'OPEX')) else 0)
+             for t in range(n_periods)]
+
+    k1 = {t: (capex[t] / demand[t] if demand[t] else 0.5) for t in range(n_periods)}
+    k2 = {t: (capex[t] / opex[t]   if opex[t]   else 0.3) for t in range(n_periods)}
+    return k1, k2
