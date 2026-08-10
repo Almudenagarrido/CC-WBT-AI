@@ -1,5 +1,5 @@
 from platform import processor
-import os, sys, json, copy, shutil, openpyxl
+import os, sys, json, copy, shutil, openpyxl, pandas as pd, matplotlib.pyplot as plt
 
 
 class PipelineIO:
@@ -37,6 +37,34 @@ class PipelineIO:
                 for cell in row:
                     if isinstance(cell.value, str):
                         cell.value = cell.value.strip()
+
+    def _fill_design_capital_dashes(self, wb):
+        for ws in wb.worksheets:
+            year_start_col = None
+            for row in ws.iter_rows():
+                for cell in row:
+                    val = cell.value
+                    year_int = None
+                    if isinstance(val, int):
+                        year_int = val
+                    elif isinstance(val, str) and val.strip().isdigit():
+                        year_int = int(val.strip())
+                    if year_int is not None and 1900 <= year_int <= 2100:
+                        year_start_col = cell.column
+                        break
+                if year_start_col:
+                    break
+            if not year_start_col:
+                continue
+            for row in ws.iter_rows():
+                row_num = row[0].row
+                all_none = all(
+                    ws.cell(row=row_num, column=col).value is None
+                    for col in range(year_start_col, ws.max_column + 1)
+                )
+                if all_none:
+                    for col in range(year_start_col, ws.max_column + 1):
+                        ws.cell(row=row_num, column=col).value = '-'
 
     def _year_cols(self, ws):
         for row in ws.iter_rows():
@@ -330,6 +358,8 @@ class PipelineIO:
                 wb.remove(wb[s])
             self._strip_cell_strings(wb)
             self._trim_year_columns(wb)
+            if 'design-capital' in fname:
+                self._fill_design_capital_dashes(wb)
             wb.save(fpath); wb.close()
             if wb_t: wb_t.close()
             print(f'  {fname}')
@@ -387,7 +417,122 @@ class PipelineIO:
         finally:
             os.chdir(orig)
 
+    def run_engine_until_convergence(self, max_iter=30, tol=1e-4):
+        design_scalars = [
+            'How much to be financed', 'Equity', 'Grants', 'Debt', 'WACC'
+        ]
+        fin_rows = [
+            'Annual Cost of Service', 'Long term subsidies',
+            'Cash Flow from Assets', 'Operating Cash Flow'
+        ]
+
+        def _read_tracked_values():
+            vals = {}
+
+            # design-capital scalars (column C)
+            wb = openpyxl.load_workbook(self.design_cap_path, data_only=True)
+            for ws in wb.worksheets:
+                for row in ws.iter_rows(max_col=3):
+                    if row[0].value in design_scalars:
+                        key = f"DC::{ws.title}::{row[0].value}"
+                        v = row[2].value
+                        vals[key] = float(v) if isinstance(v, (int, float)) else 0.0
+            wb.close()
+
+            # financial-statements time-series (sum across years as scalar proxy)
+            wb = openpyxl.load_workbook(self.fin_statements_path, data_only=True)
+            for ws in wb.worksheets:
+                for row in ws.iter_rows():
+                    if row[0].value in fin_rows:
+                        year_vals = [
+                            float(c.value) for c in row[3:]
+                            if isinstance(c.value, (int, float))
+                        ]
+                        if year_vals:
+                            key = f"FS::{ws.title}::{row[0].value}"
+                            vals[key] = sum(year_vals)
+            wb.close()
+
+            return vals
+
+        records = []
+        prev_vals = None
+
+        for i in range(max_iter):
+            self.run_engine()
+            curr_vals = _read_tracked_values()
+            record = {'iteration': i + 1, **curr_vals}
+
+            if prev_vals is not None:
+                max_delta = max(
+                    abs(curr_vals.get(k, 0) - prev_vals.get(k, 0))
+                    for k in curr_vals
+                )
+                record['max_delta'] = max_delta
+                if max_delta <= tol:
+                    records.append(record)
+                    df = pd.DataFrame(records)
+                    print(f"  Converged in {i+1} iterations.")
+                    return df
+            else:
+                record['max_delta'] = None
+
+            records.append(record)
+            prev_vals = curr_vals
+
+        print(f"  Warning: did not converge after {max_iter} iterations.")
+        return pd.DataFrame(records)
+    
     # ── Outputs ───────────────────────────────────────────────────────────────
+
+    def plot_convergence(self, df):
+
+        sheet_colors = {
+            'Electricity & E-Cooking':  '#D85A30',
+            'Electricity (Low access)': '#378ADD',
+            'LPG':                      '#1D9E75',
+        }
+        sheet_labels = {
+            'Electricity & E-Cooking':  'E-Cooking',
+            'Electricity (Low access)': 'Low Access',
+            'LPG':                      'LPG',
+        }
+
+        dc_metrics = ['How much to be financed', 'WACC', 'Equity']
+        fs_metrics = ['Cash Flow from Assets', 'Long term subsidies', 'Annual Cost of Service']
+
+        fig, axes = plt.subplots(2, 3, figsize=(15, 7))
+        fig.suptitle('Convergence by iteration', fontsize=13, y=1.01)
+        iters = df['iteration']
+
+        for row, (metrics, prefix) in enumerate([(dc_metrics, 'DC'), (fs_metrics, 'FS')]):
+            for ax, metric in zip(axes[row], metrics):
+                for sheet, color in sheet_colors.items():
+                    col = f'{prefix}::{sheet}::{metric}'
+                    if col in df.columns:
+                        ax.plot(iters, df[col], color=color,
+                                label=sheet_labels[sheet], marker='o', markersize=3, linewidth=1.5)
+                ax.set_title(f'{prefix} — {metric}', fontsize=10)
+                ax.set_xlabel('Iteration', fontsize=8)
+                ax.legend(fontsize=7)
+                ax.grid(True, alpha=0.25)
+
+        plt.tight_layout()
+        plt.show()
+
+        # max_delta en log
+        fig2, ax2 = plt.subplots(figsize=(10, 3.5))
+        valid = df['max_delta'].notna()
+        ax2.plot(iters[valid], df.loc[valid, 'max_delta'], 'k-o', markersize=4, linewidth=1.5)
+        ax2.set_yscale('log')
+        ax2.axhline(1e-4, color='#E24B4A', linestyle='--', linewidth=1, label='Tolerance 1e-4')
+        ax2.set_title('Max Δ per iteration (log scale)', fontsize=11)
+        ax2.set_xlabel('Iteration')
+        ax2.set_ylabel('Max Δ')
+        ax2.legend(fontsize=9)
+        ax2.grid(True, alpha=0.25, which='both')
+        plt.tight_layout()
+        plt.show()
 
     def read_outputs(self, sheet):
         wb = openpyxl.load_workbook(self.fin_statements_path, data_only=True)
