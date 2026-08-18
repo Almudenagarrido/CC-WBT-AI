@@ -13,7 +13,7 @@ def build_model(
     cost_equity: float,
     grace_period: int,        # T1
     amortization_period: int,  # T2
-    capex_data=None,
+    capex_total=0.0,
     cost_upstream_data=None,
     years_realisation: int = 8,
     ntlosses_data: dict = None,
@@ -34,7 +34,6 @@ def build_model(
     ntlosses_data        = ntlosses_data        or {t: 0.05 for t in range(N_PERIODS)}
     days_receivable_data = days_receivable_data or {t: 30.0 for t in range(N_PERIODS)}
     days_payable_data    = days_payable_data    or {t: 45.0 for t in range(N_PERIODS)}
-    capex_data = capex_data or {t: 0.0 for t in range(N_PERIODS)}
     cost_upstream_data = cost_upstream_data or {t: 0.0 for t in range(N_PERIODS)}
     realisation_periods = set(range(years_realisation))
  
@@ -46,7 +45,8 @@ def build_model(
  
     # ------------------ PARAMETERS -----------------------
     # ----------------- model inputs ----------------------
-    model.capex_data = Param(model.T, initialize=capex_data, mutable=True)
+    model.capex_total = Param(initialize=capex_total, mutable=True)
+    model.capex_data  = Var(model.T, within=NonNegativeReals)
     model.cost_upstream_data = Param(model.T, initialize=cost_upstream_data, mutable=True)
  
     model.K1 = Param(initialize=K1, mutable=True)
@@ -72,9 +72,9 @@ def build_model(
     model.upstream = Var(model.T, within=NonNegativeReals)
     model.opex = Var(model.T, within=NonNegativeReals)
     model.provisions = Var(model.T, within=NonNegativeReals)
-    model.costs = Var(model.T, within=Reals)
+    model.costs = Var(model.T, within=NonNegativeReals)
  
-    model.rab = Var(model.T, within=Reals)
+    model.rab = Var(model.T, within=NonNegativeReals)
     model.wc = Var(model.T, within=Reals)
     model.dwc = Var(model.T, within=Reals)
     model.treceivables = Var(model.T, within=NonNegativeReals)
@@ -83,12 +83,12 @@ def build_model(
     model.taxes = Var(model.T, within=NonNegativeReals)
     model.cum = Var(model.T, within=NonNegativeReals)
  
-    model.acofservice = Var(model.T, within=Reals)
+    model.acofservice = Var(model.T, within=NonNegativeReals)
  
     model.ebitda = Var(model.T, within=Reals)
     model.ebit = Var(model.T, within=Reals)
     model.ebt = Var(model.T, within=Reals)
-    model.financial_expenses = Var(model.T, within=Reals)
+    model.financial_expenses = Var(model.T, within=NonNegativeReals)
  
     model.cash_flow_assets = Var(model.T, within=Reals)
     model.debt = Var(model.T, within=NonNegativeReals)
@@ -157,7 +157,7 @@ def build_model(
     model.c_wc = Constraint(model.T, rule=wc_rule)
  
     def treceivables_rule(m, t):
-        return m.treceivables[t] == m.K1 * m.capex_data[t] * m.DAYS_RECEIVABLE[t] / 365
+        return m.treceivables[t] == m.tariff_income[t] * m.DAYS_RECEIVABLE[t] / 365
     model.c_treceivables = Constraint(model.T, rule=treceivables_rule)
  
     def tpayables_rule(m, t):
@@ -199,22 +199,29 @@ def build_model(
     model.c_financial_expenses = Constraint(model.T, rule=financial_expenses_rule)
  
     def cash_flow_assets_rule(m, t):
-        return m.cash_flow_assets[t] == -(
-            m.ebitda[t] - m.taxes[t] - m.dwc[t] - m.capex_data[t]
-        )
+        return m.cash_flow_assets[t] == m.ebitda[t] - m.taxes[t] + m.dwc[t] - m.capex_data[t]
     model.c_cash_flow_assets = Constraint(model.T, rule=cash_flow_assets_rule)
  
     def debt_rule(m, t):
-        return m.debt[t] >= m.cash_flow_assets[t]
+        return m.debt[t] >= -m.cash_flow_assets[t]
     model.c_debt = Constraint(model.T, rule=debt_rule)
  
+    def capex_total_rule(m):
+        return sum(m.capex_data[t] for t in m.T) == m.capex_total
+    model.c_capex_total = Constraint(rule=capex_total_rule)
+
     return model
+
 
 # ----------------- HELPER FUNCTIONS ----------------------
 def make_capex_data(tech_dict, n_periods):
     grid    = tech_dict.get('GRID',     {}).get('CAPEX - Growth', [])
     offgrid = tech_dict.get('OFF-GRID', {}).get('CAPEX - Growth', [])
-    return {t: (grid[t] if t < len(grid) else 0) + (offgrid[t] if t < len(offgrid) else 0) for t in range(n_periods)}
+    return sum(
+        (grid[t]    if t < len(grid)    else 0) +
+        (offgrid[t] if t < len(offgrid) else 0)
+        for t in range(n_periods)
+    )
 
 def make_k1_k2(tech_dict, n_periods):
     grid    = tech_dict.get('GRID',     {})

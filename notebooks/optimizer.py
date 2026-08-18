@@ -7,7 +7,7 @@ def run_optimization(tech_dict, tax_rate, years, search_ranges, fuel_fin=None, f
     optuna.logging.set_verbosity(optuna.logging.WARNING)
 
     n_periods  = len(years)
-    capex_data = make_capex_data(tech_dict, n_periods)
+    capex_total = make_capex_data(tech_dict, n_periods)
     K1, K2     = make_k1_k2(tech_dict, n_periods)
     ff = (fuel_fin or {}).get(fuel_key, {})
     ntlosses_data        = {t: ff.get('NTL',      [5] *n_periods)[t] / 100 for t in range(n_periods)}
@@ -38,7 +38,7 @@ def run_optimization(tech_dict, tax_rate, years, search_ranges, fuel_fin=None, f
                 grace_period=grace,
                 amortization_period=amortization,
                 years_realisation=years_real,
-                capex_data=capex_data,
+                capex_total=capex_total,
                 K1=K1, K2=K2,
                 TAXRATE=tax_rate / 100,
                 ntlosses_data=ntlosses_data,
