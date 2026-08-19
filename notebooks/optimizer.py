@@ -58,7 +58,30 @@ def run_optimization(tech_dict, tax_rate, years, search_ranges, fuel_fin=None, f
     study = optuna.create_study(direction='minimize')
     study.optimize(_trial, n_trials=n_trials)
     p = study.best_params
-    
+    pct_debt_best = 1 - p['pct_equity'] - p['pct_grants']
+
+    best_model = build_model(
+        pct_debt=pct_debt_best,
+        pct_equity=p['pct_equity'],
+        pct_grants=p['pct_grants'],
+        cost_equity=p['cost_equity'],
+        cost_debt=p['cost_debt'],
+        grace_period=p['grace_period'],
+        amortization_period=p['amortization_period'],
+        years_realisation=p['years_realisation'],
+        capex_total=capex_total,
+        K1=K1, K2=K2,
+        TAXRATE=tax_rate / 100,
+        ntlosses_data=ntlosses_data,
+        days_receivable_data=days_receivable_data,
+        days_payable_data=days_payable_data,
+        N_PERIODS=n_periods,
+    )
+    solver.solve(best_model)
+
+    debt_schedule  = [best_model.debt[t].value or 0 for t in range(n_periods)]
+    capex_schedule = [best_model.capex_data[t].value or 0 for t in range(n_periods)]
+
     return {
         'PCT_EQUITY':        round(p['pct_equity']  * 100),
         'COST_OF_EQUITY':    round(p['cost_equity'] * 100),
@@ -67,5 +90,6 @@ def run_optimization(tech_dict, tax_rate, years, search_ranges, fuel_fin=None, f
         'COST_OF_DEBT':      round(p['cost_debt']   * 100),
         'GRACE_PERIOD':      p['grace_period'],
         'AMORTIZATION':      p['amortization_period'],
-        'DEBT_INCREASE':     [0] * n_periods,
+        'DEBT_INCREASE':     debt_schedule,
+        'CAPEX_SCHEDULE':    capex_schedule,
     }
