@@ -21,8 +21,7 @@ class PipelineIO:
         self.fin_statements_path = os.path.join(self.scenario_dir, f'financial-statements-{model}.xlsx')
         self._templates_dir      = os.path.join(backend, '{templates}')
 
-    # ── Internal helpers ──────────────────────────────────────────────────────
-
+    # Internal helpers
     def _load_config(self):
         with open(self.config_path) as f:
             return json.load(f)
@@ -108,8 +107,7 @@ class PipelineIO:
             for col in sorted(cols_to_delete, reverse=True):
                 ws.delete_cols(col)
 
-    # ── Config ────────────────────────────────────────────────────────────────
-
+    # Config
     def write_config_scalar(self, key, value):
         cfg = self._load_config()
         cfg[key][self.country] = value
@@ -127,8 +125,7 @@ class PipelineIO:
         self._save_config(cfg)
         print(f'  config.json -> {key}.{self.model}.{tech}')
 
-    # ── Excel scalar ──────────────────────────────────────────────────────────
-
+    # Excel scalar
     def write_excel_scalar(self, filepath, sheet, param, value):
         wb = openpyxl.load_workbook(filepath)
         for row in wb[sheet].iter_rows(max_col=3):
@@ -137,8 +134,7 @@ class PipelineIO:
         wb.save(filepath); wb.close()
         print(f'  {os.path.basename(filepath)} / {sheet} -> {param} = {value}')
 
-    # ── Time series (fuel-financial-inputs format) ────────────────────────────
-
+    # Time series
     def write_timeseries_list(self, filepath, sheet, param, values):
         wb = openpyxl.load_workbook(filepath)
         ws = wb[sheet]
@@ -161,8 +157,7 @@ class PipelineIO:
         wb.save(filepath); wb.close()
         print(f'  {os.path.basename(filepath)} / {sheet} -> {param} (first year)')
 
-    # ── Technoeconomic with System column (electricity sheets) ────────────────
-
+    # Technoeconomic (system column)
     def write_techno_list(self, sheet, system, param, values):
         wb = openpyxl.load_workbook(self.techno_path)
         ws = wb[sheet]
@@ -185,8 +180,7 @@ class PipelineIO:
         wb.save(self.techno_path); wb.close()
         print(f'  technoeconomic / {sheet} -> {system}/D&A (first year)')
 
-    # ── Technoeconomic without System column (LPG sheet) ─────────────────────
-
+    # Technoeconomic (other technologies)
     def write_techno_nosystem_list(self, sheet, param, values):
         wb = openpyxl.load_workbook(self.techno_path)
         ws = wb[sheet]
@@ -209,8 +203,23 @@ class PipelineIO:
         wb.save(self.techno_path); wb.close()
         print(f'  technoeconomic / {sheet} -> D&A (first year)')
 
-    # ── Design capital — debt ─────────────────────────────────────────────────
-
+    # Design capital (debt)
+    def read_required_debt(self, sheet):
+        wb = openpyxl.load_workbook(self.design_cap_path, data_only=True)
+        ws = wb[sheet]
+        yc = self._year_cols(ws)
+        result = [0.0] * len(yc)
+        for row in ws.iter_rows():
+            if (row[0].value == 'Calculated debt variation'
+                    and row[1].value == 'How much to increase'):
+                result = [
+                    float(row[ci].value) if isinstance(row[ci].value, (int, float)) else 0.0
+                    for ci in yc
+                ]
+                break
+        wb.close()
+        return result
+    
     def write_design_debt_list(self, sheet, values):
         wb = openpyxl.load_workbook(self.design_cap_path)
         ws = wb[sheet]
@@ -223,8 +232,7 @@ class PipelineIO:
         wb.save(self.design_cap_path); wb.close()
         print(f'  design-capital / {sheet} -> User-defined debt increase')
 
-    # ── Carbon credits ────────────────────────────────────────────────────────
-
+    # Carbon credits
     def write_carbon_row(self, param, values):
         wb = openpyxl.load_workbook(self.carbon_credits_path)
         ws = wb['Carbon Credits']
@@ -250,8 +258,7 @@ class PipelineIO:
         wb.save(self.carbon_credits_path); wb.close()
         print(f'  carbon-credits.xlsx -> {param}')
 
-    # ── Model management ──────────────────────────────────────────────────────
-
+    # Model management 
     def get_expanded_sheets(self):
         cfg           = self._load_config()
         elec_variants = set(cfg.get('ELECTRICITY_VARIANTS', []))
@@ -321,8 +328,7 @@ class PipelineIO:
                     wb = openpyxl.load_workbook(fpath, read_only=True)
                     actual = set(wb.sheetnames); wb.close()
                     if actual != set(expected):
-                        needs_create.append((fname, level, expected,
-                                            f'current sheets={actual}, expected={set(expected)}'))
+                        needs_create.append((fname, level, expected, f'current sheets={actual}, expected={set(expected)}'))
                 except Exception:
                     needs_create.append((fname, level, expected, 'corrupted file — will recreate'))
 
@@ -370,8 +376,7 @@ class PipelineIO:
         self._save_config(cfg)
         print(f'Model {self.model} ready.')
 
-    # ── Engine ────────────────────────────────────────────────────────────────
-
+    # Engine
     def run_engine(self):
         sys.path.insert(0, self.backend)
         from excel_formula_engine import ExcelFormulaProcessor # type: ignore
@@ -429,7 +434,7 @@ class PipelineIO:
         def _read_tracked_values():
             vals = {}
 
-            # design-capital scalars (column C)
+            # Design capital scalars
             wb = openpyxl.load_workbook(self.design_cap_path, data_only=True)
             for ws in wb.worksheets:
                 for row in ws.iter_rows(max_col=3):
@@ -439,11 +444,11 @@ class PipelineIO:
                         vals[key] = float(v) if isinstance(v, (int, float)) else 0.0
             wb.close()
 
-            # financial-statements time-series (sum across years as scalar proxy)
+            # FFSS
             wb = openpyxl.load_workbook(self.fin_statements_path, data_only=True)
             for ws in wb.worksheets:
                 for row in ws.iter_rows():
-                    if row[0].value in fin_rows:
+                    if row[0].value in fin_rows and len(row) > 1 and row[1].value == '-':
                         year_vals = [
                             float(c.value) for c in row[3:]
                             if isinstance(c.value, (int, float))
@@ -483,8 +488,7 @@ class PipelineIO:
         print(f"  Warning: did not converge after {max_iter} iterations.")
         return pd.DataFrame(records)
     
-    # ── Outputs ───────────────────────────────────────────────────────────────
-
+    # Outputs
     def plot_convergence(self, df):
 
         sheet_colors = {
@@ -520,8 +524,7 @@ class PipelineIO:
         plt.tight_layout()
         plt.show()
 
-        # max_delta en log
-        fig2, ax2 = plt.subplots(figsize=(10, 3.5))
+        _, ax2 = plt.subplots(figsize=(10, 3.5))
         valid = df['max_delta'].notna()
         ax2.plot(iters[valid], df.loc[valid, 'max_delta'], 'k-o', markersize=4, linewidth=1.5)
         ax2.set_yscale('log')
@@ -537,8 +540,7 @@ class PipelineIO:
     def read_outputs(self, sheet):
         wb = openpyxl.load_workbook(self.fin_statements_path, data_only=True)
         ws = wb[sheet]
-        single_rows = ['Long term subsidies', 'Operating Cash Flow',
-                       'Financial Expense', 'Debt repayment', 'Equity - EoP']
+        single_rows = ['Long term subsidies', 'Operating Cash Flow','Financial Expense', 'Debt repayment', 'Equity - EoP', 'Annual Cost of Service', 'Check', 'Cash EoP', 'EBITDA', 'Net Income', 'Cash Flow from Assets', 'Cash EoP']
         double_rows = {
             ('GRANTS', '- Realisation'): 'GRANTS:- Realisation',
             ('GRANTS', '+ Increase')   : 'GRANTS:+ Increase',
@@ -546,10 +548,11 @@ class PipelineIO:
             ('DEBT',   '+ Increase')   : 'DEBT:+ Increase',
             ('DEBT',   '- Repayment')  : 'DEBT:- Repayment',
             ('DEBT',   'EoP')          : 'DEBT:EoP',
+            ('DEBT',   'LT financial expense'): 'DEBT:LT financial expense',
         }
         out = {}
         for row in ws.iter_rows(values_only=True):
-            if row[0] in single_rows:
+            if row[0] in single_rows and row[1] == '-':
                 out[row[0]] = [v if v is not None else 0 for v in row[3:3+12]]
             if (row[0], row[1]) in double_rows:
                 out[double_rows[(row[0], row[1])]] = [v if v is not None else 0 for v in row[3:3+12]]

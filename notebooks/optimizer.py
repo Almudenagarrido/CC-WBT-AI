@@ -57,8 +57,8 @@ def run_optimization(tech_dict, tax_rate, years, search_ranges, fuel_fin=None, f
 
     study = optuna.create_study(direction='minimize')
     study.optimize(_trial, n_trials=n_trials)
-
     p = study.best_params
+    
     return {
         'PCT_EQUITY':        round(p['pct_equity']  * 100),
         'COST_OF_EQUITY':    round(p['cost_equity'] * 100),
