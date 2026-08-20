@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-# ── Constants ────────────────────────────────────────────────────────────────────
+
 PARAM_KEYS = [
     'pct_equity', 'pct_grants', 'cost_equity', 'cost_debt',
     'years_realisation', 'grace_period', 'amortization_period',
@@ -23,7 +23,7 @@ MAX_SHIFT = 0.2
 MAX_SCALE = 0.3
 
 
-# ── State encoding ───────────────────────────────────────────────────────────────
+# State encoding
 def normalize_params(params: dict) -> list:
     result = []
     for key in PARAM_KEYS:
