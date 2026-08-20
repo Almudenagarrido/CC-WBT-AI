@@ -45,6 +45,7 @@ def generate_dataset(n_samples=5000, seed=42):
 class PatternRecognizer(nn.Module):
     def __init__(self, input_dim=9, hidden_dim=32, n_labels=3):
         super().__init__()
+        self.bn = nn.BatchNorm1d(input_dim)
         self.net = nn.Sequential(
             nn.Linear(input_dim, hidden_dim),
             nn.ReLU(),
@@ -55,7 +56,7 @@ class PatternRecognizer(nn.Module):
         )
 
     def forward(self, x):
-        return self.net(x)
+        return self.net(self.bn(x))
 
 
 # 3. TRAINING
