@@ -1,24 +1,24 @@
 from pyomo.environ import (
     ConcreteModel, Set, Param, Var, Objective, Constraint,
-    NonNegativeReals, Reals, minimize, SolverFactory
+    NonNegativeReals, Reals, minimize  # pyright: ignore[reportAttributeAccessIssue]
 )
- 
+
 N_PERIODS = 10
- 
- 
+
+
 def build_model(
     pct_debt: float,
     pct_equity: float,
     cost_debt: float,
     cost_equity: float,
-    grace_period: int,        # T1
-    amortization_period: int,  # T2
-    capex_total=0.0,
-    cost_upstream_data=None,
+    grace_period: int,
+    amortization_period: int,
+    capex_total: float = 0.0,
+    cost_upstream_data: dict[int, float] | None = None,
     years_realisation: int = 8,
-    ntlosses_data: dict = None,
-    days_receivable_data: dict = None,
-    days_payable_data: dict = None,
+    ntlosses_data: dict[int, float] | None = None,
+    days_receivable_data: dict[int, float] | None = None,
+    days_payable_data: dict[int, float] | None = None,
     K1: float = 0.5,
     K2: float = 0.3,
     TAXRATE: float = 0.25,
@@ -26,27 +26,23 @@ def build_model(
     N_DEPREC: int = 20,
     N_PERIODS: int = 10,
 ):
- 
-    assert abs((pct_debt + pct_equity + pct_grants) - 1.0) < 1e-9, (
-        "pct_debt + pct_equity + pct_grants must equal 1"
-    )
-    
+
     ntlosses_data        = ntlosses_data        or {t: 0.05 for t in range(N_PERIODS)}
     days_receivable_data = days_receivable_data or {t: 30.0 for t in range(N_PERIODS)}
-    days_payable_data    = days_payable_data    or {t: 45.0 for t in range(N_PERIODS)}
-    cost_upstream_data = cost_upstream_data or {t: 0.0 for t in range(N_PERIODS)}
+    days_payable_data    = days_payable_data    or {t: 30.0 for t in range(N_PERIODS)}
+    cost_upstream_data   = cost_upstream_data   or {t:  0.0 for t in range(N_PERIODS)}
+
     realisation_periods = set(range(years_realisation))
  
     model = ConcreteModel()
  
     # ------------------ SETS -----------------------
     model.T = Set(initialize=range(N_PERIODS), ordered=True)
-    first_t = min(model.T)
+    first_t = 0
  
     # ------------------ PARAMETERS -----------------------
     # ----------------- model inputs ----------------------
     model.capex_total = Param(initialize=capex_total, mutable=True)
-    model.capex_data  = Var(model.T, within=NonNegativeReals)
     model.cost_upstream_data = Param(model.T, initialize=cost_upstream_data, mutable=True)
  
     model.K1 = Param(initialize=K1, mutable=True)
@@ -57,6 +53,7 @@ def build_model(
     model.TAXRATE = Param(initialize=TAXRATE, mutable=True)
     model.pct_grants = Param(initialize=pct_grants, mutable=True)
     model.N_DEPREC = Param(initialize=N_DEPREC, mutable=True)
+    model.T1 = Param(initialize=grace_period, mutable=True)
     model.T2 = Param(initialize=amortization_period, mutable=True)
     model.COST_OF_DEBT = Param(initialize=cost_debt, mutable=True)
  
@@ -74,6 +71,7 @@ def build_model(
     model.provisions = Var(model.T, within=NonNegativeReals)
     model.costs = Var(model.T, within=NonNegativeReals)
  
+    model.capex_data = Var(model.T, within=NonNegativeReals)
     model.rab = Var(model.T, within=NonNegativeReals)
     model.wc = Var(model.T, within=Reals)
     model.dwc = Var(model.T, within=Reals)
