@@ -129,6 +129,7 @@ def run_optimization(tech_dict, tax_rate, years, search_ranges, fuel_fin=None, f
     ebitda_schedule             = [value(best_model.ebitda[t])                 or 0 for t in range(n_periods)]
     financial_expenses_schedule = [value(best_model.financial_expenses[t])     or 0 for t in range(n_periods)]
     cfa_schedule                = [value(best_model.cash_flow_assets[t])       or 0 for t in range(n_periods)]
+    acofservice_schedule = [value(best_model.acofservice[t]) or 0 for t in range(n_periods)]
 
     return {
         'K1': K1,

@@ -238,6 +238,6 @@ def make_k1_k2(tech_dict, n_periods):
              for t in range(n_periods)]
 
     k1 = sum(capex) / sum(demand) if sum(demand) else 0.5
-    k2 = sum(capex) / sum(opex)   if sum(opex)   else 0.3
+    k2 = sum(opex) / sum(capex)   if sum(capex)   else 0.3
 
     return k1, k2
