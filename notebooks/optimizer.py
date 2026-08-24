@@ -3,17 +3,19 @@ from pyomo.environ import SolverFactory, TerminationCondition, value
 from pyomo_model import build_model, make_capex_data, make_k1_k2
 
 
-def run_optimization(tech_dict, tax_rate, years, search_ranges, fuel_fin=None, fuel_key='Electricity', objective='debt', n_trials=100):
+def run_optimization(tech_dict, tax_rate, years, search_ranges, fuel_fin=None, fuel_key='Electricity', objective='debt', n_trials=100, tariffs=None):
     optuna.logging.set_verbosity(optuna.logging.WARNING)
 
     n_periods = len(years)
     capex_total = make_capex_data(tech_dict, n_periods)
-    K1, K2 = make_k1_k2(tech_dict, n_periods)
+    demand_base,K1, K2 = make_k1_k2(tech_dict, n_periods)
     print(f"K1={K1:.2g}, K2={K2:.2g}")
     ff = (fuel_fin or {}).get(fuel_key, {})
     ntlosses_data        = {t: ff.get('NTL',      [5] *n_periods)[t] / 100  for t in range(n_periods)}
     days_receivable_data = {t: ff.get('DAYS_REC', [30]*n_periods)[t]        for t in range(n_periods)}
     days_payable_data    = {t: ff.get('DAYS_PAY', [30]*n_periods)[t]        for t in range(n_periods)}
+    tariff_raw  = (tariffs or {}).get(fuel_key, [0.0]*n_periods)
+    tariff_data = {t: tariff_raw[t] if t < len(tariff_raw) else 0.0 for t in range(n_periods)}
 
     solver     = SolverFactory('appsi_highs')
     if not solver.available(exception_flag=False):
@@ -48,6 +50,8 @@ def run_optimization(tech_dict, tax_rate, years, search_ranges, fuel_fin=None, f
             days_receivable_data=days_receivable_data,
             days_payable_data=days_payable_data,
             N_PERIODS=n_periods,
+            demand_base=demand_base,
+            TARIFF=tariff_data
         )
         results = solver.solve(model)
         if results.solver.termination_condition != TerminationCondition.optimal:
@@ -111,6 +115,8 @@ def run_optimization(tech_dict, tax_rate, years, search_ranges, fuel_fin=None, f
         days_receivable_data=days_receivable_data,
         days_payable_data=days_payable_data,
         N_PERIODS=n_periods,
+        demand_base=demand_base,
+        TARIFF=tariff_data
     )
     results = solver.solve(best_model)
     if results.solver.termination_condition != TerminationCondition.optimal:
@@ -128,7 +134,7 @@ def run_optimization(tech_dict, tax_rate, years, search_ranges, fuel_fin=None, f
     costs_schedule              = [value(best_model.costs[t])                  or 0 for t in range(n_periods)]
     ebitda_schedule             = [value(best_model.ebitda[t])                 or 0 for t in range(n_periods)]
     financial_expenses_schedule = [value(best_model.financial_expenses[t])     or 0 for t in range(n_periods)]
-    cfa_schedule                = [value(best_model.cash_flow_assets[t])       or 0 for t in range(n_periods)]
+    cfa_schedule = [value(best_model.cash_flow[t]) or 0 for t in range(n_periods)]
     acofservice_schedule = [value(best_model.acofservice[t]) or 0 for t in range(n_periods)]
 
     return {

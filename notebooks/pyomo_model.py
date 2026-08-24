@@ -1,6 +1,6 @@
 from pyomo.environ import (
     ConcreteModel, Set, Param, Var, Objective, Constraint,
-    NonNegativeReals, Reals, minimize  # pyright: ignore[reportAttributeAccessIssue]
+    NonNegativeReals, Reals, Binary, minimize  # pyright: ignore[reportAttributeAccessIssue]
 )
 
 N_PERIODS = 10
@@ -21,6 +21,8 @@ def build_model(
     days_payable_data: dict[int, float] | None = None,
     K1: float = 0.5,
     K2: float = 0.3,
+    demand_base: float = 0.0,
+    TARIFF: dict | None = None,
     TAXRATE: float = 0.25,
     pct_grants: float = 0.2,
     N_DEPREC: int = 20,
@@ -31,8 +33,8 @@ def build_model(
     days_receivable_data = days_receivable_data or {t: 30.0 for t in range(N_PERIODS)}
     days_payable_data    = days_payable_data    or {t: 30.0 for t in range(N_PERIODS)}
     cost_upstream_data   = cost_upstream_data   or {t:  0.0 for t in range(N_PERIODS)}
-
     realisation_periods = set(range(years_realisation))
+    TARIFF = TARIFF or {t: 0.0 for t in range(N_PERIODS)}
  
     model = ConcreteModel()
  
@@ -87,9 +89,19 @@ def build_model(
     model.ebit = Var(model.T, within=Reals)
     model.ebt = Var(model.T, within=Reals)
     model.financial_expenses = Var(model.T, within=NonNegativeReals)
- 
-    model.cash_flow_assets = Var(model.T, within=Reals)
-    model.debt = Var(model.T, within=NonNegativeReals)
+
+    model.cash_flow    = Var(model.T, within=Reals)
+    model.repay        = Var(model.T, within=NonNegativeReals)
+    model.equity       = Var(model.T, within=NonNegativeReals)
+    model.ebt_cum      = Var(model.T, within=Reals)
+    model.profit       = Var(model.T, within=NonNegativeReals)
+    model.loss         = Var(model.T, within=NonNegativeReals)
+    model.loss_used    = Var(model.T, within=NonNegativeReals)
+    model.p_or_l       = Var(model.T, within=Binary)
+    model.tax_or_cum   = Var(model.T, within=Binary)
+    model.taxable      = Var(model.T, within=NonNegativeReals)
+    model.service_margin = Var(model.T, within=NonNegativeReals)
+    model.sub_or_mar   = Var(model.T, within=Binary)
  
     # -------------- OBJECTIVE FUNCTION -------------------
     def obj_rule(m):
@@ -102,7 +114,10 @@ def build_model(
     model.c_revenues = Constraint(model.T, rule=revenues_rule)
 
     def tariff_income_rule(m, t):
-        return m.tariff_income[t] == m.K1 * m.capex_data[t]
+        accumulated_capex = sum(
+            m.capex_data[tt] for tt in m.T if tt <= t
+        )
+        return m.tariff_income[t] == TARIFF[t] * (demand_base + m.K1 * accumulated_capex)
     model.c_tariff_income = Constraint(model.T, rule=tariff_income_rule)
  
     def grants_rule(m, t):
@@ -112,19 +127,33 @@ def build_model(
     model.c_grants = Constraint(model.T, rule=grants_rule)
  
     def lt_subsidies_rule(m, t):
-        return m.lt_subsidies[t] <= m.acofservice[t] - m.tariff_income[t]
+        return m.lt_subsidies[t] <= m.acofservice[t] - m.tariff_income[t] + m.service_margin[t]
     model.c_lt_subsidies = Constraint(model.T, rule=lt_subsidies_rule)
+
+    def sub_or_mar_1_rule(m, t):
+        return m.lt_subsidies[t] <= 1e3 * m.sub_or_mar[t]
+    model.c_sub_or_mar_1 = Constraint(model.T, rule=sub_or_mar_1_rule)
+
+    def sub_or_mar_2_rule(m, t):
+        return m.service_margin[t] <= 1e3 * (1 - m.sub_or_mar[t])
+    model.c_sub_or_mar_2 = Constraint(model.T, rule=sub_or_mar_2_rule)
  
     def costs_rule(m, t):
         return m.upstream[t] + m.opex[t] + m.provisions[t] == m.costs[t]
     model.c_costs = Constraint(model.T, rule=costs_rule)
 
     def upstream_rule(m, t):
-        return m.upstream[t] == m.cost_upstream_data[t] * m.K2 * m.capex_data[t]
+        accumulated_capex = sum(
+            m.capex_data[tt] for tt in m.T if tt <= t
+        )
+        return m.upstream[t] == m.cost_upstream_data[t] * (demand_base + m.K1 * accumulated_capex)
     model.c_upstream = Constraint(model.T, rule=upstream_rule)
  
     def opex_rule(m, t):
-        return m.opex[t] == m.K2 * m.capex_data[t]
+        accumulated_capex = sum(
+            m.capex_data[tt] for tt in m.T if tt <= t
+        )
+        return m.opex[t] == m.K2 * (demand_base + m.K1 * accumulated_capex)
     model.c_opex = Constraint(model.T, rule=opex_rule)
  
     def provisions_rule(m, t):
@@ -140,7 +169,7 @@ def build_model(
  
     def rab_rule(m, t):
         if t == first_t:
-            return m.rab[t] == 0
+            return m.rab[t] == m.capex_data[t] - m.da[t]
         return m.rab[t] == m.capex_data[t] - m.da[t] + m.rab[t - 1]
     model.c_rab = Constraint(model.T, rule=rab_rule)
 
@@ -166,17 +195,43 @@ def build_model(
         return m.da[t] == (1 / m.N_DEPREC) * sum(m.capex_data[s] for s in m.T if s <= t)
     model.c_da = Constraint(model.T, rule=da_rule)
  
-    def taxes_rule(m, t):
-        if t == first_t:
-            return m.taxes[t] == 0
-        return m.taxes[t] >= (m.ebt[t] - m.cum[t - 1]) * m.TAXRATE
-    model.c_taxes = Constraint(model.T, rule=taxes_rule)
+    def ebt_cum_rule(m, t):
+        return m.ebt_cum[t] == m.ebt[t] - m.grants[t] - m.lt_subsidies[t]
+    model.c_ebt_cum = Constraint(model.T, rule=ebt_cum_rule)
+
+    def ebt_split_rule(m, t):
+        return m.ebt_cum[t] == m.profit[t] - m.loss[t]
+    model.c_ebt_split = Constraint(model.T, rule=ebt_split_rule)
+
+    def profit_loss_1_rule(m, t):
+        return m.profit[t] <= 1e3 * m.p_or_l[t]
+    model.c_profit_loss_1 = Constraint(model.T, rule=profit_loss_1_rule)
+
+    def profit_loss_2_rule(m, t):
+        return m.loss[t] <= 1e3 * (1 - m.p_or_l[t])
+    model.c_profit_loss_2 = Constraint(model.T, rule=profit_loss_2_rule)
 
     def cum_rule(m, t):
         if t == first_t:
-            return m.cum[t] == 0
-        return m.cum[t] >= m.cum[t - 1] - m.ebt[t]
+            return m.cum[t] == m.loss[t] - m.loss_used[t]
+        return m.cum[t] == m.cum[t - 1] + m.loss[t] - m.loss_used[t]
     model.c_cum = Constraint(model.T, rule=cum_rule)
+
+    def taxable_rule(m, t):
+        return m.taxable[t] == m.profit[t] - m.loss_used[t]
+    model.c_taxable = Constraint(model.T, rule=taxable_rule)
+
+    def tax_or_cum_1_rule(m, t):
+        return m.taxable[t] <= 1e3 * m.tax_or_cum[t]
+    model.c_tax_or_cum_1 = Constraint(model.T, rule=tax_or_cum_1_rule)
+
+    def tax_or_cum_2_rule(m, t):
+        return m.cum[t] <= 1e3 * (1 - m.tax_or_cum[t])
+    model.c_tax_or_cum_2 = Constraint(model.T, rule=tax_or_cum_2_rule)
+
+    def taxes_rule(m, t):
+        return m.taxes[t] == m.taxable[t] * m.TAXRATE
+    model.c_taxes = Constraint(model.T, rule=taxes_rule)
  
     def ebitda_rule(m, t):
         return m.ebitda[t] == m.revenues[t] - m.costs[t]
@@ -192,16 +247,28 @@ def build_model(
 
     def financial_expenses_rule(m, t):
         return m.financial_expenses[t] == (
-            (1 / m.T2) * sum(m.debt[s] for s in m.T if s <= t) * m.COST_OF_DEBT
-        )
+        sum(m.debt[s] - m.repay[s] for s in m.T if s <= t) * m.COST_OF_DEBT
+    )
     model.c_financial_expenses = Constraint(model.T, rule=financial_expenses_rule)
  
-    def cash_flow_assets_rule(m, t):
-        return m.cash_flow_assets[t] == m.ebitda[t] - m.taxes[t] + m.dwc[t] - m.capex_data[t]
-    model.c_cash_flow_assets = Constraint(model.T, rule=cash_flow_assets_rule)
- 
+    def repay_rule(m, t):
+        if t < grace_period:
+            return m.repay[t] == 0
+        return m.repay[t] == (1 / m.T2) * sum(m.debt[s] - m.repay[s] for s in m.T if s <= t - grace_period)
+    model.c_repay = Constraint(model.T, rule=repay_rule)
+
+    def equity_rule(m, t):
+        if t == first_t:
+            return m.equity[t] == (pct_equity * sum(m.debt[s] for s in m.T)) / pct_debt
+        return m.equity[t] == 0
+    model.c_equity = Constraint(model.T, rule=equity_rule)
+
+    def cash_flow_rule(m, t):
+        return m.cash_flow[t] == m.ebitda[t] - m.taxes[t] + m.dwc[t] - m.capex_data[t] - m.financial_expenses[t] - m.repay[t] + m.equity[t]
+    model.c_cash_flow = Constraint(model.T, rule=cash_flow_rule)
+
     def debt_rule(m, t):
-        return m.debt[t] >= -m.cash_flow_assets[t]
+        return m.debt[t] >= -m.cash_flow[t]
     model.c_debt = Constraint(model.T, rule=debt_rule)
  
     def capex_total_rule(m):
@@ -222,22 +289,54 @@ def make_capex_data(tech_dict, n_periods):
     )
 
 def make_k1_k2(tech_dict, n_periods):
-    grid    = tech_dict.get('GRID',     {})
+    grid    = tech_dict.get('GRID', {})
     offgrid = tech_dict.get('OFF-GRID', {})
+ 
+    def _get(d, key):
+        return d.get(key, [])
+ 
+    capex = [
+        (_get(grid, 'CAPEX - Growth')[t] if t < len(_get(grid, 'CAPEX - Growth')) else 0)
+        + (_get(offgrid, 'CAPEX - Growth')[t] if t < len(_get(offgrid, 'CAPEX - Growth')) else 0)
+        for t in range(n_periods)
+    ]
+ 
+    # Accumulated CAPEX
+    capex_cum = []
+    total = 0.0
+    for c in capex:
+        total += c
+        capex_cum.append(total)
+ 
+    demand = [
+        (_get(grid, 'Demand')[t] if t < len(_get(grid, 'Demand')) else 0)
+        + (_get(offgrid, 'Demand')[t] if t < len(_get(offgrid, 'Demand')) else 0)
+        for t in range(n_periods)
+    ]
+ 
+    opex = [
+        (_get(grid, 'OPEX')[t] if t < len(_get(grid, 'OPEX')) else 0)
+        + (_get(offgrid, 'OPEX')[t] if t < len(_get(offgrid, 'OPEX')) else 0)
+        for t in range(n_periods)
+    ]
+ 
+    # DEMAND = demand_base + k1 * accumulated_CAPEX
+    mean_capex = sum(capex_cum) / len(capex_cum)
+    mean_demand = sum(demand) / len(demand)
+ 
+    denominator_k1 = sum((c - mean_capex) ** 2 for c in capex_cum)
+ 
+    k1 = (
+        sum((c - mean_capex) * (d - mean_demand)
+            for c, d in zip(capex_cum, demand))
+        / denominator_k1
+    )
+    demand_base = mean_demand - k1 * mean_capex
 
-    def _get(d, key): return d.get(key, [])
-
-    capex  = [(_get(grid, 'CAPEX - Growth')[t] if t < len(_get(grid, 'CAPEX - Growth')) else 0)
-             + (_get(offgrid, 'CAPEX - Growth')[t] if t < len(_get(offgrid, 'CAPEX - Growth')) else 0)
-             for t in range(n_periods)]
-    demand = [(_get(grid, 'Demand')[t] if t < len(_get(grid, 'Demand')) else 0)
-             + (_get(offgrid, 'Demand')[t] if t < len(_get(offgrid, 'Demand')) else 0)
-             for t in range(n_periods)]
-    opex   = [(_get(grid, 'OPEX')[t] if t < len(_get(grid, 'OPEX')) else 0)
-             + (_get(offgrid, 'OPEX')[t] if t < len(_get(offgrid, 'OPEX')) else 0)
-             for t in range(n_periods)]
-
-    k1 = sum(capex) / sum(demand) if sum(demand) else 0.5
-    k2 = sum(opex) / sum(capex)   if sum(capex)   else 0.3
-
-    return k1, k2
+    # OPEX = k2 * DEMAND
+    # Regression forced through the origin
+    denominator_k2 = sum(d ** 2 for d in demand)
+ 
+    k2 = sum(d * o for d, o in zip(demand, opex)) / denominator_k2
+ 
+    return demand_base, k1, k2
