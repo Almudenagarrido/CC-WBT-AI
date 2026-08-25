@@ -89,6 +89,7 @@ def build_model(
     model.ebit = Var(model.T, within=Reals)
     model.ebt = Var(model.T, within=Reals)
     model.financial_expenses = Var(model.T, within=NonNegativeReals)
+    model.debt = Var(model.T, within=NonNegativeReals)
 
     model.cash_flow    = Var(model.T, within=Reals)
     model.repay        = Var(model.T, within=NonNegativeReals)
@@ -157,7 +158,7 @@ def build_model(
     model.c_opex = Constraint(model.T, rule=opex_rule)
  
     def provisions_rule(m, t):
-        return m.provisions[t] == m.NTLOSSES[t] * m.K1 * m.capex_data[t]
+        return m.provisions[t] == m.NTLOSSES[t] * m.tariff_income[t]
     model.c_provisions = Constraint(model.T, rule=provisions_rule)
 
     def acofservice_rule(m, t):

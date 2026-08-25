@@ -5,6 +5,7 @@ def explain_results(
     pattern_results: dict,
     outputs: dict,
     years: list,
+    country: str = 'Mozambique',
     language: str = 'en',
     model: str = 'llama-3.3-70b-versatile',
 ) -> str:
@@ -49,7 +50,7 @@ def explain_results(
     prompt = f"""{persona}
 
 The capital structure optimisation pipeline has produced the following results
-for Rwanda's CleanStep scenario (2023-2034, values in M$):
+for {country}'s CleanStep scenario ({years[0]}-{years[-1]}, values in M$):
 
 {financial_summary}
 

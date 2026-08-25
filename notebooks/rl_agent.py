@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from optimizer import run_optimization
 
 
 PARAM_KEYS = [
@@ -46,12 +47,10 @@ def encode_state(best_params, best_obj, pattern_labels, iteration, max_iter=10):
     return torch.tensor(features, dtype=torch.float32).unsqueeze(0)
 
 
-# ── Policy network ───────────────────────────────────────────────────────────────
+# Policy network
 class RLAgent(nn.Module):
     """
-    Takes state (12 features) and outputs adjustments to search range
-    centers and widths for each of the 7 params.
-    Output: (shift, scale) per param, both in [-1, 1].
+    Takes state (12 features) and outputs adjustments to search range centers and widths for each of the params.
     """
     def __init__(self, state_dim=12, hidden_dim=64, n_params=7):
         super().__init__()
@@ -66,9 +65,8 @@ class RLAgent(nn.Module):
         return self.net(x).view(-1, self.n_params, 2)
 
 
-# ── Range adjustment ─────────────────────────────────────────────────────────────
+# Range adjustment
 def adjust_ranges(action, current_ranges):
-    """Apply agent's action to SEARCH_RANGES."""
     action_np  = action.squeeze(0).detach().numpy()
     new_ranges = {}
 
@@ -94,7 +92,7 @@ def adjust_ranges(action, current_ranges):
     return new_ranges
 
 
-# ── REINFORCE update ─────────────────────────────────────────────────────────────
+# REINFORCE update
 def update_policy(agent, optimizer, log_prob, reward):
     loss = -log_prob * reward
     optimizer.zero_grad()
@@ -103,24 +101,21 @@ def update_policy(agent, optimizer, log_prob, reward):
     return loss.item()
 
 
-# ── Main RL loop ─────────────────────────────────────────────────────────────────
+# Main RL loop
 def run_rl_optimization(
     tech_dict, tax_rate, years, initial_ranges,
-    pattern_model,
     fuel_fin=None, fuel_key='Electricity',
     objective='debt',
     n_rounds=5, n_trials_per_round=50,
-    lr=1e-3,
+    lr=1e-3, tariffs=None,
 ):
-    from optimizer import run_optimization
-    from pattern_recognizer import LABELS
 
     agent      = RLAgent()
     optimizer_ = optim.Adam(agent.parameters(), lr=lr)
 
     ranges       = dict(initial_ranges)
     best_overall = None
-    best_obj     = float('inf')
+    best_obj     = 1.0
     history      = []
 
     for round_idx in range(n_rounds):
@@ -130,16 +125,24 @@ def run_rl_optimization(
         result = run_optimization(
             tech_dict=tech_dict, tax_rate=tax_rate, years=years,
             search_ranges=ranges, fuel_fin=fuel_fin, fuel_key=fuel_key,
-            objective=objective, n_trials=n_trials_per_round,
+            objective=objective, n_trials=n_trials_per_round, tariffs=tariffs
         )
 
-        # objective proxy: pct_debt (lower = better)
-        pct_debt = 1 - result['PCT_EQUITY'] / 100 - result['PCT_GRANTS'] / 100
-        obj_val  = max(pct_debt, 0.0)
+        # Objective: minimize total debt
+        total_debt = sum(result.get('DEBT_INCREASE', [0]))
+        total_lts  = result.get('TOTAL_LT_SUBSIDIES', 0)
+        obj_val    = min((total_debt + 0.1 * total_lts) / 5000, 1.0)
 
-        # Step 2: pattern labels (dummy until pipeline is wired in layer 3)
-        pattern_labels = {label: 0.5 for label in LABELS}
-
+        # Real state signals
+        n_p = len(years)
+        lts_sched  = result.get('LT_SUBSIDY_SCHEDULE', [0]*n_p)
+        debt_sched = result.get('DEBT_INCREASE',       [0]*n_p)
+        pattern_labels = {
+            'subsidy_dependent': min(total_lts / 5000, 1.0),
+            'fragile_structure': sum(1 for v in debt_sched if v > 0) / n_p,
+            'high_circularity':  0.0,
+        }
+        
         # Step 3: encode state
         best_params_norm = {
             'pct_equity':          result['PCT_EQUITY'] / 100,
@@ -151,6 +154,7 @@ def run_rl_optimization(
             'amortization_period': result['AMORTIZATION'],
         }
         state = encode_state(best_params_norm, obj_val, pattern_labels, round_idx, n_rounds)
+
 
         # Step 4: agent action + exploration noise
         action_mean = agent(state)
