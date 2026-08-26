@@ -68,7 +68,12 @@ financing plan, highlighting the main risks and practical implications.
     response = client.chat.completions.create(
         model=model,
         messages=[{"role": "user", "content": prompt}],
-        max_tokens=512,
+        max_tokens=1024,
     )
 
-    return response.choices[0].message.content
+    choice = response.choices[0]
+    text = choice.message.content
+    if choice.finish_reason == "length":
+        text += "\n\n[⚠ response truncated due to token limit]"
+
+    return text

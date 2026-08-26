@@ -10,19 +10,28 @@
         "Rwanda": {
             "start": 2023,
             "end": 2034
+        },
+        "Mozambique": {
+            "start": 2023,
+            "end": 2034
         }
     },
     "TAX_RATES": {
-        "Rwanda": 28
+        "Rwanda": 28,
+        "Mozambique": 28
     },
     "INFLATIONS": {
-        "Rwanda": 5
+        "Rwanda": 5,
+        "Mozambique": 5
     },
     "MODELS": {
         "Rwanda": [
             "Baseline",
             "CleanStep",
             "Aligned"
+        ],
+        "Mozambique": [
+            "CleanStep"
         ]
     },
     "FUELS": {
@@ -58,6 +67,37 @@
             ]
         },
         "Rwanda": {
+            "normal": [
+                "Electricity",
+                "LPG"
+            ],
+            "only_carbon": [
+                "Carbon Credits"
+            ],
+            "carbon": [
+                "Electricity",
+                "LPG",
+                "Carbon Credits"
+            ],
+            "expanded_carbon": [
+                "Electricity & E-Cooking",
+                "Electricity (Low access)",
+                "LPG",
+                "Carbon Credits"
+            ],
+            "expanded": [
+                "Electricity & E-Cooking",
+                "Electricity (Low access)",
+                "LPG"
+            ],
+            "more_expanded": [
+                "Electricity (Only E-Cooking)",
+                "Electricity & E-Cooking",
+                "Electricity (Low access)",
+                "LPG"
+            ]
+        },
+        "Mozambique": {
             "normal": [
                 "Electricity",
                 "LPG"
@@ -161,6 +201,38 @@
                     "2034": 0.13
                 }
             }
+        },
+        "Mozambique": {
+            "CleanStep": {
+                "Electricity": {
+                    "2023": 0.15,
+                    "2024": 0.16,
+                    "2025": 0.17,
+                    "2026": 0.17,
+                    "2027": 0.18,
+                    "2028": 0.19,
+                    "2029": 0.2,
+                    "2030": 0.21,
+                    "2031": 0.22,
+                    "2032": 0.23,
+                    "2033": 0.24,
+                    "2034": 0.26
+                },
+                "LPG": {
+                    "2023": 0.08,
+                    "2024": 0.08,
+                    "2025": 0.08,
+                    "2026": 0.09,
+                    "2027": 0.09,
+                    "2028": 0.1,
+                    "2029": 0.1,
+                    "2030": 0.11,
+                    "2031": 0.11,
+                    "2032": 0.12,
+                    "2033": 0.12,
+                    "2034": 0.13
+                }
+            }
         }
     },
     "UPSTREAMS": {
@@ -228,6 +300,38 @@
                     "2032": 0.0,
                     "2033": 0.0,
                     "2034": 0.0
+                }
+            }
+        },
+        "Mozambique": {
+            "CleanStep": {
+                "Electricity": {
+                    "2023": 0,
+                    "2024": 0,
+                    "2025": 0,
+                    "2026": 0,
+                    "2027": 0,
+                    "2028": 0,
+                    "2029": 0,
+                    "2030": 0,
+                    "2031": 0,
+                    "2032": 0,
+                    "2033": 0,
+                    "2034": 0
+                },
+                "LPG": {
+                    "2023": 0,
+                    "2024": 0,
+                    "2025": 0,
+                    "2026": 0,
+                    "2027": 0,
+                    "2028": 0,
+                    "2029": 0,
+                    "2030": 0,
+                    "2031": 0,
+                    "2032": 0,
+                    "2033": 0,
+                    "2034": 0
                 }
             }
         }

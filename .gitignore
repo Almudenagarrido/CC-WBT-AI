@@ -24,4 +24,4 @@ coverage.xml
 *.xlsx
 *.xls
 *.csv
-backend/config.json
+backend/config.jsonnotebooks\rl_agent_state.pt 
