@@ -54,9 +54,7 @@ def encode_state(best_params, best_obj, pattern_labels, iteration, max_iter=10):
 
 # Policy network
 class RLAgent(nn.Module):
-    """
-    Takes state (12 features) and outputs adjustments to search range centers and widths for each of the params.
-    """
+
     def __init__(self, state_dim=12, hidden_dim=64, n_params=7):
         super().__init__()
         self.net = nn.Sequential(

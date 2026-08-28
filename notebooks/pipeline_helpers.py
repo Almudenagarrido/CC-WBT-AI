@@ -397,7 +397,7 @@ class PipelineIO:
         processor = ExcelFormulaProcessor()
         orig = os.getcwd(); os.chdir(self.backend)
         try:
-            for _ in range(2):
+            for _ in range(5):
                 processor.clear_workbook_cache()
                 processor.apply_formulas(
                     file_path=f'{self.country}/capex-fuels-{self.model}.xlsx',
@@ -422,13 +422,13 @@ class PipelineIO:
         finally:
             os.chdir(orig)
 
-    def run_engine_until_convergence(self, max_iter=30, tol=1e-4):
+    def run_engine_until_convergence(self, max_iter=60, tol=1e-8):
         design_scalars = [
             'How much to be financed', 'Equity', 'Grants', 'Debt', 'WACC'
         ]
         fin_rows = [
             'Annual Cost of Service', 'Long term subsidies',
-            'Cash Flow from Assets', 'Operating Cash Flow'
+            'Cash Flow from Assets', 'Operating Cash Flow', 'Check'
         ]
 
         def _read_tracked_values():
@@ -536,6 +536,26 @@ class PipelineIO:
         ax2.grid(True, alpha=0.25, which='both')
         plt.tight_layout()
         plt.show()
+
+    def reset_circular_rows(self, sheet):
+        rows_to_reset = [
+            'Equity - EoP', 'Cash EoP', 'PP&E - EoP',
+            'Cumulative tax losses', 'Reserves',
+        ]
+        double_rows_to_reset = [('GRANTS', 'EoP'), ('DEBT', 'EoP')]
+    
+        wb = openpyxl.load_workbook(self.fin_statements_path)
+        ws = wb[sheet]
+        for row in ws.iter_rows():
+            if row[0].value in rows_to_reset and row[1].value == '-':
+                for c in row[3:3+12]:
+                    c.value = 0
+            if (row[0].value, row[1].value) in double_rows_to_reset:
+                for c in row[3:3+12]:
+                    c.value = 0
+        wb.save(self.fin_statements_path)
+        wb.close()
+        print(f'  Reset accumulator rows for {sheet} in financial-statements-{self.model}.xlsx')
 
     def read_outputs(self, sheet):
         wb = openpyxl.load_workbook(self.fin_statements_path, data_only=True)

@@ -128,7 +128,7 @@ def build_model(
     model.c_grants = Constraint(model.T, rule=grants_rule)
  
     def lt_subsidies_rule(m, t):
-        return m.lt_subsidies[t] <= m.acofservice[t] - m.tariff_income[t] + m.service_margin[t]
+        return m.lt_subsidies[t] == m.acofservice[t] - m.tariff_income[t] + m.service_margin[t]
     model.c_lt_subsidies = Constraint(model.T, rule=lt_subsidies_rule)
 
     def sub_or_mar_1_rule(m, t):
