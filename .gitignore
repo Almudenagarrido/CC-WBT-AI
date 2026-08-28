@@ -21,3 +21,7 @@ nosetests.xml
 coverage.xml
 .streamlit/config.toml
 .streamlit/secrets.toml
+*.xlsx
+*.xls
+*.csv
+backend/config.jsonnotebooks\rl_agent_state.pt 

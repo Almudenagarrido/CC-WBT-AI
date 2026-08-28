@@ -89,6 +89,7 @@ def build_model(
     model.ebit = Var(model.T, within=Reals)
     model.ebt = Var(model.T, within=Reals)
     model.financial_expenses = Var(model.T, within=NonNegativeReals)
+    model.debt = Var(model.T, within=NonNegativeReals)
 
     model.cash_flow    = Var(model.T, within=Reals)
     model.repay        = Var(model.T, within=NonNegativeReals)
@@ -127,7 +128,7 @@ def build_model(
     model.c_grants = Constraint(model.T, rule=grants_rule)
  
     def lt_subsidies_rule(m, t):
-        return m.lt_subsidies[t] <= m.acofservice[t] - m.tariff_income[t] + m.service_margin[t]
+        return m.lt_subsidies[t] == m.acofservice[t] - m.tariff_income[t] + m.service_margin[t]
     model.c_lt_subsidies = Constraint(model.T, rule=lt_subsidies_rule)
 
     def sub_or_mar_1_rule(m, t):
@@ -157,7 +158,7 @@ def build_model(
     model.c_opex = Constraint(model.T, rule=opex_rule)
  
     def provisions_rule(m, t):
-        return m.provisions[t] == m.NTLOSSES[t] * m.K1 * m.capex_data[t]
+        return m.provisions[t] == m.NTLOSSES[t] * m.tariff_income[t]
     model.c_provisions = Constraint(model.T, rule=provisions_rule)
 
     def acofservice_rule(m, t):
