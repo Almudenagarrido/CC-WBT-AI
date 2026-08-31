@@ -96,7 +96,7 @@ the situation qualitatively instead of inventing a number.
     response = client.chat.completions.create(
         model=model,
         messages=[{"role": "user", "content": prompt}],
-        max_tokens=1024,
+        max_tokens=2048,
     )
 
     choice = response.choices[0]
